@@ -81,21 +81,94 @@ Future<GalCalibrationImageFit> fitGalCalibrationImages(
   GalLookupCalibrationDraft draft, {
   GalCalibrationPreviewBuilder build = GalLookupCalibrationPreviewChannel.build,
 }) async {
+  final GalLookupCalibrationDraft fittingDraft = _quotedTextFittingDraft(draft);
   final GalCalibrationOcrAssist? ocr = galCalibrationOcrAssist;
   if (ocr != null) {
     // OCR is an offline calibration aid only.  A null result means that its
     // small model pack is not installed; retain the old pixel fitter as a
     // useful zero-download fallback.  A non-null failure is authoritative so
     // an installed model never silently falls back to a worse fit.
-    final GalCalibrationImageFit? assisted = await ocr(draft, build: build);
-    if (assisted != null) return assisted;
+    final GalCalibrationImageFit? assisted = await ocr(
+      fittingDraft,
+      build: build,
+    );
+    if (assisted != null) {
+      if (!draft.layout.quotedTextOnly) return assisted;
+      return _restoreQuotedFit(assisted, draft, build: build);
+    }
   }
   final GalCalibrationImageFit fit = await compute(
     inferGalCalibrationGrid,
-    draft,
+    fittingDraft,
   );
-  final GalLookupCalibrationDraft? fitted = fit.draft;
-  if (fitted == null) return fit;
+  return _restoreQuotedFit(fit, draft, build: build);
+}
+
+GalLookupCalibrationDraft _quotedTextFittingDraft(
+  GalLookupCalibrationDraft draft,
+) {
+  if (!draft.layout.quotedTextOnly) return draft;
+  return GalLookupCalibrationDraft(
+    rect: draft.rect,
+    searchRect: draft.searchRect,
+    layout: draft.layout,
+    slot: draft.slot,
+    layoutReferenceClient: draft.layoutReferenceClient,
+    layoutCaptureMetadata: draft.layoutCaptureMetadata,
+    samples: <GalCalibrationSample>[
+      for (final GalCalibrationSample sample in draft.samples)
+        if (galLookupGridSourceText(
+              sample.capture.sourceText,
+              quotedTextOnly: true,
+            ) ==
+            sample.capture.sourceText)
+          sample
+        else
+          GalCalibrationSample(
+            capture: GalLookupCalibrationCapture(
+              sourceText: galLookupGridSourceText(
+                sample.capture.sourceText,
+                quotedTextOnly: true,
+              ),
+              pngBytes: sample.capture.pngBytes,
+              referenceClient: sample.capture.referenceClient,
+              exePath: sample.capture.exePath,
+              exeSha256: sample.capture.exeSha256,
+              sessionEpoch: sample.capture.sessionEpoch,
+              occurrenceId: sample.capture.occurrenceId,
+              targetHwnd: sample.capture.targetHwnd,
+              capturedAt: sample.capture.capturedAt,
+              selectedThreadKey: sample.capture.selectedThreadKey,
+              sourceSequence: sample.capture.sourceSequence,
+              captureMetadata: sample.capture.captureMetadata,
+            ),
+            validation: sample.validation,
+          ),
+    ],
+  );
+}
+
+Future<GalCalibrationImageFit> _restoreQuotedFit(
+  GalCalibrationImageFit fit,
+  GalLookupCalibrationDraft original, {
+  required GalCalibrationPreviewBuilder build,
+}) async {
+  final GalLookupCalibrationDraft? candidate = fit.draft;
+  if (candidate == null) return fit;
+  if (candidate.samples.length != original.samples.length) {
+    return const GalCalibrationImageFit(reason: 'inconsistent_samples');
+  }
+  final GalLookupCalibrationDraft fitted = original.layout.quotedTextOnly
+      ? GalLookupCalibrationDraft(
+          rect: candidate.rect,
+          searchRect: candidate.searchRect,
+          layout: candidate.layout,
+          samples: original.samples,
+          slot: candidate.slot ?? original.slot,
+          layoutReferenceClient: candidate.layoutReferenceClient,
+          layoutCaptureMetadata: candidate.layoutCaptureMetadata,
+        )
+      : candidate;
   for (int index = 0; index < fitted.samples.length; index++) {
     final GalCalibrationSample sample = fitted.samples[index];
     final GalCalibrationPreview preview = await build(
@@ -111,7 +184,9 @@ Future<GalCalibrationImageFit> fitGalCalibrationImages(
       );
     }
   }
-  return fit;
+  return original.layout.quotedTextOnly
+      ? GalCalibrationImageFit(draft: fitted)
+      : fit;
 }
 
 class _InkRow {
@@ -193,6 +268,8 @@ List<int> _logicalUnits(String text) {
 }
 
 List<List<int>> _lines(String text, int capacity, int indent) {
+  final String content = text.trimRight();
+  final bool hasHookBreak = content.contains('\r') || content.contains('\n');
   final List<List<int>> lines = [[]];
   int previous = 0;
   for (final int unit in _logicalUnits(text)) {
@@ -200,7 +277,7 @@ List<List<int>> _lines(String text, int capacity, int indent) {
       if (unit != 10 || previous != 13) lines.add([]);
     } else {
       final int limit = capacity - (lines.length == 1 ? 0 : indent);
-      if (lines.last.length == limit) lines.add([]);
+      if (!hasHookBreak && lines.last.length == limit) lines.add([]);
       lines.last.add(unit);
     }
     previous = unit;
@@ -657,7 +734,10 @@ GalCalibrationImageFit inferGalCalibrationGrid(
       quotedContinuationIndent: quoteIndent.toDouble(),
     );
     if (!grid.isValid) continue;
-    final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(cellGrid: grid);
+    final GalLookupTextLayoutV1 layout = GalLookupTextLayoutV1(
+      cellGrid: grid,
+      quotedTextOnly: draft.layout.quotedTextOnly,
+    );
     final GalLookupCalibrationDraft candidate = GalLookupCalibrationDraft(
       searchRect: draft.searchRect,
       rect: GalLookupNormalizedRectV1(

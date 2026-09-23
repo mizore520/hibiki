@@ -339,6 +339,7 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   double? tracking,
   double? lineHeight,
   bool clearCellGrid = false,
+  bool? quotedTextOnly,
   List<GalLookupPunctuationVisualBoundV1>? punctuationVisualBounds,
 }) => GalLookupTextLayoutV1(
   fontFamily: fontFamily ?? layout.fontFamily,
@@ -349,6 +350,7 @@ GalLookupTextLayoutV1 copyGalCalibrationLayout(
   verticalAlign: layout.verticalAlign,
   paddingPerClientHeight: layout.paddingPerClientHeight,
   cellGrid: clearCellGrid ? null : layout.cellGrid,
+  quotedTextOnly: quotedTextOnly ?? layout.quotedTextOnly,
   punctuationVisualBounds: clearCellGrid
       ? const <GalLookupPunctuationVisualBoundV1>[]
       : punctuationVisualBounds ?? layout.punctuationVisualBounds,

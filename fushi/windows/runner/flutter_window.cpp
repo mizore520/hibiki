@@ -1337,6 +1337,15 @@ AttachedTextSurfaceWindow::Layout AttachedLayoutFromArgs(
     }
     layout.cell_grid = grid;
   }
+  const auto quoted_text_only =
+      map->find(flutter::EncodableValue("quotedTextOnly"));
+  if (quoted_text_only != map->end()) {
+    const bool* enabled = std::get_if<bool>(&quoted_text_only->second);
+    if (enabled != nullptr)
+      layout.quoted_text_only = *enabled;
+    else
+      layout.cell_grid = fushi::attached_text_layout::CellGrid{};
+  }
   const auto character_advances_it =
       map->find(flutter::EncodableValue("characterAdvances"));
   if (character_advances_it != map->end()) {
@@ -1554,6 +1563,10 @@ flutter::EncodableMap AttachedLayoutMap(
       {flutter::EncodableValue("paddingPerClientHeight"),
        flutter::EncodableValue(layout.padding_per_client_height)},
   };
+  if (layout.quoted_text_only) {
+    result[flutter::EncodableValue("quotedTextOnly")] =
+        flutter::EncodableValue(true);
+  }
   if (layout.cell_grid.has_value()) {
     const fushi::attached_text_layout::CellGrid& grid = *layout.cell_grid;
     flutter::EncodableMap serialized_grid{

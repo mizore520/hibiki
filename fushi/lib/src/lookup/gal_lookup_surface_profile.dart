@@ -42,14 +42,74 @@ enum GalLookupCalibrationSlotV1 {
   }
 }
 
-/// Classifies only paired outer quote marks. Quotes occurring inside the body
-/// are deliberately ignored so narration containing quoted text stays
-/// narration.
+/// Classifies text containing a Japanese dialogue quote. The hook may append
+/// line breaks, punctuation, or other text around the visible quote, and some
+/// engines may expose only one side while a line is being updated. The user's
+/// calibration rule is that any Japanese dialogue quote marker means dialogue.
 bool isGalLookupDialogueText(String text) {
   final String value = text.trim();
-  if (value.length < 2) return false;
-  return (value.startsWith('「') && value.endsWith('」')) ||
-      (value.startsWith('『') && value.endsWith('』'));
+  if (value.isEmpty) return false;
+  return value.contains('「') ||
+      value.contains('」') ||
+      value.contains('『') ||
+      value.contains('』');
+}
+
+/// Select the first Japanese dialogue quote for grid fitting without changing
+/// the stored Hook text or native hit indexes.
+String galLookupGridSourceText(String source, {required bool quotedTextOnly}) {
+  if (!quotedTextOnly) return source;
+  final int start = source.indexOf('「');
+  if (start < 0) return source;
+  final int close = source.indexOf('」', start + 1);
+  return source.substring(start, close < 0 ? null : close + 1);
+}
+
+/// Per-game visible/card text. Keep the captured Hook line unchanged so source
+/// matching, audio identity and UTF-16 hit positions remain stable.
+({String text, int sourceOffset}) galLookupVisibleHookLineText({
+  required String source,
+  required bool currentSession,
+  required String? sessionExecutable,
+  required String? attachedExecutable,
+  required String? attachedSha256,
+  required GalLookupSurfaceProfileV1? profile,
+  required GalLookupReferenceClientV1? client,
+}) {
+  final ({String text, int sourceOffset}) original = (
+    text: source,
+    sourceOffset: 0,
+  );
+  if (!currentSession ||
+      sessionExecutable == null ||
+      attachedExecutable == null ||
+      attachedSha256 == null ||
+      profile == null ||
+      client == null) {
+    return original;
+  }
+  final String sessionPath = GalLookupSurfaceProfileV1.normalizeExePath(
+    sessionExecutable,
+  );
+  final String attachedPath = GalLookupSurfaceProfileV1.normalizeExePath(
+    attachedExecutable,
+  );
+  if (sessionPath != attachedPath ||
+      attachedPath !=
+          GalLookupSurfaceProfileV1.normalizeExePath(profile.exePath) ||
+      GalLookupSurfaceProfileV1.normalizeSha256(attachedSha256) !=
+          GalLookupSurfaceProfileV1.normalizeSha256(profile.exeSha256)) {
+    return original;
+  }
+  final bool quotedTextOnly =
+      profile.bestVariantForSourceText(client, source)?.layout.quotedTextOnly ??
+      false;
+  final String visible = galLookupGridSourceText(
+    source,
+    quotedTextOnly: quotedTextOnly,
+  );
+  if (visible == source) return original;
+  return (text: visible, sourceOffset: source.indexOf('「'));
 }
 
 class GalLookupNormalizedRectV1 {
@@ -520,6 +580,7 @@ class GalLookupTextLayoutV1 {
     this.verticalAlign = 'top',
     this.paddingPerClientHeight = 0,
     this.cellGrid,
+    this.quotedTextOnly = false,
     this.punctuationVisualBounds = const <GalLookupPunctuationVisualBoundV1>[],
     this.characterAdvances = const <GalLookupCharacterAdvanceV1>[],
   });
@@ -532,6 +593,7 @@ class GalLookupTextLayoutV1 {
   final String verticalAlign;
   final double paddingPerClientHeight;
   final GalLookupCellGridV1? cellGrid;
+  final bool quotedTextOnly;
   final List<GalLookupPunctuationVisualBoundV1> punctuationVisualBounds;
   final List<GalLookupCharacterAdvanceV1> characterAdvances;
 
@@ -585,6 +647,7 @@ class GalLookupTextLayoutV1 {
       'paddingPerClientHeight': paddingPerClientHeight,
     };
     if (cellGrid != null) result['cellGrid'] = cellGrid!.toJson();
+    if (quotedTextOnly) result['quotedTextOnly'] = true;
     if (punctuationVisualBounds.isNotEmpty) {
       final List<GalLookupPunctuationVisualBoundV1> sorted =
           List<GalLookupPunctuationVisualBoundV1>.of(punctuationVisualBounds)
@@ -625,6 +688,7 @@ class GalLookupTextLayoutV1 {
     };
     const Set<String> optionalKeys = <String>{
       'cellGrid',
+      'quotedTextOnly',
       'punctuationVisualBounds',
       'characterAdvances',
     };
@@ -648,6 +712,9 @@ class GalLookupTextLayoutV1 {
         ? GalLookupCellGridV1.tryFromJson(map['cellGrid'])
         : null;
     if (map.containsKey('cellGrid') && cellGrid == null) return null;
+    if (map.containsKey('quotedTextOnly') && map['quotedTextOnly'] is! bool) {
+      return null;
+    }
     final List<GalLookupPunctuationVisualBoundV1> punctuationVisualBounds =
         <GalLookupPunctuationVisualBoundV1>[];
     if (map.containsKey('punctuationVisualBounds')) {
@@ -706,6 +773,7 @@ class GalLookupTextLayoutV1 {
       paddingPerClientHeight:
           _finiteDouble(map['paddingPerClientHeight']) ?? double.nan,
       cellGrid: cellGrid,
+      quotedTextOnly: map['quotedTextOnly'] == true,
       punctuationVisualBounds: punctuationVisualBounds,
       characterAdvances: characterAdvances,
     );
@@ -723,6 +791,7 @@ class GalLookupTextLayoutV1 {
       other.verticalAlign == verticalAlign &&
       other.paddingPerClientHeight == paddingPerClientHeight &&
       other.cellGrid == cellGrid &&
+      other.quotedTextOnly == quotedTextOnly &&
       _samePunctuationVisualBounds(
         other.punctuationVisualBounds,
         punctuationVisualBounds,
@@ -739,6 +808,7 @@ class GalLookupTextLayoutV1 {
     verticalAlign,
     paddingPerClientHeight,
     cellGrid,
+    quotedTextOnly,
     Object.hashAll(punctuationVisualBounds),
     Object.hashAll(characterAdvances),
   );

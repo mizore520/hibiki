@@ -80,6 +80,7 @@ GalLookupSurfaceVariantV1? projectGalCalibrationToSource({
             trimWrapWhitespace: grid.trimWrapWhitespace,
             lineWidthInCells: grid.lineWidthInCells,
           ),
+    quotedTextOnly: layout.quotedTextOnly,
     punctuationVisualBounds: layout.punctuationVisualBounds,
     characterAdvances: layout.characterAdvances,
   );

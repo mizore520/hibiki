@@ -447,6 +447,38 @@ List<_SourceUnit> _sourceUnits(String text) {
   return units;
 }
 
+bool _rowsFollowHookLineBreaks(List<_SourceUnit> source, List<dynamic> ranges) {
+  if (ranges.length < 2) return false;
+  int previousEnd = 0;
+  for (int row = 0; row < ranges.length; row++) {
+    final Map<dynamic, dynamic> range = ranges[row] as Map;
+    final int start = (range['sourceStart'] as num).toInt();
+    final int end = (range['sourceEnd'] as num).toInt();
+    if (start < previousEnd ||
+        end <= start ||
+        end > source.length ||
+        source.sublist(start, end).any((unit) => unit.newline)) {
+      return false;
+    }
+    if (row == 0 && source.take(start).any((unit) => unit.newline)) {
+      return false;
+    }
+    if (row > 0) {
+      final List<_SourceUnit> gap = source.sublist(previousEnd, start);
+      final String breaks = gap
+          .where((unit) => unit.newline)
+          .map((unit) => unit.value)
+          .join();
+      if ((breaks != '\n' && breaks != '\r' && breaks != '\r\n') ||
+          gap.any((unit) => !unit.newline && !unit.whitespace)) {
+        return false;
+      }
+    }
+    previousEnd = end;
+  }
+  return true;
+}
+
 List<_OcrUnit> _ocrUnits(GalCalibrationOcrLine line) {
   if (line.tokens.isNotEmpty) {
     final List<_OcrUnit> measured = <_OcrUnit>[];
@@ -1318,6 +1350,7 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
     verticalAlign: draft.layout.verticalAlign,
     paddingPerClientHeight: draft.layout.paddingPerClientHeight,
     cellGrid: grid,
+    quotedTextOnly: draft.layout.quotedTextOnly,
   );
   if (!rect.isValid || !layout.isValid) {
     return const GalCalibrationImageFit(reason: 'selection_out_of_bounds');
@@ -1349,6 +1382,12 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
     final Map<String, dynamic>? expected = geometries[i];
     if (expected != null) {
       final double samplePitch = (expected['pitch'] as num).toDouble();
+      // Hook breaks fix the rows; leave small OCR/grid offsets for manual edit.
+      final bool approximateHardBreakGrid = _rowsFollowHookLineBreaks(
+        sources[i],
+        expected['renderRanges'] as List<dynamic>,
+      );
+      final Map<int, double> nativeRowTops = <int, double>{};
       for (final dynamic item in expected['boxes'] as List) {
         final Map<dynamic, dynamic> cell = item as Map;
         final int index = (cell['sourceIndex'] as num).toInt();
@@ -1362,18 +1401,50 @@ Future<GalCalibrationImageFit> fitGalCalibrationOcrGrid(
             sampleIndex: i,
           );
         }
+        if (approximateHardBreakGrid) {
+          final int row = (cell['line'] as num).toInt();
+          final double? rowTop = nativeRowTops[row];
+          if (rowTop != null && (actual.rect.top - rowTop).abs() > 2) {
+            return GalCalibrationImageFit(
+              reason: 'ocr_geometry_conflict',
+              detail: 'runtime_row_breaks_differ_from_hook',
+              sampleIndex: i,
+            );
+          }
+          nativeRowTops[row] = actual.rect.top;
+        }
         final double x = (cell['left'] as num).toDouble();
         final double y = (cell['top'] as num).toDouble();
         // Native bounds round to physical pixels; this is a translation check,
         // not a second OCR fitter allowed to reinterpret the selected grid.
         final double tolerance = math.max(2, samplePitch * .08);
-        if ((actual.rect.left - x).abs() > tolerance ||
-            (actual.rect.top - y).abs() > tolerance ||
-            (actual.rect.width - (cell['width'] as num)).abs() > tolerance ||
-            (actual.rect.height - (cell['height'] as num)).abs() > tolerance) {
+        if (!approximateHardBreakGrid &&
+            ((actual.rect.left - x).abs() > tolerance ||
+                (actual.rect.top - y).abs() > tolerance ||
+                (actual.rect.width - (cell['width'] as num)).abs() >
+                    tolerance ||
+                (actual.rect.height - (cell['height'] as num)).abs() >
+                    tolerance)) {
           return GalCalibrationImageFit(
             reason: 'ocr_geometry_conflict',
             detail: 'runtime_grid_differs_from_fitted_cells',
+            sampleIndex: i,
+          );
+        }
+      }
+      if (approximateHardBreakGrid) {
+        final List<int> rows = nativeRowTops.keys.toList()..sort();
+        if (rows.length != (expected['renderRanges'] as List).length ||
+            rows.first != 0 ||
+            rows.last != rows.length - 1 ||
+            Iterable<int>.generate(rows.length - 1).any(
+              (index) =>
+                  nativeRowTops[rows[index + 1]]! <=
+                  nativeRowTops[rows[index]]!,
+            )) {
+          return GalCalibrationImageFit(
+            reason: 'ocr_geometry_conflict',
+            detail: 'runtime_row_breaks_differ_from_hook',
             sampleIndex: i,
           );
         }

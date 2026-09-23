@@ -50,9 +50,10 @@ final Uint8List _png = Uint8List.fromList(
 
 GalLookupCalibrationCapture _capture({
   GalLookupReferenceClientV1 client = _client,
+  String sourceText = _text,
   String occurrenceId = 'synthetic-entry-1',
 }) => GalLookupCalibrationCapture(
-  sourceText: _text,
+  sourceText: sourceText,
   pngBytes: _png,
   referenceClient: client,
   exePath: r'C:\synthetic\game.exe',
@@ -69,10 +70,11 @@ GalLookupCalibrationCapture _capture({
 GalLookupCalibrationDraft _draft({
   int count = 1,
   GalLookupNormalizedRectV1 rect = _rect,
+  GalLookupTextLayoutV1 layout = _layout,
   Map<int, Offset> anchors = const <int, Offset>{},
 }) => GalLookupCalibrationDraft(
   rect: rect,
-  layout: _layout,
+  layout: layout,
   samples: <GalCalibrationSample>[
     for (int i = 0; i < count; i++)
       GalCalibrationSample(capture: _capture(), anchors: anchors),
@@ -141,6 +143,8 @@ Future<_Result> _open(
   Size size = const Size(1280, 900),
   bool manual = true,
   GalLookupCalibrationSlotV1? slot,
+  Future<void> Function()? onOpenNarrationCalibration,
+  Future<void> Function()? onOpenDialogueCalibration,
 }) async {
   tester.view.devicePixelRatio = 1;
   tester.view.physicalSize = size;
@@ -163,6 +167,8 @@ Future<_Result> _open(
                     initialLayout: _layout,
                     capture: capture,
                     slot: slot,
+                    onOpenNarrationCalibration: onOpenNarrationCalibration,
+                    onOpenDialogueCalibration: onOpenDialogueCalibration,
                     store: store,
                     previewBuilder: previewBuilder,
                     imageFitter: imageFitter,
@@ -179,7 +185,7 @@ Future<_Result> _open(
   );
   await tester.tap(find.byType(ElevatedButton));
   await tester.pumpAndSettle();
-  // Existing anchor/font cases explicitly opt in to the advanced workflow.
+  // Some tests need to inspect the advanced settings panel.
   if (manual) {
     final Finder advanced = find.byKey(
       const ValueKey<String>('calibration-advanced'),
@@ -187,39 +193,18 @@ Future<_Result> _open(
     await tester.ensureVisible(advanced);
     await tester.tap(advanced);
     await tester.pumpAndSettle();
-    final Finder button = find.byKey(
-      const ValueKey<String>('calibration-manual-layout'),
-    );
-    await tester.ensureVisible(button);
-    await tester.tap(button);
-    await tester.pumpAndSettle();
   }
   return result;
 }
 
 Future<GalLookupCalibrationCapture> _captureAsync() async => _capture();
 
-Finder _cluster(String label) => find.byWidgetPredicate(
-  (Widget widget) =>
-      widget is ChoiceChip &&
-      widget.label is Text &&
-      (widget.label as Text).data == label,
-);
-
 Finder _sampleChip(int index) => find.byWidgetPredicate(
   (Widget widget) =>
       widget is ChoiceChip &&
       widget.label is Text &&
-      ((widget.label as Text).data?.startsWith('${index + 1} ·') ?? false),
+      (widget.label as Text).data == '${index + 1}',
 );
-
-Future<void> _enterFont(WidgetTester tester, String value) async {
-  final Finder field = find.byKey(const ValueKey<String>('calibration-font'));
-  await tester.ensureVisible(field);
-  await tester.enterText(field, value);
-  // Deliberately do not submit the text field: normal typing must take effect.
-  await tester.pumpAndSettle();
-}
 
 void main() {
   setUp(() => LocaleSettings.setLocale(AppLocale.en));
@@ -250,10 +235,14 @@ void main() {
         canvas(tester).rect.top,
         closeTo(_rect.top - 20 / imageSize.height, 0.002),
       );
-      expect(canvas(tester).anchors[0], const Offset(0.3, 0.7));
-      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+      expect(canvas(tester).anchors, isEmpty);
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.pumpAndSettle();
       expect(store.saved.last.rect, canvas(tester).rect);
+      expect(
+        store.saved.last.samples.single.anchors[0],
+        const Offset(0.3, 0.7),
+      );
     },
   );
 
@@ -273,7 +262,7 @@ void main() {
         closeTo(_rect.height - 35 / imageSize.height, 0.002),
       );
       expect(canvas(tester).rect.top, _rect.top);
-      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.pumpAndSettle();
       expect(
         store.saved.last.layout.fontSizePerClientHeight,
@@ -315,110 +304,496 @@ void main() {
     },
   );
 
-  testWidgets('existing points can be dragged and nudged by one source pixel', (
+  testWidgets('zoomed image pans when dragging outside the yellow region', (
     WidgetTester tester,
   ) async {
-    final _MemoryStore store = _MemoryStore(
-      draft: _draft(anchors: const <int, Offset>{0: Offset(0.3, 0.7)}),
+    await _open(tester, store: _MemoryStore(draft: _draft()));
+    await tester.tap(find.byTooltip(t.game_lookup_samples_zoom_in));
+    await tester.pumpAndSettle();
+    final Finder image = find.byKey(
+      const ValueKey<String>('calibration-image'),
     );
-    await _open(tester, store: store);
-    await tester.tap(_cluster('A'));
-    await tester.pumpAndSettle();
-    final Size imageSize = tester.getSize(find.byType(Image));
-    await tester.drag(
-      find.byKey(const ValueKey<String>('calibration-anchor-0')),
-      const Offset(25, -20),
+    final Rect before = tester.getRect(image);
+    final TestGesture mouse = await tester.startGesture(
+      before.center,
+      kind: PointerDeviceKind.mouse,
     );
+    await mouse.moveBy(const Offset(40, 25));
+    await mouse.up();
     await tester.pumpAndSettle();
-    final Offset moved = canvas(tester).anchors[0]!;
-    expect(moved.dx, closeTo(0.3 + 25 / imageSize.width, 0.002));
-    expect(moved.dy, closeTo(0.7 - 20 / imageSize.height, 0.002));
-    final Finder nudge = find.byKey(
-      const ValueKey<String>('anchor-nudge-right'),
+    final Rect after = tester.getRect(image);
+    expect(after.left - before.left, closeTo(40, 0.5));
+    expect(after.top - before.top, closeTo(25, 0.5));
+  });
+
+  testWidgets('mouse-wheel zoom keeps the pointer position fixed', (
+    WidgetTester tester,
+  ) async {
+    await _open(tester, store: _MemoryStore(draft: _draft()));
+    final Finder image = find.byKey(
+      const ValueKey<String>('calibration-image'),
     );
-    await tester.ensureVisible(nudge);
-    await tester.tap(nudge);
+    final Rect before = tester.getRect(image);
+    final Offset focus = before.topLeft + const Offset(100, 80);
+    final TestPointer mouse = TestPointer(1, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(mouse.hover(focus));
+    await tester.sendEventToBinding(mouse.scroll(const Offset(0, -120)));
     await tester.pumpAndSettle();
-    expect(canvas(tester).anchors[0]!.dx, closeTo(moved.dx + 1 / 800, 1e-9));
-    await tester.tap(find.byTooltip(t.game_lookup_samples_save));
-    await tester.pumpAndSettle();
+
+    final Rect after = tester.getRect(image);
     expect(
-      store.saved.last.samples.single.anchors[0],
-      canvas(tester).anchors[0],
+      after.left,
+      closeTo(focus.dx - 1.15 * (focus.dx - before.left), 0.5),
     );
+    expect(after.top, closeTo(focus.dy - 1.15 * (focus.dy - before.top), 0.5));
   });
 
   testWidgets(
-    'pixel height input updates visible bounds and saves pending input',
+    'advanced settings hide numeric region, point mode, and validation controls',
     (WidgetTester tester) async {
       final _MemoryStore store = _MemoryStore(draft: _draft());
       await _open(tester, store: store);
-      final Finder field = find.descendant(
-        of: find.byKey(const ValueKey<String>('calibration-number-height')),
-        matching: find.byType(TextField),
+      expect(
+        find.byKey(const ValueKey<String>('calibration-number-height')),
+        findsNothing,
       );
-      await tester.ensureVisible(field);
-      await tester.enterText(field, '100');
-      await tester.testTextInput.receiveAction(TextInputAction.done);
-      await tester.pumpAndSettle();
-      expect(canvas(tester).rect.height, closeTo(100 / 600, 1e-9));
-      await tester.enterText(field, '120');
-      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
-      await tester.pumpAndSettle();
-      expect(store.saved.last.rect.height, closeTo(120 / 600, 1e-9));
+      expect(
+        find.byKey(const ValueKey<String>('calibration-mode-region')),
+        findsNothing,
+      );
+      expect(find.byType(FilterChip), findsNothing);
+      expect(
+        find.byKey(const ValueKey<String>('calibration-font')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const ValueKey<String>('calibration-manual-layout')),
+        findsOneWidget,
+      );
+      expect(find.text(t.game_lookup_samples_boxes), findsNothing);
+      expect(find.text(t.game_lookup_samples_saved_hint), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );
 
-  testWidgets('zoomed mouse adjustments preserve the point grab offset', (
+  testWidgets('special character widths are optional and persisted', (
+    WidgetTester tester,
+  ) async {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.04,
+      lineAdvancePerClientHeight: 0.06,
+      cellHeightPerClientHeight: 0.05,
+      columns: 20,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    final _MemoryStore store = _MemoryStore(
+      draft: _draft(layout: const GalLookupTextLayoutV1(cellGrid: grid)),
+    );
+    await _open(tester, store: store);
+    final Finder manualLayout = find.byKey(
+      const ValueKey<String>('calibration-manual-layout'),
+    );
+    await tester.ensureVisible(manualLayout);
+    await tester.tap(manualLayout);
+    await tester.pumpAndSettle();
+    final Finder toggle = find.byKey(
+      const ValueKey<String>('calibration-special-character-width'),
+    );
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('calibration-special-character-input')),
+      '、',
+    );
+    final Finder add = find.byKey(
+      const ValueKey<String>('calibration-special-character-add'),
+    );
+    await tester.ensureVisible(add);
+    await tester.tap(add);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(store.saved.last.layout.characterAdvances, hasLength(1));
+    expect(store.saved.last.layout.characterAdvances.single.character, '、');
+    expect(
+      store.saved.last.layout.characterAdvances.single.advanceRatio,
+      closeTo(0.75, 0.001),
+    );
+    await tester.ensureVisible(toggle);
+    await tester.tap(toggle);
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(store.saved.last.layout.characterAdvances, isEmpty);
+  });
+
+  testWidgets('dialogue advanced settings expose manual layout entry', (
     WidgetTester tester,
   ) async {
     await _open(
       tester,
+      store: _MemoryStore(draft: _draft()),
+      slot: GalLookupCalibrationSlotV1.dialogue,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('calibration-manual-layout')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('quote-only filter can be set before any grid is fitted', (
+    WidgetTester tester,
+  ) async {
+    final _MemoryStore store = _MemoryStore(draft: _draft());
+    await _open(
+      tester,
+      store: store,
+      slot: GalLookupCalibrationSlotV1.dialogue,
+    );
+    final Finder toggle = find.byKey(
+      const ValueKey<String>('calibration-quoted-text-only'),
+    );
+    await tester.ensureVisible(toggle);
+    expect(tester.widget<SwitchListTile>(toggle).value, isFalse);
+    await tester.tap(toggle);
+    await tester.pump(const Duration(milliseconds: 450));
+    await tester.pumpAndSettle();
+    expect(store.saved.last.layout.quotedTextOnly, isTrue);
+  });
+
+  test(
+    'quote-only fitting restores original Hook sample after OCR assist',
+    () async {
+      const String source = '軽音部員「A\r\nB\nC」尾注';
+      final GalLookupCalibrationDraft original = GalLookupCalibrationDraft(
+        rect: _rect,
+        layout: const GalLookupTextLayoutV1(quotedTextOnly: true),
+        samples: <GalCalibrationSample>[
+          GalCalibrationSample(capture: _capture(sourceText: source)),
+        ],
+        slot: GalLookupCalibrationSlotV1.dialogue,
+      );
+      galCalibrationOcrAssist =
+          (
+            GalLookupCalibrationDraft fitting, {
+            required GalCalibrationPreviewBuilder build,
+          }) async {
+            expect(fitting.samples.single.capture.sourceText, '「A\r\nB\nC」');
+            expect(fitting.layout.quotedTextOnly, isTrue);
+            return GalCalibrationImageFit(draft: fitting);
+          };
+      addTearDown(() {
+        galCalibrationOcrAssist = null;
+      });
+      int previewCalls = 0;
+      final GalCalibrationImageFit result = await fitGalCalibrationImages(
+        original,
+        build:
+            ({
+              required String text,
+              required GalLookupReferenceClientV1 client,
+              required GalLookupNormalizedRectV1 rect,
+              required GalLookupTextLayoutV1 layout,
+            }) async {
+              previewCalls++;
+              expect(text, source);
+              expect(layout.quotedTextOnly, isTrue);
+              return _preview(
+                text: text,
+                client: client,
+                rect: rect,
+                layout: layout,
+              );
+            },
+      );
+      expect(result.draft?.samples.single.capture.sourceText, source);
+      expect(result.draft?.slot, GalLookupCalibrationSlotV1.dialogue);
+      expect(previewCalls, 1);
+    },
+  );
+
+  testWidgets('manual layout controls stay hidden until activated', (
+    WidgetTester tester,
+  ) async {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.04,
+      lineAdvancePerClientHeight: 0.06,
+      cellHeightPerClientHeight: 0.05,
+      columns: 20,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    await _open(
+      tester,
       store: _MemoryStore(
-        draft: _draft(anchors: const <int, Offset>{0: Offset(0.3, 0.7)}),
+        draft: _draft(layout: const GalLookupTextLayoutV1(cellGrid: grid)),
       ),
     );
-    await tester.tap(_cluster('A'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip(t.game_lookup_samples_zoom_in));
-    await tester.pumpAndSettle();
-    final Offset zoomedPoint = tester.getCenter(
-      find.byKey(const ValueKey<String>('calibration-anchor-0')),
+    expect(
+      find.byKey(const ValueKey<String>('calibration-grid-advance-slider')),
+      findsNothing,
     );
-    await tester.tap(
-      find.byKey(const ValueKey<String>('calibration-mode-pan')),
+    expect(
+      find.byKey(
+        const ValueKey<String>('calibration-continuation-indent-slider'),
+      ),
+      findsNothing,
     );
-    await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(const ValueKey<String>('calibration-mode-points')),
+    expect(
+      find.byKey(const ValueKey<String>('calibration-special-character-width')),
+      findsNothing,
     );
+
+    final Finder manualLayout = find.byKey(
+      const ValueKey<String>('calibration-manual-layout'),
+    );
+    await tester.ensureVisible(manualLayout);
+    await tester.tap(manualLayout);
     await tester.pumpAndSettle();
     expect(
-      tester.getCenter(
-        find.byKey(const ValueKey<String>('calibration-anchor-0')),
+      find.byKey(const ValueKey<String>('calibration-grid-advance-slider')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(
+        const ValueKey<String>('calibration-continuation-indent-slider'),
       ),
-      zoomedPoint,
+      findsOneWidget,
     );
-    final Size imageSize = tester.getSize(find.byType(Image));
-    final Offset grab =
-        tester.getCenter(
-          find.byKey(const ValueKey<String>('calibration-anchor-0')),
-        ) +
-        const Offset(6, -4);
-    final TestGesture mouse = await tester.startGesture(
-      grab,
-      kind: PointerDeviceKind.mouse,
+    expect(
+      find.byKey(const ValueKey<String>('calibration-special-character-width')),
+      findsOneWidget,
     );
-    await mouse.moveBy(const Offset(1, 0));
+  });
+
+  testWidgets('continuation start control applies to all text', (
+    WidgetTester tester,
+  ) async {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.04,
+      lineAdvancePerClientHeight: 0.06,
+      cellHeightPerClientHeight: 0.05,
+      columns: 20,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    final _MemoryStore store = _MemoryStore(
+      draft: _draft(layout: const GalLookupTextLayoutV1(cellGrid: grid)),
+    );
+    await _open(tester, store: store);
+    final Finder manualLayout = find.byKey(
+      const ValueKey<String>('calibration-manual-layout'),
+    );
+    await tester.ensureVisible(manualLayout);
+    await tester.tap(manualLayout);
+    await tester.pumpAndSettle();
+
+    final Slider continuation = tester.widget<Slider>(
+      find.byKey(
+        const ValueKey<String>('calibration-continuation-indent-slider'),
+      ),
+    );
+    expect(continuation.min, -1);
+    expect(continuation.max, 8);
+    expect(
+      find.byKey(
+        const ValueKey<String>('calibration-quoted-continuation-indent-slider'),
+      ),
+      findsNothing,
+    );
+    continuation.onChanged!(1.75);
     await tester.pump();
-    expect(
-      canvas(tester).anchors[0]!.dx,
-      closeTo(0.3 + 1 / 1.5 / imageSize.width, 1e-8),
-    );
-    expect(canvas(tester).anchors[0]!.dy, closeTo(0.7, 1e-8));
-    await mouse.up();
+
+    expect(canvas(tester).grid!.continuationIndent, closeTo(1.75, 1e-8));
+    expect(canvas(tester).grid!.quotedContinuationIndent, closeTo(1.75, 1e-8));
+    await tester.tap(find.text(t.game_lookup_samples_apply));
     await tester.pumpAndSettle();
+    expect(store.saved.last.layout.cellGrid!.continuationIndent, 1.75);
+    expect(store.saved.last.layout.cellGrid!.quotedContinuationIndent, 1.75);
+  });
+
+  testWidgets('normal cell width control persists and expands the frame', (
+    WidgetTester tester,
+  ) async {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.04,
+      lineAdvancePerClientHeight: 0.06,
+      cellHeightPerClientHeight: 0.05,
+      columns: 20,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    const GalLookupNormalizedRectV1 rect = GalLookupNormalizedRectV1(
+      left: 0.1,
+      top: 0.6,
+      width: 0.5,
+      height: 0.25,
+    );
+    final _MemoryStore store = _MemoryStore(
+      draft: _draft(
+        rect: rect,
+        layout: const GalLookupTextLayoutV1(cellGrid: grid),
+      ),
+    );
+    await _open(tester, store: store);
+    final Finder manualLayout = find.byKey(
+      const ValueKey<String>('calibration-manual-layout'),
+    );
+    await tester.ensureVisible(manualLayout);
+    await tester.tap(manualLayout);
+    await tester.pumpAndSettle();
+
+    final Slider width = tester.widget<Slider>(
+      find.byKey(const ValueKey<String>('calibration-grid-advance-slider')),
+    );
+    expect(width.value, closeTo(0.8, 1e-8));
+    expect(width.divisions, 3700);
+    width.onChanged!(1.1);
+    await tester.pump();
+
+    expect(canvas(tester).grid!.advancePerClientHeight, closeTo(0.055, 1e-8));
+    expect(canvas(tester).layoutRect!.width, closeTo(0.725, 1e-8));
+    await tester.tap(find.text(t.game_lookup_samples_apply));
+    await tester.pumpAndSettle();
+    expect(
+      store.saved.last.layout.cellGrid!.advancePerClientHeight,
+      closeTo(0.055, 1e-8),
+    );
+    expect(store.saved.last.rect.width, closeTo(0.725, 1e-8));
+  });
+
+  testWidgets('grid editing uses visual handles for uniform cell correction', (
+    WidgetTester tester,
+  ) async {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.04,
+      lineAdvancePerClientHeight: 0.06,
+      cellHeightPerClientHeight: 0.05,
+      columns: 20,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    final _MemoryStore store = _MemoryStore(
+      draft: _draft(layout: const GalLookupTextLayoutV1(cellGrid: grid)),
+    );
+    await _open(tester, store: store);
+    final Finder manualLayout = find.byKey(
+      const ValueKey<String>('calibration-manual-layout'),
+    );
+    expect(manualLayout, findsOneWidget);
+    await tester.ensureVisible(manualLayout);
+    await tester.tap(manualLayout);
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('calibration-grid-move')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('calibration-cell-0')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('calibration-region-move')),
+      findsNothing,
+    );
+    expect(
+      find.byKey(const ValueKey<String>('calibration-region-bottom')),
+      findsNothing,
+    );
+    for (final String corner in <String>[
+      'top-left',
+      'top-right',
+      'bottom-left',
+      'bottom-right',
+    ]) {
+      expect(
+        find.byKey(ValueKey<String>('calibration-grid-$corner')),
+        findsOneWidget,
+      );
+    }
+    expect(
+      find.byKey(const ValueKey<String>('calibration-grid-columns')),
+      findsNothing,
+    );
+    final GalLookupNormalizedRectV1 originalLayoutRect = canvas(
+      tester,
+    ).layoutRect!;
+    await tester.drag(
+      find.byKey(const ValueKey<String>('calibration-grid-top-right')),
+      const Offset(16, -12),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      canvas(tester).layoutRect!.width,
+      greaterThan(originalLayoutRect.width),
+    );
+    expect(
+      canvas(tester).layoutRect!.height,
+      greaterThan(originalLayoutRect.height),
+    );
+    final double originalAdvance = canvas(tester).grid!.advancePerClientHeight;
+    await tester.drag(
+      find.byKey(const ValueKey<String>('calibration-cell-0')),
+      const Offset(20, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      canvas(tester).grid!.advancePerClientHeight,
+      greaterThan(originalAdvance),
+    );
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    expect(store.saved.last.layout.cellGrid, isNotNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('special-character cell resizing stays independent', (
+    WidgetTester tester,
+  ) async {
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.04,
+      lineAdvancePerClientHeight: 0.06,
+      cellHeightPerClientHeight: 0.05,
+      columns: 20,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    const GalLookupCharacterAdvanceV1 emojiAdvance =
+        GalLookupCharacterAdvanceV1(codePoint: 0x1f600, advanceRatio: 0.75);
+    final _MemoryStore store = _MemoryStore(
+      draft: _draft(
+        layout: const GalLookupTextLayoutV1(
+          cellGrid: grid,
+          characterAdvances: <GalLookupCharacterAdvanceV1>[emojiAdvance],
+        ),
+      ),
+    );
+    await _open(tester, store: store);
+    await tester.ensureVisible(
+      find.byKey(const ValueKey<String>('calibration-manual-layout')),
+    );
+    await tester.tap(
+      find.byKey(const ValueKey<String>('calibration-manual-layout')),
+    );
+    await tester.pumpAndSettle();
+    final double originalGridAdvance = canvas(
+      tester,
+    ).grid!.advancePerClientHeight;
+    final double originalLayoutWidth = canvas(tester).layoutRect!.width;
+    await tester.drag(
+      find.byKey(const ValueKey<String>('calibration-cell-1')),
+      const Offset(12, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      canvas(tester).grid!.advancePerClientHeight,
+      closeTo(originalGridAdvance, 1e-8),
+    );
+    expect(canvas(tester).layoutRect!.width, greaterThan(originalLayoutWidth));
+    expect(
+      canvas(tester).characterAdvances.single.advanceRatio,
+      greaterThan(0.75),
+    );
   });
 
   testWidgets('a narrow saved region at the edge can still be resized', (
@@ -560,134 +935,84 @@ void main() {
     expect(find.byKey(ValueKey<Object>(newCapture)), findsOneWidget);
   });
 
-  testWidgets(
-    'native clusters are single choices and validation keeps their anchors',
-    (WidgetTester tester) async {
-      final _MemoryStore store = _MemoryStore(draft: _draft());
-      await _open(tester, store: store);
-      expect(_cluster('A'), findsOneWidget);
-      expect(_cluster('😀'), findsOneWidget);
-      expect(_cluster('e\u0301'), findsOneWidget);
-      expect(_cluster('B'), findsOneWidget);
-      expect(_cluster('e'), findsNothing);
-      expect(_cluster('\u0301'), findsNothing);
-
-      await tester.tap(_cluster('e\u0301'));
-      await tester.pump();
-      final Finder screenshot = find.byType(Image);
-      await tester.tapAt(tester.getCenter(screenshot));
-      await tester.pump();
-      await tester.ensureVisible(find.byType(FilterChip));
-      await tester.tap(find.byType(FilterChip));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
-      await tester.pumpAndSettle();
-
-      final GalCalibrationSample sample = store.saved.last.samples.single;
-      expect(sample.validation, isTrue);
-      expect(sample.anchors.keys, <int>[3]);
-      expect(sample.anchors[3]!.dx, closeTo(0.5, 0.01));
-      expect(sample.anchors[3]!.dy, closeTo(0.5, 0.01));
-      expect(tester.takeException(), isNull);
-    },
-  );
-
-  testWidgets('typing a font updates preview and save without pressing Enter', (
+  testWidgets('dialogue advanced settings open narration calibration', (
     WidgetTester tester,
   ) async {
-    final _MemoryStore store = _MemoryStore(draft: _draft());
-    final List<String> previewFonts = <String>[];
+    bool opened = false;
     await _open(
       tester,
-      store: store,
-      previewBuilder:
-          ({
-            required String text,
-            required GalLookupReferenceClientV1 client,
-            required GalLookupNormalizedRectV1 rect,
-            required GalLookupTextLayoutV1 layout,
-          }) async {
-            previewFonts.add(layout.fontFamily);
-            return _preview(
-              text: text,
-              client: client,
-              rect: rect,
-              layout: layout,
-            );
-          },
+      store: _MemoryStore(draft: _draft()),
+      slot: GalLookupCalibrationSlotV1.dialogue,
+      onOpenNarrationCalibration: () async => opened = true,
     );
-    await _enterFont(tester, 'Different fixture font');
-    expect(previewFonts.last, 'Different fixture font');
-    await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+    final Finder narration = find.byKey(
+      const ValueKey<String>('calibration-narration-settings'),
+    );
+    expect(narration, findsOneWidget);
+    expect(find.text(t.game_lookup_samples_narration_hint), findsOneWidget);
+    await tester.ensureVisible(narration);
+    await tester.tap(narration);
     await tester.pumpAndSettle();
-    expect(store.saved.single.layout.fontFamily, 'Different fixture font');
-    expect(find.byType(GalLookupSamplesDialog), findsOneWidget);
+    expect(opened, isTrue);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('closing saves a dirty draft without applying it', (
+  testWidgets('narration explains its use and can return to dialogue', (
     WidgetTester tester,
   ) async {
-    final _MemoryStore store = _MemoryStore(draft: _draft());
-    final _Result result = await _open(tester, store: store);
-    await _enterFont(tester, 'Draft-only font');
-    await tester.tap(find.byType(CloseButton));
+    bool opened = false;
+    await _open(
+      tester,
+      store: _MemoryStore(draft: _draft()),
+      slot: GalLookupCalibrationSlotV1.narration,
+      onOpenDialogueCalibration: () async => opened = true,
+    );
+    expect(find.text(t.game_lookup_samples_narration_hint), findsOneWidget);
+    final Finder dialogue = find.byKey(
+      const ValueKey<String>('calibration-dialogue-settings'),
+    );
+    expect(dialogue, findsOneWidget);
+    await tester.ensureVisible(dialogue);
+    await tester.tap(dialogue);
     await tester.pumpAndSettle();
-    expect(store.saved.single.layout.fontFamily, 'Draft-only font');
-    expect(result.closed, isTrue);
-    expect(result.applied, isNull);
-    expect(find.byType(GalLookupSamplesDialog), findsNothing);
-    expect(tester.takeException(), isNull);
+    expect(opened, isTrue);
   });
 
-  testWidgets('apply saves and returns the edited draft to live calibration', (
+  testWidgets('visual grid edits can be applied without font controls', (
     WidgetTester tester,
   ) async {
-    final _MemoryStore store = _MemoryStore(draft: _draft());
+    const GalLookupCellGridV1 grid = GalLookupCellGridV1(
+      advancePerClientHeight: 0.04,
+      lineAdvancePerClientHeight: 0.06,
+      cellHeightPerClientHeight: 0.05,
+      columns: 20,
+      continuationIndent: 0,
+      quotedContinuationIndent: 1,
+    );
+    final _MemoryStore store = _MemoryStore(
+      draft: _draft(layout: const GalLookupTextLayoutV1(cellGrid: grid)),
+    );
     final _Result result = await _open(tester, store: store);
-    await _enterFont(tester, 'Applied font');
+    final Finder manualLayout = find.byKey(
+      const ValueKey<String>('calibration-manual-layout'),
+    );
+    await tester.ensureVisible(manualLayout);
+    await tester.tap(manualLayout);
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const ValueKey<String>('calibration-grid-top-left')),
+      const Offset(8, 0),
+    );
     await tester.tap(find.text(t.game_lookup_samples_apply));
     await tester.pumpAndSettle();
     expect(result.closed, isTrue);
-    expect(result.applied!.layout.fontFamily, 'Applied font');
-    expect(result.applied!.samples.single.capture.sourceText, _text);
-    expect(store.saved.single.layout.fontFamily, 'Applied font');
+    expect(result.applied!.layout.cellGrid, isNotNull);
+    expect(
+      find.byKey(const ValueKey<String>('calibration-font')),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
   });
-
-  testWidgets(
-    'apply validates pending numeric input before returning a draft',
-    (WidgetTester tester) async {
-      final _MemoryStore store = _MemoryStore(draft: _draft());
-      final _Result result = await _open(
-        tester,
-        store: store,
-        previewBuilder:
-            ({
-              required String text,
-              required GalLookupReferenceClientV1 client,
-              required GalLookupNormalizedRectV1 rect,
-              required GalLookupTextLayoutV1 layout,
-            }) async => rect.height < 0.2
-            ? const GalCalibrationPreview(boxes: [], reason: 'overflow')
-            : _preview(text: text, client: client, rect: rect, layout: layout),
-      );
-      final Finder field = find.descendant(
-        of: find.byKey(const ValueKey<String>('calibration-number-height')),
-        matching: find.byType(TextField),
-      );
-      await tester.ensureVisible(field);
-      await tester.enterText(field, '100');
-      // Apply while the last accepted preview still corresponds to 150 px.
-      await tester.tap(find.text(t.game_lookup_samples_apply));
-      await tester.pumpAndSettle();
-      expect(result.closed, isFalse);
-      expect(result.applied, isNull);
-      expect(canvas(tester).rect.height, closeTo(100 / 600, 1e-9));
-      expect(find.text(t.game_lookup_samples_unavailable), findsWidgets);
-      expect(tester.takeException(), isNull);
-    },
-  );
 
   testWidgets(
     'image alignment applies grid and hides irrelevant font controls',
@@ -1020,10 +1345,10 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text(t.game_lookup_samples_auto_multiline), findsOneWidget);
-    await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+    await tester.pump(const Duration(milliseconds: 400));
     await tester.pumpAndSettle();
-    expect(store.saved.single.layout, _layout);
-    expect(store.saved.single.rect, _rect);
+    expect(store.draft!.layout, _layout);
+    expect(store.draft!.rect, _rect);
   });
 
   testWidgets(
@@ -1104,11 +1429,11 @@ void main() {
         ),
         findsOneWidget,
       );
-      await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+      await tester.pump(const Duration(milliseconds: 400));
       await tester.pumpAndSettle();
-      expect(store.saved.last.layout, original.layout);
-      expect(store.saved.last.rect, original.rect);
-      expect(store.saved.last.samples.map((s) => s.validation), [
+      expect(store.draft!.layout, original.layout);
+      expect(store.draft!.rect, original.rect);
+      expect(store.draft!.samples.map((s) => s.validation), [
         true,
         false,
         false,
@@ -1139,24 +1464,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(captures, 0);
       expect(find.text(t.game_lookup_samples_limit), findsOneWidget);
-      final Finder advanced = find.byKey(
-        const ValueKey<String>('calibration-advanced'),
+      await tester.tap(
+        find.byKey(const ValueKey<String>('calibration-remove-sample')),
       );
-      await tester.ensureVisible(advanced);
-      await tester.tap(advanced);
-      await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text(t.game_lookup_samples_remove));
-      await tester.tap(find.text(t.game_lookup_samples_remove));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip(t.game_lookup_samples_capture));
       await tester.pumpAndSettle();
       expect(captures, 1);
       expect(find.text(t.game_lookup_samples_capture_changed), findsOneWidget);
-      expect(store.saved, isEmpty);
+      expect(store.saved.last.samples, hasLength(7));
       await tester.tap(find.byTooltip(t.game_lookup_samples_capture));
       await tester.pumpAndSettle();
       expect(captures, 2);
-      expect(store.saved.single.samples, hasLength(8));
+      expect(store.saved.last.samples, hasLength(8));
       expect(find.text(t.game_lookup_samples_capture_changed), findsNothing);
     },
   );
@@ -1172,7 +1492,7 @@ void main() {
     expect(find.text(t.game_lookup_samples_save_failed), findsOneWidget);
     expect(find.text(t.game_lookup_samples_capture_failed), findsNothing);
     store.failSave = false;
-    await tester.tap(find.byTooltip(t.game_lookup_samples_save));
+    await tester.tap(find.byType(CloseButton));
     await tester.pumpAndSettle();
     expect(store.saved.single.samples, hasLength(1));
     expect(tester.takeException(), isNull);
@@ -1188,7 +1508,6 @@ void main() {
           size: size,
         );
         expect(find.byType(Image), findsOneWidget);
-        expect(_cluster('e\u0301'), findsOneWidget);
         expect(tester.takeException(), isNull);
       },
     );

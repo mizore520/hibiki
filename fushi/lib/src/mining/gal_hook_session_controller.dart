@@ -1067,6 +1067,10 @@ class GalHookSessionController extends ChangeNotifier {
 
   int? get selectedNativeTextThreadId => _selectedNativeTextThreadId;
   String? get currentLaunchExecutable => _state.launchExe;
+
+  /// Captured game identity for both launched and attached sessions.
+  String? get currentCaptureExecutable =>
+      _state.launchExe ?? _attachedCaptureExecutable;
   TexthookerTextThread? get selectedTextThread {
     final String? key = selectedTextThreadKey;
     if (key == null) return null;

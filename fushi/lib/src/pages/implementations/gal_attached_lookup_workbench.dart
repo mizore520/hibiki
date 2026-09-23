@@ -42,14 +42,15 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
         final GalAttachedUnsafeRiskAcceptanceRequest? riskRequest =
             controller.unsafeRiskAcceptanceRequest;
         final bool riskPending = controller.needsUnsafeRiskAcceptance;
-        // 手动校准只在用户显式选了「仅贴附层」之后才露面：自动模式下工具条上
-        // 不再出现校准按钮，也不再挂「未选正文线程」这类只为校准服务的提示。
+        // 自动模式也保留校准入口。模式决定运行时如何使用结果，不能阻断
+        // 用户为当前游戏准备或修正校准样本。
         final bool calibrationExposed =
+            mode == GalLookupSurfaceMode.auto ||
             mode == GalLookupSurfaceMode.attachedOnly;
         final bool canOpenCalibration =
             hasSelectedBodyThread && controller.canCalibrate;
         final bool showThreadRequiredPill =
-            calibrationExposed && !hasSelectedBodyThread;
+            mode == GalLookupSurfaceMode.attachedOnly && !hasSelectedBodyThread;
 
         return Material(
           key: const ValueKey<String>('game-attached-lookup-workbench'),
@@ -157,22 +158,6 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
                         : null,
                     icon: const Icon(Icons.format_quote_outlined, size: 20),
                   ),
-                  IconButton(
-                    key: const ValueKey<String>(
-                      'game-attached-lookup-narration-samples',
-                    ),
-                    tooltip: t.game_lookup_samples_narration,
-                    onPressed:
-                        hasSelectedBodyThread &&
-                            controller.executableSha256 != null &&
-                            controller.currentClient != null
-                        ? () => _openSamples(
-                            context,
-                            slot: GalLookupCalibrationSlotV1.narration,
-                          )
-                        : null,
-                    icon: const Icon(Icons.subject_outlined, size: 20),
-                  ),
                 ],
                 PopupMenuButton<String>(
                   key: const ValueKey<String>('game-attached-lookup-mode'),
@@ -279,30 +264,58 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
     final GalLookupReferenceClientV1? client = controller.currentClient;
     final GalAttachedSurfaceTarget? target = controller.target;
     if (hash == null || client == null || target == null) return;
-    final GalLookupSurfaceVariantV1? seed = controller.profile
-        ?.nearestVariantForClient(client, slot: slot);
-    final GalLookupCalibrationDraft? draft =
-        await showDialog<GalLookupCalibrationDraft>(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) => GalLookupSamplesDialog(
-            exeSha256: hash,
-            initialRect:
-                seed?.bodyRect ?? GalAttachedTextController.defaultBodyRect,
-            initialLayout: seed?.layout ?? const GalLookupTextLayoutV1(),
-            slot: slot,
-            capture:
-                GalHookTextOverlayController.instance.captureCalibrationSample,
-          ),
-        );
-    if (draft == null ||
-        !context.mounted ||
-        controller.executableSha256 != hash ||
-        controller.target?.matches(target) != true) {
-      return;
+    final BuildContext hostContext = context;
+    GalLookupCalibrationSlotV1 activeSlot = slot;
+    GalLookupCalibrationDraft? draft;
+    while (true) {
+      if (!context.mounted ||
+          controller.executableSha256 != hash ||
+          controller.target?.matches(target) != true) {
+        return;
+      }
+      final GalLookupSurfaceVariantV1? seed = controller.profile
+          ?.nearestVariantForClient(client, slot: activeSlot);
+      GalLookupCalibrationSlotV1? requestedSlot;
+      draft = await showDialog<GalLookupCalibrationDraft>(
+        context: hostContext,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) => GalLookupSamplesDialog(
+          exeSha256: hash,
+          initialRect:
+              seed?.bodyRect ?? GalAttachedTextController.defaultBodyRect,
+          initialLayout: seed?.layout ?? const GalLookupTextLayoutV1(),
+          slot: activeSlot,
+          onOpenNarrationCalibration:
+              activeSlot == GalLookupCalibrationSlotV1.dialogue
+              ? () async {
+                  requestedSlot = GalLookupCalibrationSlotV1.narration;
+                  Navigator.of(dialogContext).pop();
+                }
+              : null,
+          onOpenDialogueCalibration:
+              activeSlot == GalLookupCalibrationSlotV1.narration
+              ? () async {
+                  requestedSlot = GalLookupCalibrationSlotV1.dialogue;
+                  Navigator.of(dialogContext).pop();
+                }
+              : null,
+          capture:
+              GalHookTextOverlayController.instance.captureCalibrationSample,
+        ),
+      );
+      if (!context.mounted ||
+          controller.executableSha256 != hash ||
+          controller.target?.matches(target) != true) {
+        return;
+      }
+      if (draft != null) break;
+      if (requestedSlot == null) return;
+      final GalLookupCalibrationSlotV1? nextSlot = requestedSlot;
+      if (nextSlot == null) return;
+      activeSlot = nextSlot;
     }
     if (draft.layout.cellGrid == null) {
-      await _openCalibration(context, draft: draft, slot: slot);
+      await _openCalibration(context, draft: draft, slot: activeSlot);
       return;
     }
     final GalLookupSurfaceProfileV1? profile = controller.profile;
@@ -327,7 +340,7 @@ class GalAttachedLookupWorkbench extends StatelessWidget {
       client: measuredClient,
       rect: draft.rect,
       layout: draft.layout,
-      slot: draft.slot ?? slot,
+      slot: activeSlot,
       metadata:
           draft.layoutCaptureMetadata ??
           draft.samples.first.capture.captureMetadata,
@@ -765,6 +778,7 @@ class _GalAttachedCalibrationDialogState
     verticalAlign: verticalAlign ?? _layout.verticalAlign,
     paddingPerClientHeight: _layout.paddingPerClientHeight,
     cellGrid: _layout.cellGrid,
+    quotedTextOnly: _layout.quotedTextOnly,
     punctuationVisualBounds: _layout.punctuationVisualBounds,
     characterAdvances: _layout.characterAdvances,
   );

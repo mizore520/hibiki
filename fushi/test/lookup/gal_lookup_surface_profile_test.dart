@@ -102,6 +102,35 @@ void main() {
     });
   });
 
+  test('quote-only grid source keeps Hook line breaks and legacy defaults', () {
+    const String source = '軽音部員「じゃあベースは？\r\nキーボードは？\nそもそも？」後続';
+    expect(
+      galLookupGridSourceText(source, quotedTextOnly: true),
+      '「じゃあベースは？\r\nキーボードは？\nそもそも？」',
+    );
+    expect(
+      galLookupGridSourceText('軽音部員「途中\n次行', quotedTextOnly: true),
+      '「途中\n次行',
+    );
+    expect(galLookupGridSourceText('旁白\n第二行', quotedTextOnly: true), '旁白\n第二行');
+    expect(galLookupGridSourceText(source, quotedTextOnly: false), source);
+    const GalLookupTextLayoutV1 enabled = GalLookupTextLayoutV1(
+      quotedTextOnly: true,
+    );
+    expect(enabled.toJson()['quotedTextOnly'], true);
+    expect(GalLookupTextLayoutV1.tryFromJson(enabled.toJson()), enabled);
+    expect(
+      const GalLookupTextLayoutV1().toJson().containsKey('quotedTextOnly'),
+      isFalse,
+    );
+    expect(
+      GalLookupTextLayoutV1.tryFromJson(
+        Map<String, Object?>.of(enabled.toJson())..['quotedTextOnly'] = 'true',
+      ),
+      isNull,
+    );
+  });
+
   test(
     'optional cell grid round-trips without changing legacy layout JSON',
     () {
@@ -502,7 +531,7 @@ void main() {
     );
   });
 
-  test('dialogue and narration slots select by paired outer quotes', () {
+  test('dialogue and narration slots select by Japanese quote markers', () {
     final GalLookupSurfaceVariantV1 dialogue = variant(
       slot: GalLookupCalibrationSlotV1.dialogue,
     );
@@ -518,9 +547,13 @@ void main() {
       dpi: 144,
     );
     expect(isGalLookupDialogueText('「外层引号」'), isTrue);
-    expect(isGalLookupDialogueText('旁白含有「内嵌引号」'), isFalse);
+    expect(isGalLookupDialogueText('台词前缀「内嵌引号」后缀'), isTrue);
+    expect(isGalLookupDialogueText('「更新中的台词'), isTrue);
+    expect(isGalLookupDialogueText('更新中的台词」'), isTrue);
+    expect(isGalLookupDialogueText('旁白没有对话引号'), isFalse);
     expect(value.bestVariantForSourceText(client, '「外层引号」'), dialogue);
-    expect(value.bestVariantForSourceText(client, '旁白含有「内嵌引号」'), narration);
+    expect(value.bestVariantForSourceText(client, '台词前缀「内嵌引号」后缀'), dialogue);
+    expect(value.bestVariantForSourceText(client, '旁白没有对话引号'), narration);
   });
 
   test('one usable slot is the shared fallback for every source text', () {

@@ -10791,11 +10791,11 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_save => '保存草稿';
   @override
-  String get game_lookup_samples_apply => '将草稿用于游戏校准';
+  String get game_lookup_samples_apply => '游戏校准';
   @override
-  String get game_lookup_samples_saved => '草稿已保存在本机';
+  String get game_lookup_samples_saved => '已自动保存到本机';
   @override
-  String get game_lookup_samples_saved_hint => '样本和截图保存在本机。保存草稿不会开启查词。';
+  String get game_lookup_samples_saved_hint => '样本和截图会自动保存在本机，关闭窗口后也不会丢失。';
   @override
   String get game_lookup_samples_busy => '处理中…';
   @override
@@ -10942,7 +10942,7 @@ class _StringsZhCn extends _StringsEn {
   String get game_lookup_samples_capture_unsupported =>
       '当前文本包含暂不支持的注音格式，请换一条普通台词采集。';
   @override
-  String get game_lookup_samples_save_failed => '草稿未能写入磁盘，当前样本仍保留在本窗口；请重试保存。';
+  String get game_lookup_samples_save_failed => '自动保存失败，当前样本仍保留在本窗口；请重试。';
   @override
   String get game_lookup_samples_search_title => '识别范围（橙色外框）';
   @override
@@ -10958,15 +10958,15 @@ class _StringsZhCn extends _StringsEn {
       '默认只用当前选中的截图拟合；请选择一张包含至少两行完整台词的截图。';
   @override
   String get game_lookup_samples_auto_all_hint =>
-      '高级模式会将所有校准样本共同拟合；验证样本只用于检查结果。';
+      '高级模式会将所有校准样本共同拟合，并用完整样本集检查结果。';
   @override
   String get game_lookup_samples_advanced => '高级选项';
   @override
-  String get game_lookup_samples_advanced_hint => '多样本、像素数值、手动排版和叠框检查';
+  String get game_lookup_samples_advanced_hint => '多样本和可视化字格修正';
   @override
   String get game_lookup_samples_fit_all => '将所有校准样本共同拟合';
   @override
-  String get game_lookup_samples_fit_all_hint => '多张完整台词共用同一字格时使用；验证样本仍只用于检查。';
+  String get game_lookup_samples_fit_all_hint => '多张完整台词共用同一字格时使用；完整样本集会一起检查。';
   @override
   String get game_lookup_samples_auto_align_current => '按当前截图自动对齐';
   @override
@@ -11016,4 +11016,56 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_lookup_samples_capture_surface_mapping =>
       '游戏窗口与超分画面的位置暂时无法对应，无法采集校准截图。';
+  @override
+  String get game_lookup_samples_grid_edit_hint =>
+      '拖动蓝框内部移动或四角缩放；拖动小格右边缘调整格宽。普通格会同步变化，蓝框从右侧终点同步扩展；特殊字符格保持独立宽度。';
+  @override
+  String get game_lookup_samples_continuation_title => '续行起点';
+  @override
+  String get game_lookup_samples_continuation_hint =>
+      '自定义第二行及后续行相对第一行的起点，所有文本使用同一数值；0 表示同一起点。';
+  @override
+  String get game_lookup_samples_continuation_label => '文本续行';
+  @override
+  String get game_lookup_samples_continuation_normal => '普通文本续行';
+  @override
+  String get game_lookup_samples_continuation_quoted => '引号开头文本续行';
+  @override
+  String get game_lookup_samples_continuation_cells => '格';
+  @override
+  String get game_lookup_samples_grid_columns => '每行格数';
+  @override
+  String get game_lookup_samples_grid_move => '移动字格';
+  @override
+  String get game_lookup_samples_grid_advance => '调整格宽';
+  @override
+  String get game_lookup_samples_grid_height => '调整格高';
+  @override
+  String get game_lookup_samples_grid_line_spacing => '调整行距';
+  @override
+  String get game_lookup_samples_grid_line_width => '按整数调整每行格数';
+  @override
+  String get game_lookup_samples_grid_start => '修正字格起点';
+  @override
+  String get game_lookup_samples_grid_end => '修正字格终点';
+  @override
+  String get game_lookup_samples_narration_hint =>
+      '只有台词和旁白的文字排版不一致时才需要单独校准；排版一致时无需进行旁白校准。';
+  @override
+  String get game_lookup_samples_special_chars_title => '特殊字符格宽';
+  @override
+  String get game_lookup_samples_special_chars_hint =>
+      '为占用较窄或较宽格子的标点单独设置格宽；未添加的字符仍使用普通格宽。';
+  @override
+  String get game_lookup_samples_special_chars_input => '输入特殊字符';
+  @override
+  String get game_lookup_samples_special_chars_input_hint => '可一次输入多个字符，例如 、。';
+  @override
+  String get game_lookup_samples_special_chars_add => '添加特殊字符';
+  @override
+  String get game_lookup_samples_special_chars_remove => '移除特殊字符';
+  @override
+  String get game_lookup_samples_quoted_text_only_hint => '过滤掉「…」以外的人名等字符。';
+  @override
+  String get game_lookup_samples_quoted_text_only => '只用「」内台词';
 }

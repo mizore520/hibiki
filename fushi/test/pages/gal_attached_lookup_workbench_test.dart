@@ -144,10 +144,29 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.byKey(const ValueKey<String>('game-attached-lookup-calibrate')),
-        findsNothing,
-        reason: '自动模式下工具条不得再出现校准入口——那条路第一步就是往游戏上盖框',
+        find.byKey(
+          const ValueKey<String>('game-attached-lookup-dialogue-samples'),
+        ),
+        findsOneWidget,
+        reason: '自动模式也应保留对话校准入口',
       );
+      await tester.tap(
+        find.byKey(const ValueKey<String>('game-attached-lookup-mode')),
+      );
+      await tester.pumpAndSettle();
+      final PopupMenuItem<String> automaticCalibrate = tester
+          .widget<PopupMenuItem<String>>(
+            find.byKey(
+              const ValueKey<String>('game-attached-lookup-calibrate'),
+            ),
+          );
+      expect(
+        automaticCalibrate.enabled,
+        isFalse,
+        reason: '自动模式下没有正文线程时校准入口仍应禁用',
+      );
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
       expect(
         find.textContaining('Select one body-text thread'),
         findsNothing,

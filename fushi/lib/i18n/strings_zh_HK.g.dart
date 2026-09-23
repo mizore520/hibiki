@@ -10951,12 +10951,11 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get game_lookup_samples_save => 'Save draft';
   @override
-  String get game_lookup_samples_apply => 'Use draft for live calibration';
+  String get game_lookup_samples_apply => '遊戲校準';
   @override
-  String get game_lookup_samples_saved => 'Draft saved on this device';
+  String get game_lookup_samples_saved => '已自動儲存到本機';
   @override
-  String get game_lookup_samples_saved_hint =>
-      'Samples and screenshots stay on this device. Saving a draft does not enable lookup.';
+  String get game_lookup_samples_saved_hint => '樣本和截圖會自動儲存在本機，關閉視窗後也不會遺失。';
   @override
   String get game_lookup_samples_busy => 'Working…';
   @override
@@ -11118,8 +11117,7 @@ class _StringsZhHk extends _StringsEn {
   String get game_lookup_samples_capture_unsupported =>
       'This text contains a ruby format that is not supported yet. Capture a normal dialogue line instead.';
   @override
-  String get game_lookup_samples_save_failed =>
-      'The draft could not be written to disk. The current samples remain in this window; try saving again.';
+  String get game_lookup_samples_save_failed => '自動儲存失敗，當前樣本仍保留在本視窗；請重試。';
   @override
   String get game_lookup_samples_search_title =>
       'Recognition region (orange frame)';
@@ -11136,18 +11134,16 @@ class _StringsZhHk extends _StringsEn {
       'Use the selected screenshot only. It should show the complete dialogue across at least two lines.';
   @override
   String get game_lookup_samples_auto_all_hint =>
-      'Use all calibration samples together. Validation samples only check the result.';
+      '高級模式會將所有校準樣本共同擬合，並用完整樣本集檢查結果。';
   @override
   String get game_lookup_samples_advanced => 'Advanced options';
   @override
-  String get game_lookup_samples_advanced_hint =>
-      'Extra samples, pixel values, manual layout, and overlay inspection';
+  String get game_lookup_samples_advanced_hint => '多樣本和可視化字格修正';
   @override
   String get game_lookup_samples_fit_all =>
       'Fit all calibration samples together';
   @override
-  String get game_lookup_samples_fit_all_hint =>
-      'Use this when several complete samples share one grid. Validation samples remain checks.';
+  String get game_lookup_samples_fit_all_hint => '多張完整台詞共用同一字格時使用；完整樣本集會一起檢查。';
   @override
   String get game_lookup_samples_auto_align_current =>
       'Align current screenshot';
@@ -11204,4 +11200,56 @@ class _StringsZhHk extends _StringsEn {
   @override
   String get game_lookup_samples_capture_surface_mapping =>
       'The game window and the upscaled image cannot be aligned right now, so a calibration screenshot cannot be captured.';
+  @override
+  String get game_lookup_samples_grid_edit_hint =>
+      '拖動藍框內部移動或四角縮放；拖動小格右邊緣調整格寬。普通格會同步變化，藍框從右側終點同步擴展；特殊字符格保持獨立寬度。';
+  @override
+  String get game_lookup_samples_grid_columns => 'Cells per line';
+  @override
+  String get game_lookup_samples_grid_move => 'Move text grid';
+  @override
+  String get game_lookup_samples_grid_advance => 'Adjust cell width';
+  @override
+  String get game_lookup_samples_grid_height => 'Adjust cell height';
+  @override
+  String get game_lookup_samples_grid_line_spacing => 'Adjust line spacing';
+  @override
+  String get game_lookup_samples_grid_line_width => '按整數調整每行格數';
+  @override
+  String get game_lookup_samples_grid_start => '修正字格起點';
+  @override
+  String get game_lookup_samples_grid_end => '修正字格終點';
+  @override
+  String get game_lookup_samples_narration_hint =>
+      '只有台詞和旁白的文字排版不一致時才需要單獨校準；排版一致時無需進行旁白校準。';
+  @override
+  String get game_lookup_samples_special_chars_title => '特殊字符格寬';
+  @override
+  String get game_lookup_samples_special_chars_hint =>
+      '為佔用較窄或較寬格子的標點單獨設定格寬；未加入的字符仍使用普通格寬。';
+  @override
+  String get game_lookup_samples_special_chars_input => '輸入特殊字符';
+  @override
+  String get game_lookup_samples_special_chars_input_hint => '可一次輸入多個字符，例如 、。';
+  @override
+  String get game_lookup_samples_special_chars_add => '加入特殊字符';
+  @override
+  String get game_lookup_samples_special_chars_remove => '移除特殊字符';
+  @override
+  String get game_lookup_samples_continuation_title => '续行起点';
+  @override
+  String get game_lookup_samples_continuation_hint =>
+      '自定义第二行及后续行相对第一行的起点，数值以普通字格为单位；0 表示同一起点。以「或『开头的文本使用引号续行设置。';
+  @override
+  String get game_lookup_samples_continuation_normal => '普通文本续行';
+  @override
+  String get game_lookup_samples_continuation_quoted => '引号开头文本续行';
+  @override
+  String get game_lookup_samples_continuation_cells => '格';
+  @override
+  String get game_lookup_samples_continuation_label => '文本续行';
+  @override
+  String get game_lookup_samples_quoted_text_only_hint => '過濾「…」以外的人名等字符。';
+  @override
+  String get game_lookup_samples_quoted_text_only => 'Use text inside 「」 only';
 }

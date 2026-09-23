@@ -12,6 +12,7 @@
 #include <limits>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "attached_layout_validation.h"
@@ -159,6 +160,7 @@ struct Layout {
   std::string vertical_align = "top";
   double padding_per_client_height = 0.0;
   std::optional<CellGrid> cell_grid;
+  bool quoted_text_only = false;
   std::vector<PunctuationVisualBounds> punctuation_visual_bounds;
   // MethodChannel decoding is fail-closed.  A present but malformed list
   // must never silently become the legacy layout.
@@ -394,6 +396,31 @@ inline bool IsHangingPunctuation(uint32_t code) {
   }
 }
 
+inline std::pair<size_t, size_t> GridSourceSpan(const std::wstring &source,
+                                                const Layout &style) {
+  size_t start = 0;
+  size_t end = source.size();
+  if (style.quoted_text_only) {
+    const size_t opener = source.find(L'\u300C');
+    if (opener != std::wstring::npos) {
+      start = opener;
+      const size_t closer = source.find(L'\u300D', opener + 1);
+      if (closer != std::wstring::npos) end = closer + 1;
+    }
+  }
+  return {start, end};
+}
+
+inline bool HasExplicitGridLineBreak(const std::wstring &source,
+                                     const Layout &style) {
+  if (!style.cell_grid.has_value() || source.empty()) return false;
+  const auto [start, end] = GridSourceSpan(source, style);
+  const size_t last_content = source.find_last_not_of(L"\r\n \t\u3000", end - 1);
+  return last_content != std::wstring::npos &&
+         last_content >= start &&
+         source.find_first_of(L"\r\n", start) < last_content;
+}
+
 inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
                             int client_height_px, int surface_width_px,
                             int surface_height_px,
@@ -431,9 +458,17 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
     return Failure("grid_overflow_body_rect");
   }
 
+  // Filter only for the grid. Keep original UTF-16 positions for Hook hits.
+  const auto [start, end] = GridSourceSpan(source, style);
+  const uint32_t source_start = static_cast<uint32_t>(start);
+  const uint32_t source_end = static_cast<uint32_t>(end);
+  // A Hook hard break owns every row boundary for this sentence. Keep the
+  // saved width and wrapping unchanged for text without an explicit break.
+  const bool hard_break = HasExplicitGridLineBreak(source, style);
   const bool quoted =
-      !source.empty() &&
-      (source.front() == L'\u300C' || source.front() == L'\u300E');
+      source_start < source_end &&
+      (source[source_start] == L'\u300C' ||
+       source[source_start] == L'\u300E');
   const double continuation_indent = quoted ? grid.quoted_continuation_indent
                                             : grid.continuation_indent;
   int row = 0;
@@ -455,7 +490,8 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
     const double bottom = top + cell_height;
     if (!std::isfinite(left) || !std::isfinite(top) ||
         !std::isfinite(right) || !std::isfinite(bottom) ||
-        left < bounds_left || top < bounds_top || right > bounds_right ||
+        left < bounds_left || top < bounds_top ||
+        right > (hard_break ? surface_width_px : bounds_right) ||
         bottom > bounds_bottom || left < 0.0 || top < 0.0 ||
         right > static_cast<double>(surface_width_px) ||
         bottom > static_cast<double>(surface_height_px)) {
@@ -466,7 +502,8 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
                 static_cast<LONG>(std::llround(right)),
                 static_cast<LONG>(std::llround(bottom))};
     if (!RectHasArea(*box) || box->left < layout_bounds.left ||
-        box->top < layout_bounds.top || box->right > layout_bounds.right ||
+        box->top < layout_bounds.top ||
+        box->right > (hard_break ? surface_width_px : layout_bounds.right) ||
         box->bottom > layout_bounds.bottom || box->left < 0 || box->top < 0 ||
         box->right > surface_width_px || box->bottom > surface_height_px) {
       return false;
@@ -476,10 +513,10 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
 
   Result result;
   bool previous_cell = false;
-  for (uint32_t index = 0; index < source.size(); ++index) {
+  for (uint32_t index = source_start; index < source_end; ++index) {
     uint32_t code = static_cast<uint16_t>(source[index]);
     uint32_t length = 1;
-    if (code >= 0xD800 && code <= 0xDBFF && index + 1 < source.size()) {
+    if (code >= 0xD800 && code <= 0xDBFF && index + 1 < source_end) {
       const uint32_t low = static_cast<uint16_t>(source[index + 1]);
       if (low >= 0xDC00 && low <= 0xDFFF) {
         code = 0x10000 + ((code - 0xD800) << 10) + (low - 0xDC00);
@@ -488,7 +525,7 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
     }
     if (code == L'\r') {
       pending_wrap_space = false;
-      if (index + 1 < source.size() && source[index + 1] == L'\n') ++index;
+      if (index + 1 < source_end && source[index + 1] == L'\n') ++index;
       advance_line();
       previous_cell = false;
       continue;
@@ -516,7 +553,7 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       return Failure("invalid_layout");
 
     constexpr double kCursorEpsilon = 1e-9;
-    if (grid.trim_wrap_whitespace && whitespace &&
+    if (!hard_break && grid.trim_wrap_whitespace && whitespace &&
         (pending_wrap_space ||
          cursor_in_cells + width_in_cells >
              line_width_in_cells + kCursorEpsilon)) {
@@ -530,7 +567,7 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
       pending_wrap_space = false;
     }
     bool allow_hanging = false;
-    if (cursor_in_cells + width_in_cells >
+    if (!hard_break && cursor_in_cells + width_in_cells >
         line_width_in_cells + kCursorEpsilon) {
       allow_hanging =
           grid.hanging_punctuation &&
@@ -577,9 +614,9 @@ inline Result BuildCellGrid(const std::wstring &source, const Layout &style,
   return result;
 }
 
-// Build a surface-local layout. Runtime calibration uses a full-client surface
-// with body_bounds inside it; normal lookup uses a surface the size of the
-// body.
+// Build a surface-local layout. Runtime calibration is full-client; ordinary
+// lookup is body-local except when a Hook hard break needs a glyph just beyond
+// the saved body's right edge.
 inline Result Build(IDWriteFactory *factory, const std::wstring &source,
                     const Layout &style, int client_height_px,
                     int surface_width_px, int surface_height_px,
@@ -845,8 +882,13 @@ inline Result Preview(const std::wstring &source,
   Layout style = layout;
   if (style.font_family.empty())
     style.font_family = L"Yu Gothic";
+  // Hard-break cells can extend past the selected rectangle, but never past
+  // the source client. Preview and runtime must use the same physical limit.
+  const int surface_width = HasExplicitGridLineBreak(source, style)
+                                ? reference.width_px - body.left
+                                : width;
   Result result = Build(factory.Get(), source, style, reference.height_px,
-                        width, height, bounds);
+                        surface_width, height, bounds);
   for (ClusterBox &box : result.boxes) {
     box.hit_rect.left += body.left;
     box.hit_rect.right += body.left;

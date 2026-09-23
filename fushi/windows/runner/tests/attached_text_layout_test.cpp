@@ -177,6 +177,76 @@ int main() {
          large_grid.boxes.front().hit_rect.top);
   ++cases;
 
+  // The optional Hook filter keeps only the first Japanese quote for grid
+  // boxes, but indexes still refer to the unmodified source. Explicit CRLF
+  // and LF remain hard line breaks even with a speaker prefix.
+  layout::Layout quoted_only_style = grid_style;
+  quoted_only_style.quoted_text_only = true;
+  quoted_only_style.cell_grid->quoted_continuation_indent = 0;
+  const std::wstring hooked =
+      L"\u8efd\u97f3\u90e8\u54e1\u300cA\r\nB\nC\u300d\u5c3e\u6ce8";
+  const auto quote_only = layout::Preview(
+      hooked, client, rect, quoted_only_style);
+  assert(quote_only.ok() && quote_only.boxes.size() == 5);
+  const uint32_t positions[] = {4, 5, 8, 10, 11};
+  for (size_t index = 0; index < quote_only.boxes.size(); ++index)
+    assert(quote_only.boxes[index].text_position == positions[index]);
+  assert(quote_only.boxes[2].hit_rect.top ==
+         quote_only.boxes[0].hit_rect.top + 24);
+  assert(quote_only.boxes[3].hit_rect.top ==
+         quote_only.boxes[0].hit_rect.top + 48);
+  const auto unfinished_quote = layout::Preview(
+      L"\u8efd\u97f3\u90e8\u54e1\u300cA\nB", client, rect,
+      quoted_only_style);
+  assert(unfinished_quote.ok() && unfinished_quote.boxes.size() == 3);
+  assert(unfinished_quote.boxes.front().text_position == 4);
+  const auto no_quote = layout::Preview(
+      L"ABC\nD", client, rect, quoted_only_style);
+  assert(no_quote.ok() && no_quote.boxes.size() == 4);
+  quoted_only_style.quoted_text_only = false;
+  const auto unfiltered_hook = layout::Preview(
+      hooked, client, rect, quoted_only_style);
+  assert(unfiltered_hook.ok() && unfiltered_hook.boxes.size() == 11);
+  ++cases;
+
+  // A Hook hard break, not the saved body width, owns the line boundary.
+  // The last first-row glyph may sit just beyond the calibrated body while
+  // remaining inside the source client. Plain text still wraps as before.
+  layout::Layout hard_break_style = grid_style;
+  hard_break_style.cell_grid->columns = 4;
+  hard_break_style.cell_grid->continuation_indent = 0;
+  hard_break_style.cell_grid->quoted_continuation_indent = 0;
+  const layout::NormalizedRect narrow_rect{0.1, 0.1, 0.16, 0.4};
+  const auto prioritized_break = layout::Preview(
+      L"ABCDEFGH\r\nI", client, narrow_rect, hard_break_style);
+  assert(prioritized_break.ok() && prioritized_break.boxes.size() == 9);
+  const RECT narrow_body = layout::ResolveBodyRect(
+      RECT{0, 0, client.width_px, client.height_px}, narrow_rect);
+  assert(prioritized_break.boxes[7].hit_rect.top ==
+         prioritized_break.boxes.front().hit_rect.top);
+  assert(prioritized_break.boxes[7].hit_rect.right > narrow_body.right);
+  assert(prioritized_break.boxes[8].text_position == 10);
+  assert(prioritized_break.boxes[8].hit_rect.top ==
+         prioritized_break.boxes.front().hit_rect.top + 24);
+  const auto unbroken = layout::Preview(
+      L"ABCDEFGHI", client, narrow_rect, hard_break_style);
+  assert(unbroken.ok() && unbroken.boxes[4].hit_rect.top >
+                            unbroken.boxes.front().hit_rect.top);
+  const auto trailing_break = layout::Preview(
+      L"ABCDEFGHI\r\n", client, narrow_rect, hard_break_style);
+  assert(trailing_break.ok() &&
+         trailing_break.boxes[4].hit_rect.top >
+             trailing_break.boxes.front().hit_rect.top);
+  const auto runtime_hard_break = layout::Build(
+      factory.Get(), L"ABCDEFGH\r\nI", hard_break_style, client.height_px,
+      client.width_px - narrow_body.left,
+      narrow_body.bottom - narrow_body.top,
+      RECT{0, 0, narrow_body.right - narrow_body.left,
+           narrow_body.bottom - narrow_body.top});
+  ExpectSameBoxes(prioritized_break, runtime_hard_break, narrow_body.left,
+                  narrow_body.top);
+  ++cases;
+
   // Regression: the OCR fitter reserves one pixel at the calibration size.
   // At half size the required width is 288.48 and the continuous body is
   // 288.98, but nearest-rounded edges used to leave only 288 integer pixels.

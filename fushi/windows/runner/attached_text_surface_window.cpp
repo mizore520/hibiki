@@ -1309,6 +1309,7 @@ AttachedTextSurfaceWindow::UpdateStyle(const Epoch &epoch, uint32_t target_pid,
   };
   const bool layout_changed =
       desired.cell_grid != layout_.cell_grid ||
+      desired.quoted_text_only != layout_.quoted_text_only ||
       !same_punctuation_bounds(desired.punctuation_visual_bounds,
                                layout_.punctuation_visual_bounds) ||
       !same_character_advances(desired.character_advances,
@@ -1809,7 +1810,12 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     EmitStateIfChanged();
     return;
   }
-  const RECT surface = calibration ? client : body;
+  // Hard-break grids may have a final glyph just outside the saved body.
+  // Keep the overlay click-through and expose only actual glyph hit regions.
+  const bool hard_break_grid =
+      fushi::attached_text_layout::HasExplicitGridLineBreak(source_text_,
+                                                            layout_);
+  const RECT surface = calibration || hard_break_grid ? client : body;
   const bool size_changed =
       surface.right - surface.left !=
           surface_screen_rect_.right - surface_screen_rect_.left ||
@@ -2008,10 +2014,17 @@ bool AttachedTextSurfaceWindow::RebuildClusters() {
   const int source_height = source_body_screen_rect_.bottom -
                             source_body_screen_rect_.top;
   const RECT layout_bounds{0, 0, source_width, source_height};
+  const bool hard_break_grid =
+      fushi::attached_text_layout::HasExplicitGridLineBreak(source_text_,
+                                                            layout_);
+  const int surface_width = hard_break_grid
+      ? surface_geometry_.source_client_screen.right -
+            source_body_screen_rect_.left
+      : source_width;
   fushi::attached_text_layout::Result result =
       fushi::attached_text_layout::Build(
           dwrite_factory_.Get(), source_text_, layout_,
-          live_reference_client_.height_px, source_width, source_height,
+          live_reference_client_.height_px, surface_width, source_height,
           layout_bounds);
   if (!result.ok())
     return ClusterFailure(result.reason.c_str());

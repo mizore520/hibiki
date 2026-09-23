@@ -81,6 +81,19 @@ void main() {
     expect(variant.layout.cellGrid!.trimWrapWhitespace, isTrue);
   });
 
+  test('quote-only filter survives conversion to source client', () {
+    final GalLookupSurfaceVariantV1 variant = projectGalCalibrationToSource(
+      client: _image,
+      rect: _body,
+      layout: GalLookupTextLayoutV1(
+        cellGrid: _layout.cellGrid,
+        quotedTextOnly: true,
+      ),
+      metadata: _mapping,
+    )!;
+    expect(variant.layout.quotedTextOnly, isTrue);
+  });
+
   test('anisotropic output independently restores x and y advances', () {
     final WindowCaptureMetadata mapping = WindowCaptureMetadata.tryFromMap({
       ..._mapping.toJson(),

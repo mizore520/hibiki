@@ -800,6 +800,117 @@ void main() {
       expect(fit.draft!.layout.cellGrid!.columns, greaterThanOrEqualTo(5));
     },
   );
+  test('Hook rows permit a shifted but index-correct editable grid', () async {
+    const String hard = 'あいうえお\nかきくけ';
+    const String soft = 'あいうえおかきくけ';
+    Future<GalCalibrationPreview> shifted({
+      required String text,
+      required GalLookupReferenceClientV1 client,
+      required GalLookupNormalizedRectV1 rect,
+      required GalLookupTextLayoutV1 layout,
+    }) async {
+      final GalCalibrationPreview base = await _preview(
+        text: text,
+        client: client,
+        rect: rect,
+        layout: layout,
+      );
+      return GalCalibrationPreview(
+        boxes: [
+          for (final GalCalibrationBox box in base.boxes)
+            GalCalibrationBox(
+              box.charIndex,
+              box.charLength,
+              box.rect.translate(box.charIndex >= 6 ? 8 : 0, 0),
+            ),
+        ],
+      );
+    }
+
+    final GalCalibrationImageFit hardFit = await _fit(
+      [_sample(hard)],
+      [
+        _alignment(['あいうえお', 'かきくけ'], source: hard),
+      ],
+      build: shifted,
+    );
+    expect(
+      hardFit.draft,
+      isNotNull,
+      reason: '${hardFit.reason}: ${hardFit.detail}',
+    );
+    final GalCalibrationImageFit softFit = await _fit(
+      [_sample(soft)],
+      [
+        _alignment(['あいうえお', 'かきくけ'], source: soft),
+      ],
+      build: shifted,
+    );
+    expect(softFit.detail, 'runtime_grid_differs_from_fitted_cells');
+  });
+
+  test('Hook rows still reject a native break inside one source row', () async {
+    const String hard = 'あいうえお\nかきくけ';
+    final GalCalibrationImageFit fit = await _fit(
+      [_sample(hard)],
+      [
+        _alignment(['あいうえお', 'かきくけ'], source: hard),
+      ],
+      build:
+          ({
+            required String text,
+            required GalLookupReferenceClientV1 client,
+            required GalLookupNormalizedRectV1 rect,
+            required GalLookupTextLayoutV1 layout,
+          }) async {
+            final GalCalibrationPreview base = await _preview(
+              text: text,
+              client: client,
+              rect: rect,
+              layout: layout,
+            );
+            return GalCalibrationPreview(
+              boxes: [
+                for (final GalCalibrationBox box in base.boxes)
+                  GalCalibrationBox(
+                    box.charIndex,
+                    box.charLength,
+                    box.rect.translate(0, box.charIndex == 2 ? 48 : 0),
+                  ),
+              ],
+            );
+          },
+    );
+    expect(fit.detail, 'runtime_row_breaks_differ_from_hook');
+  });
+
+  test(
+    'a longer second Hook row has one editable cell per character',
+    () async {
+      const String first = 'あいうえおかきくけこ';
+      const String second = 'さしすせそたちつてとなにぬねのはひ';
+      const String text = '$first\n$second';
+      final GalCalibrationImageFit fit = await _fit(
+        [_sample(text)],
+        [
+          _alignment([first, second], source: text),
+        ],
+      );
+      expect(fit.draft, isNotNull, reason: '${fit.reason}: ${fit.detail}');
+      final GalCalibrationPreview preview = await _preview(
+        text: text,
+        client: _sample(text).capture.referenceClient,
+        rect: fit.draft!.rect,
+        layout: fit.draft!.layout,
+      );
+      expect(preview.boxes.length, first.length + second.length);
+      expect(preview.boxForIndex(first.length), isNull);
+      expect(
+        preview.boxForIndex(first.length + 1)!.rect.top,
+        greaterThan(preview.boxForIndex(0)!.rect.top),
+      );
+    },
+  );
 
   test(
     'unobserved wrap spaces keep the next row at its fitted origin',

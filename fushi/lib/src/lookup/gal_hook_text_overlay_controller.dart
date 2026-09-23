@@ -2052,6 +2052,19 @@ class GalHookTextOverlayController extends ChangeNotifier {
     );
   }
 
+  /// Filter only the card sentence; never change the line used to bind audio.
+  String _cardSentenceForGame(TexthookerLineEntry entry, String source) =>
+      galLookupVisibleHookLineText(
+        source: source,
+        currentSession:
+            _session.state.isActive && _session.isLineInCurrentSession(entry),
+        sessionExecutable: _session.currentCaptureExecutable,
+        attachedExecutable: _attachedText.executablePath,
+        attachedSha256: _attachedText.executableSha256,
+        profile: _attachedText.profile,
+        client: _attachedText.currentClient,
+      ).text;
+
   /// [consumeOutsideClicksOwnerHwnd]：attached 校准字形表面命中时传游戏
   /// HWND，桌面弹窗「点卡外关闭」的点击成对吞掉、不推进游戏；台词浮窗（C 表面）
   /// 不传，行为不变。
@@ -2084,7 +2097,7 @@ class GalHookTextOverlayController extends ChangeNotifier {
       term,
       // 台词浮窗本身已经显示完整句子；查词卡只保留词典正文。完整 sentence 仍会
       // 进入 mining 上下文（{sentence} 回落）。
-      sentence: entry.text,
+      sentence: _cardSentenceForGame(entry, entry.text),
       // 卡片锚在被点中的那个词上（native 给的屏幕逻辑 px 矩形），而不是鼠标位置：
       // 浮窗里点词跟阅读器/剪贴板面板一样是「点哪个词看哪个词」。老 native 不带
       // 矩形时为 null，自动回落到光标定位。
@@ -2363,10 +2376,18 @@ class GalHookTextOverlayController extends ChangeNotifier {
     );
     final BaseAnkiRepository repo = model.platformServices
         .createAnkiRepository();
+    final TexthookerLineEntry? entry = _session.entryById(lineId);
+    final String? cardSentence = entry == null
+        ? sentenceOverride
+        : _cardSentenceForGame(entry, sentenceOverride ?? entry.text);
     final GalHookMiningResult result = await _miningCoordinator.mineLine(
       lineId: lineId,
       fields: fields,
-      sentenceOverride: sentenceOverride,
+      sentenceOverride:
+          sentenceOverride != null ||
+              (entry != null && cardSentence != entry.text)
+          ? cardSentence
+          : null,
       occurrence: occurrence,
       compression: MiningMediaCompression.resolve(
         imageTier: model.miningImageQuality,

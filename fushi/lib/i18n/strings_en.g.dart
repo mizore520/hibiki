@@ -6772,10 +6772,10 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_lookup_samples_unavailable =>
       'This layout cannot cover the complete line. Adjust the area or font size.';
   String get game_lookup_samples_save => 'Save draft';
-  String get game_lookup_samples_apply => 'Use draft for live calibration';
-  String get game_lookup_samples_saved => 'Draft saved on this device';
+  String get game_lookup_samples_apply => 'Game calibration';
+  String get game_lookup_samples_saved => 'Saved automatically on this device';
   String get game_lookup_samples_saved_hint =>
-      'Samples and screenshots stay on this device. Saving a draft does not enable lookup.';
+      'Samples and screenshots are saved automatically on this device.';
   String get game_lookup_samples_busy => 'Working…';
   String get game_lookup_samples_load_failed =>
       'The saved sample draft could not be read.';
@@ -6879,7 +6879,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_lookup_samples_capture_unsupported =>
       'This text contains a ruby format that is not supported yet. Capture a normal dialogue line instead.';
   String get game_lookup_samples_save_failed =>
-      'The draft could not be written to disk. The current samples remain in this window; try saving again.';
+      'Automatic save failed. The current samples remain in this window; try again.';
   String get game_lookup_samples_search_title =>
       'Recognition region (orange frame)';
   String get game_lookup_samples_search_hint =>
@@ -6891,14 +6891,14 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_lookup_samples_auto_current_hint =>
       'Use the selected screenshot only. It should show the complete dialogue across at least two lines.';
   String get game_lookup_samples_auto_all_hint =>
-      'Use all calibration samples together. Validation samples only check the result.';
+      'Use all calibration samples together and check the result against the complete set.';
   String get game_lookup_samples_advanced => 'Advanced options';
   String get game_lookup_samples_advanced_hint =>
-      'Extra samples, pixel values, manual layout, and overlay inspection';
+      'Extra samples and visual grid correction';
   String get game_lookup_samples_fit_all =>
       'Fit all calibration samples together';
   String get game_lookup_samples_fit_all_hint =>
-      'Use this when several complete samples share one grid. Validation samples remain checks.';
+      'Use this when several complete samples share one grid; the complete set is checked together.';
   String get game_lookup_samples_auto_align_current =>
       'Align current screenshot';
   String get game_lookup_samples_auto_align_all =>
@@ -6936,4 +6936,40 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'The generated cells differ too much from the detected positions. This result was not applied.';
   String get game_lookup_samples_capture_surface_mapping =>
       'The game window and the upscaled image cannot be aligned right now, so a calibration screenshot cannot be captured.';
+  String get game_lookup_samples_grid_edit_hint =>
+      'Drag the blue frame to move or resize it; drag the right edge of a cell to adjust its width. Normal cells stay synchronized and the frame expands from the right edge; special-character cells keep their own width.';
+  String get game_lookup_samples_continuation_title =>
+      'Continuation line start';
+  String get game_lookup_samples_continuation_hint =>
+      'Set where the second and later lines start relative to the first line. One value applies to all text; 0 keeps the same start.';
+  String get game_lookup_samples_continuation_label => 'Text continuation';
+  String get game_lookup_samples_continuation_normal =>
+      'Plain-text continuation';
+  String get game_lookup_samples_continuation_quoted =>
+      'Quoted-text continuation';
+  String get game_lookup_samples_continuation_cells => 'cells';
+  String get game_lookup_samples_grid_columns => 'Cells per line';
+  String get game_lookup_samples_grid_move => 'Move text grid';
+  String get game_lookup_samples_grid_advance => 'Adjust cell width';
+  String get game_lookup_samples_grid_height => 'Adjust cell height';
+  String get game_lookup_samples_grid_line_spacing => 'Adjust line spacing';
+  String get game_lookup_samples_grid_line_width =>
+      'Adjust cells per line (whole numbers)';
+  String get game_lookup_samples_grid_start => 'Correct grid start';
+  String get game_lookup_samples_grid_end => 'Correct grid end';
+  String get game_lookup_samples_narration_hint =>
+      'Only calibrate narration separately when its text layout differs from dialogue. If they use the same layout, no narration calibration is needed.';
+  String get game_lookup_samples_special_chars_title =>
+      'Special-character cell width';
+  String get game_lookup_samples_special_chars_hint =>
+      'Set a separate width for punctuation that occupies a narrower or wider cell. Other characters keep the normal width.';
+  String get game_lookup_samples_special_chars_input => 'Characters';
+  String get game_lookup_samples_special_chars_input_hint =>
+      'Enter one or more characters, such as 、。';
+  String get game_lookup_samples_special_chars_add => 'Add special characters';
+  String get game_lookup_samples_special_chars_remove =>
+      'Remove special character';
+  String get game_lookup_samples_quoted_text_only_hint =>
+      'Filter speaker names and other characters outside 「…」.';
+  String get game_lookup_samples_quoted_text_only => 'Use text inside 「」 only';
 }

@@ -6,6 +6,14 @@ import 'package:fushi/src/utils/misc/ruby_markup.dart';
 
 enum TexthookerLineSource { websocket, engineHook, unknown }
 
+/// Hook script line breaks are part of the text, not printable characters.
+/// Normalize before ruby parsing so all downstream UTF-16 indexes share the
+/// same displayed text (including ruby spans and native hit testing).
+final RegExp _hookHtmlLineBreak = RegExp(r'<br\s*/?>', caseSensitive: false);
+
+String normalizeTexthookerLineBreaks(String text) =>
+    text.replaceAll(_hookHtmlLineBreak, '\n');
+
 /// 异常长/批量文本的渲染级别。正常台词保持逐字可点；较长文本改普通 Text；
 /// 明显历史/批量输出再折叠提示，避免一次 hook 造出成千上万个字级 widget。
 enum TexthookerLinePresentation { interactive, plain, collapsed }
@@ -878,7 +886,9 @@ class TexthookerService extends ChangeNotifier {
     // 制卡 sentence / 字数统计 / 跨线程折叠）拿到 `entry.text` 之前的唯一收口，
     // 剥在这里才能保证它们天然共用同一坐标系；放到显示层剥会让
     // `_onLookupText` 的 `entry.text != text` 守卫恒真，点字直接失效。
-    final RubyMarkupText parsed = parseRubyMarkup(line).trimmed();
+    final RubyMarkupText parsed = parseRubyMarkup(
+      normalizeTexthookerLineBreaks(line),
+    ).trimmed();
     final String trimmed = parsed.text;
     if (trimmed.isEmpty) return null;
     _lastFoldedLineIds.clear();

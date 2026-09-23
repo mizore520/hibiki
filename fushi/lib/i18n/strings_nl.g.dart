@@ -11853,12 +11853,12 @@ class _StringsNl extends _StringsEn {
   @override
   String get game_lookup_samples_save => 'Save draft';
   @override
-  String get game_lookup_samples_apply => 'Use draft for live calibration';
+  String get game_lookup_samples_apply => 'Game calibration';
   @override
-  String get game_lookup_samples_saved => 'Draft saved on this device';
+  String get game_lookup_samples_saved => 'Saved automatically on this device';
   @override
   String get game_lookup_samples_saved_hint =>
-      'Samples and screenshots stay on this device. Saving a draft does not enable lookup.';
+      'Samples and screenshots are saved automatically on this device.';
   @override
   String get game_lookup_samples_busy => 'Working…';
   @override
@@ -12021,7 +12021,7 @@ class _StringsNl extends _StringsEn {
       'This text contains a ruby format that is not supported yet. Capture a normal dialogue line instead.';
   @override
   String get game_lookup_samples_save_failed =>
-      'The draft could not be written to disk. The current samples remain in this window; try saving again.';
+      'Automatic save failed. The current samples remain in this window; try again.';
   @override
   String get game_lookup_samples_search_title =>
       'Recognition region (orange frame)';
@@ -12106,4 +12106,61 @@ class _StringsNl extends _StringsEn {
   @override
   String get game_lookup_samples_capture_surface_mapping =>
       'The game window and the upscaled image cannot be aligned right now, so a calibration screenshot cannot be captured.';
+  @override
+  String get game_lookup_samples_grid_edit_hint =>
+      'Drag the blue frame to move or resize it; drag the right edge of a cell to adjust its width. Normal cells stay synchronized and the frame expands from the right edge; special-character cells keep their own width.';
+  @override
+  String get game_lookup_samples_grid_columns => 'Cells per line';
+  @override
+  String get game_lookup_samples_grid_move => 'Move text grid';
+  @override
+  String get game_lookup_samples_grid_advance => 'Adjust cell width';
+  @override
+  String get game_lookup_samples_grid_height => 'Adjust cell height';
+  @override
+  String get game_lookup_samples_grid_line_spacing => 'Adjust line spacing';
+  @override
+  String get game_lookup_samples_grid_line_width =>
+      'Adjust cells per line (whole numbers)';
+  @override
+  String get game_lookup_samples_grid_start => 'Correct grid start';
+  @override
+  String get game_lookup_samples_grid_end => 'Correct grid end';
+  @override
+  String get game_lookup_samples_narration_hint =>
+      'Only calibrate narration separately when its text layout differs from dialogue. If they use the same layout, no narration calibration is needed.';
+  @override
+  String get game_lookup_samples_special_chars_title =>
+      'Special-character cell width';
+  @override
+  String get game_lookup_samples_special_chars_hint =>
+      'Set a separate width for punctuation that occupies a narrower or wider cell. Other characters keep the normal width.';
+  @override
+  String get game_lookup_samples_special_chars_input => 'Characters';
+  @override
+  String get game_lookup_samples_special_chars_input_hint =>
+      'Enter one or more characters, such as 、。';
+  @override
+  String get game_lookup_samples_special_chars_add => 'Add special characters';
+  @override
+  String get game_lookup_samples_special_chars_remove =>
+      'Remove special character';
+  @override
+  String get game_lookup_samples_continuation_title => '续行起点';
+  @override
+  String get game_lookup_samples_continuation_hint =>
+      '自定义第二行及后续行相对第一行的起点，数值以普通字格为单位；0 表示同一起点。以「或『开头的文本使用引号续行设置。';
+  @override
+  String get game_lookup_samples_continuation_normal => '普通文本续行';
+  @override
+  String get game_lookup_samples_continuation_quoted => '引号开头文本续行';
+  @override
+  String get game_lookup_samples_continuation_cells => '格';
+  @override
+  String get game_lookup_samples_continuation_label => '文本续行';
+  @override
+  String get game_lookup_samples_quoted_text_only_hint =>
+      'Filter speaker names and other characters outside 「…」.';
+  @override
+  String get game_lookup_samples_quoted_text_only => 'Use text inside 「」 only';
 }
