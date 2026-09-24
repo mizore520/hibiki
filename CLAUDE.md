@@ -2,6 +2,10 @@
 
 本文件维护技术、数据与平台约束；协作、验证范围和正式采用授权见 [个人工作规则](docs/personal/PERSONAL_FORK_RULES.md)。根入口和本文件不要求每次操作重读，专项文档按任务触发。
 
+Claude Code 通过下行自动导入个人工作规则（Codex 经 `AGENTS.override.md` 读取同一文件）：
+
+@docs/personal/PERSONAL_FORK_RULES.md
+
 ## 基本规则
 
 - 所有修改在独立 worktree 中完成，不覆盖用户或其他任务的改动。已授权的实现、定向验证和本地提交持续完成；合并/推送边界遵守个人规则。
