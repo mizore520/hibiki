@@ -1,4 +1,4 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)]
   [string] $RepoRoot
@@ -10,6 +10,8 @@ Set-StrictMode -Version Latest
 # Git emits literal path names as UTF-8. Windows PowerShell otherwise decodes
 # them with the console's legacy code page when launched from cmd.exe.
 [Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
+
+. (Join-Path $PSScriptRoot 'windows_build_inputs.ps1')
 
 function Invoke-GitText {
   param([Parameter(ValueFromRemainingArguments = $true)][string[]] $Arguments)
@@ -36,58 +38,37 @@ function Get-FileSha256Hex {
   finally { $stream.Dispose() }
 }
 
-function Test-IsBuildInputPath {
-  param([Parameter(Mandatory = $true)][string] $RelativePath)
+function Get-StringSha256Hex {
+  param([Parameter(Mandatory = $true)][AllowEmptyString()][string] $Text)
 
-  $normalized = ($RelativePath -replace '\\', '/')
-  while ($normalized.StartsWith('./', [StringComparison]::Ordinal)) {
-    $normalized = $normalized.Substring(2)
+  $bytes = [Text.Encoding]::UTF8.GetBytes($Text)
+  $hasher = [Security.Cryptography.SHA256]::Create()
+  try {
+    return (($hasher.ComputeHash($bytes) |
+      ForEach-Object { $_.ToString('x2') }) -join '')
   }
-  $normalized = $normalized.TrimStart('/')
-  if ([string]::IsNullOrWhiteSpace($normalized)) {
-    return $false
-  }
-
-  # The launcher fingerprint must describe inputs to the Windows bundle, not
-  # repository bookkeeping. In particular, bug-index regeneration used to
-  # make an unchanged EXE look stale because docs/BUGS.md and a new
-  # docs/bugs/*.md were included in the all-worktree diff. Keep this exclusion
-  # path-based and conservative: application/native/package/tool sources still
-  # participate in the fingerprint, including untracked files.
-  if ($normalized -match '^(?:docs/|\.codex-test/|\.worktrees/|\.github/)') {
-    return $false
-  }
-  # Codex scratch directories/scripts and loose compiler objects are local
-  # diagnostics, not Windows bundle inputs. They are intentionally not
-  # deleted or added to .gitignore here: excluding them at the fingerprint
-  # boundary keeps an existing user's files visible while preventing a probe
-  # or a temporary CMake backup from forcing a full app rebuild.
-  if ($normalized -match '(^|/)\.codex(?:-|/)') {
-    return $false
-  }
-  if ($normalized -match '\.obj$') {
-    return $false
-  }
-  if ($normalized -eq 'native/galgame_hook/tools/little_busters_memory_probe.cpp') {
-    return $false
-  }
-  if ($normalized -match '^(?:fushi/(?:test|integration_test)/|(?:test|integration_test)/|packages/[^/]+/test/|native(?:/[^/]+)*/tests/)') {
-    return $false
-  }
-  if ($normalized -match '^(?:fushi/docs/|packages/[^/]+/docs/|native(?:/[^/]+)*/docs/)') {
-    return $false
-  }
-  if ($normalized -match '^(?:启动Hibiki最新版\.bat|tool/get_windows_build_state\.ps1)$') {
-    return $false
-  }
-  if ($normalized -match '(^|/)(?:AGENTS|CLAUDE)(?:\.local)?\.md$') {
-    return $false
-  }
-  return $true
+  finally { $hasher.Dispose() }
 }
 
 $repo = (Resolve-Path -LiteralPath $RepoRoot).Path
-$head = (Invoke-GitText 'rev-parse' '--verify' 'HEAD').Trim()
+
+# Identify the committed sources by the content of their build inputs, not by
+# the commit id. A docs-only commit therefore keeps the stamp, and two
+# checkouts of identical sources (a verified candidate and the merge that
+# adopts it) produce the same state, which lets the launcher reuse a bundle
+# instead of compiling the same code twice.
+$treeText = Invoke-GitText '-c' 'core.quotePath=false' 'ls-tree' '-r' '--full-tree' 'HEAD'
+$treeEntries = [Collections.Generic.List[string]]::new()
+foreach ($line in ($treeText -split "`n")) {
+  $entry = $line.TrimEnd("`r")
+  $tab = $entry.IndexOf("`t")
+  if ($tab -lt 0) { continue }
+  if (Test-IsBuildInputPath -RelativePath $entry.Substring($tab + 1)) {
+    $treeEntries.Add($entry)
+  }
+}
+$treeDigest = Get-StringSha256Hex -Text ($treeEntries -join "`n")
+
 # Keep non-ASCII path names literal. Git's default octal quoting (for example
 # the Chinese launcher filename) would otherwise be fed back as a literal
 # path argument below and can become an invalid Windows path such as /345.
@@ -118,7 +99,8 @@ $untracked = @(
 [Array]::Sort($untracked, [StringComparer]::Ordinal)
 
 $manifest = [Text.StringBuilder]::new()
-[void] $manifest.Append("head`0$head`n")
+[void] $manifest.Append("format`0build-state-v2`n")
+[void] $manifest.Append("tree`0$treeDigest`n")
 [void] $manifest.Append("tracked`0$trackedPatch`n")
 foreach ($relative in $untracked) {
   $full = [IO.Path]::GetFullPath((Join-Path $repo ($relative -replace '/', '\')))
@@ -132,10 +114,4 @@ foreach ($relative in $untracked) {
   [void] $manifest.Append("`n")
 }
 
-$bytes = [Text.Encoding]::UTF8.GetBytes($manifest.ToString())
-$sha256 = [Security.Cryptography.SHA256]::Create()
-try {
-  (($sha256.ComputeHash($bytes) |
-    ForEach-Object { $_.ToString('x2') }) -join '')
-}
-finally { $sha256.Dispose() }
+Get-StringSha256Hex -Text $manifest.ToString()
