@@ -444,6 +444,11 @@ void main() {
       expect(normalized(await buildRootFor(other)), normalized(shared));
       await File('${other.path}/fushi/lib/app.dart').writeAsString('dirty\n');
       expect(normalized(await buildRootFor(other)), normalized(other.path));
+      expect(
+        File('${other.path}/$hookDownload').existsSync(),
+        isTrue,
+        reason: 'in-place builds are seeded too',
+      );
 
       // Edits inside the shared checkout block switching it.
       await File('$shared/fushi/lib/app.dart').writeAsString('edited\n');
