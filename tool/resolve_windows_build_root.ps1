@@ -132,4 +132,21 @@ else {
   }
 }
 
+# Native-asset build hooks cache their downloads under
+# .dart_tool/hooks_runner/shared/<package>/build/<versioned path>. The hook
+# process only receives a filtered environment (no proxy variables), so a
+# fresh checkout that has to download them can time out (pdfium_dart fetches
+# PDFium from GitHub with a 3-minute limit). Seed files the main checkout
+# already has; the paths carry the upstream version, and existing files are
+# never overwritten.
+foreach ($relative in @('.dart_tool\hooks_runner\shared', 'fushi\.dart_tool\hooks_runner\shared')) {
+  $source = Join-Path $mainRoot $relative
+  if (-not (Test-Path -LiteralPath $source -PathType Container)) { continue }
+  $target = Join-Path $buildRoot $relative
+  & robocopy $source $target /E /XC /XN /XO /XF '.lock' /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null
+  if ($LASTEXITCODE -ge 8) {
+    Write-Note "[BUILD-ROOT] Could not seed native-asset downloads from $source (robocopy $LASTEXITCODE); hooks may download them."
+  }
+}
+
 Write-Output $buildRoot

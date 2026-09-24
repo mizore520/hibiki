@@ -395,12 +395,32 @@ void main() {
         'HEAD',
       ]);
 
+      // Native-asset downloads the main checkout already has are seeded.
+      const String hookDownload =
+          '.dart_tool/hooks_runner/shared/pdfium_dart/build/'
+          'chromium_7811/win-x64/pdfium.dll';
+      const String hookExisting =
+          '.dart_tool/hooks_runner/shared/sqlite3/build/existing.dll';
+      for (final String relative in <String>[hookDownload, hookExisting]) {
+        final File file = File('${main.path}/$relative');
+        await file.parent.create(recursive: true);
+        await file.writeAsString('from main');
+      }
+
       final String shared = '${main.path}/.worktrees/_candidate-build';
       expect(normalized(await buildRootFor(candidate)), normalized(shared));
       expect(
         await git(Directory(shared), <String>['rev-parse', 'HEAD']),
         candidateHead,
       );
+      expect(File('$shared/$hookDownload').readAsStringSync(), 'from main');
+
+      // Files already present in the shared checkout are never overwritten.
+      File('$shared/$hookExisting').writeAsStringSync('shared copy');
+      await File('${main.path}/$hookDownload').writeAsString('newer main');
+      await buildRootFor(candidate);
+      expect(File('$shared/$hookExisting').readAsStringSync(), 'shared copy');
+      expect(File('$shared/$hookDownload').readAsStringSync(), 'from main');
 
       // A second candidate moves the same checkout.
       await git(main, <String>['commit', '-q', '--allow-empty', '-m', 'm']);
