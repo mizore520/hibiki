@@ -154,14 +154,21 @@ extension _VideoSubtitle on _VideoFushiPageState {
   /// 推与阅读器 / 词典页同款查词浮层），[graphemeIndex] 为列表项点击位置命中的 grapheme
   /// 下标（与底部字幕逐字查词同语义），[charRect] 为被点字符的屏幕矩形供浮层定位。
   /// 沉浸锁不允许查词时早返回（与字幕字符点击 [_handleSubtitleLookupTap] 同门控）。
+  ///
+  /// [fromHover]：本次查词是不是悬停发起的（浮层 barrier 的列表 hover 换词那条传 true）。
+  /// 它决定「指针离开后自动关栈续播」对本次会话是否生效，语义与
+  /// [_handleSubtitleLookupTap] 的同名参数一致。
   void _handleSubtitleListLookup(
     AudioCue cue,
     int graphemeIndex,
-    Rect charRect,
-  ) {
+    Rect charRect, {
+    bool fromHover = false,
+  }) {
     if (!_immersiveAllowsLookup) return;
     final String sentence = cue.text;
     if (sentence.trim().isEmpty) return;
+    _lookupOpenedByHover = fromHover;
+    if (!fromHover) _cancelHoverLeaveResume();
     // BUG-966：把被点的列表 cue 透传给查词，作为制卡音频锚点——列表里的句可能远离播放头
     // （点列表只暂停不 seek），不透传会回落到播放位置那句、截出别的句子的声音。
     unawaited(_lookupAt(sentence, graphemeIndex, charRect, overrideCue: cue));
@@ -1063,12 +1070,56 @@ extension _VideoSubtitle on _VideoFushiPageState {
       return series.isEmpty ? null : series;
     }
     if (_isRemote) {
-      final String title = (_title ?? widget.remoteInfo?.title ?? '').trim();
-      if (title.isEmpty) return null;
-      final String series = parseVideoFilename(title).series.trim();
-      return series.isEmpty ? title : series;
+      // BUG-2626：远端**合集**里的一集，标题是**分集**标题——在线视频源扩展给的就是
+      // `Episode 1`（`AnimeSourceVideoClient._infoFor` 用 `episode.name`），番名在合集
+      // 名里。之前一律拿标题去 [parseVideoFilename]，而它的裸集号规则只认两位数字，
+      // `Episode 1` 收敛不掉就被整串当成番名搜，Jimaku 必然空手；`Episode 12` 更糟，
+      // 会变成番名 `Episode`。
+      //
+      // 合集名只在来源声明「合集 = 作品」（[RemoteVideoCollectionIsWork]：在线源 /
+      // 媒体服务器）时参与；互联 host 的合集是用户库里的任意合集（「待看」），host
+      // 那边 `VideoBook.title` 本身就是番名，仍走标题路径。选词规则本身是纯函数
+      // [remoteSubtitleSeriesQuery]（可单测）。
+      //
+      // 标题用 [_effectiveRemoteInfo] 而非 `widget.remoteInfo`——后者是首播那一集，
+      // 换集后已陈旧。
+      return remoteSubtitleSeriesQuery(
+        collectionName: _effectiveRemoteInfo?.collection?.collectionName,
+        collectionIsWork: _effectiveRemoteClient is RemoteVideoCollectionIsWork,
+        title: _title ?? _effectiveRemoteInfo?.title,
+        parseFallbackSeries: (String title) => parseVideoFilename(title).series,
+      );
     }
     return null;
+  }
+
+  /// 字幕检索要预填的集号；算不出来返回 null（= 输入框留空 = 列出全部版本，旧行为）。
+  ///
+  /// BUG-2626：这个值此前**没有任何注入口**，两条来路都恒空——本地视频的集号被
+  /// [_jimakuQuery] 解析出来后整个丢掉，远端则连集号字段都没往下传。用户每次都得自己
+  /// 数到第几集再手填。
+  ///
+  /// 取值按可靠度降序：
+  /// 1. 远端来源自己报的集号（[RemoteVideoEpisodeNumber]，在线视频源扩展的
+  ///    `episode_number`）——来源权威，不猜。
+  /// 2. 本地文件名解析（[parseVideoFilename]，与剧集面板角标同一套规则）。
+  ///
+  /// 刻意**不**拿合集内的播放序（`sortIndex` / `_currentEpisode`）兜底：有特别篇/OVA
+  /// 或不从第 1 集开始的季度时它与集号不等，填错的集号比留空更坏——留空只是多几条
+  /// 候选，填错会把用户引到另一集的字幕上去。
+  int? _jimakuEpisodeNumber() {
+    if (_isRemote) {
+      final Object? client = _effectiveRemoteClient;
+      final String? id = _effectiveRemoteInfo?.id;
+      if (client is RemoteVideoEpisodeNumber && id != null) {
+        return client.remoteVideoEpisodeNumber(id);
+      }
+      return null;
+    }
+    final String? videoPath = _currentVideoPath;
+    if (videoPath == null || videoPath.trim().isEmpty) return null;
+    final int? episode = parseVideoFilename(p.basename(videoPath)).episode;
+    return episode != null && episode > 0 ? episode : null;
   }
 
   /// 组装在线字幕检索的**身份种子**：优先用刮削早就存下的外部 ID 与日文原名，而不是
@@ -1176,6 +1227,8 @@ extension _VideoSubtitle on _VideoFushiPageState {
         initialQuery: seed.primaryQuery.isEmpty ? query : seed.primaryQuery,
         seriesKey: query.trim().toLowerCase(),
         seed: seed,
+        // BUG-2626：预填当前集号（算不出就留空 = 列出全部，旧行为）。
+        episode: _jimakuEpisodeNumber(),
         // 本地视频才有指纹可算（远端流恒 null），OpenSubtitles 据此按文件哈希精确匹配。
         videoPath: _isRemote ? null : _currentVideoPath,
       ),
@@ -1335,9 +1388,16 @@ extension _VideoSubtitle on _VideoFushiPageState {
       );
       return;
     }
-    final RemoteVideoClient? client = widget.remoteClient;
-    final RemoteVideoInfo? info = widget.remoteInfo;
+    // 必须是**当前集**（合集连播切集后 widget.remoteInfo 仍是打开播放页时那一集）：
+    // 此前这里用 widget.remoteInfo，切到第 2 集再选内嵌轨，下载的是第 1 集的同号轨
+    // ——字幕与画面对不上，用户看到的就是「选了 srt 轨没反应 / 不对」。副字幕的同款
+    // 函数早已按当前集取，主字幕漏改。
+    final RemoteVideoClient? client = _effectiveRemoteClient;
+    final RemoteVideoInfo? info = _effectiveRemoteInfo;
     if (client == null || info == null) return;
+    final (_, int ep) = _remotePositionKeyForIndex(_currentEpisode);
+    final String label = _remoteEmbeddedSubtitleLabel(track);
+    final String source = _remoteEmbeddedSubtitleSource(track);
     final Directory temp = await getTemporaryDirectory();
     final File subtitle = File(
       p.join(
@@ -1348,18 +1408,91 @@ extension _VideoSubtitle on _VideoFushiPageState {
         ),
       ),
     );
-    await client.getRemoteVideoSubtitle(
-      info.id,
-      subtitle,
-      embeddedStreamIndex: track.streamIndex,
-    );
-    final String source = _remoteEmbeddedSubtitleSource(track);
+    // 下载失败（服务器 404 / 500、兼容层不支持字幕端点、断网）此前直接从
+    // `unawaited` 里逃逸：没有 OSD、没有日志，用户只看到「点了没反应」。
+    try {
+      await client.getRemoteVideoSubtitle(
+        info.id,
+        subtitle,
+        embeddedStreamIndex: track.streamIndex,
+        episodeIndex: ep,
+      );
+    } catch (e, stack) {
+      ErrorLogService.instance.log('VideoFushi.remoteSubtitle', e, stack);
+      if (!mounted) return;
+      // BUG-2590：服务器抽不出该轨（兼容层没有字幕端点 → 404）但直出的是原始
+      // 容器，这条轨就在 libmpv 正在 demux 的流里：交给 libmpv 自绘把字幕显示
+      // 出来；流不是原始容器 / 轨未就绪才按下载失败提示。
+      final bool shown = await _showRemoteEmbeddedTrackViaPlayer(
+        controller,
+        track,
+        source: source,
+        label: label,
+      );
+      if (shown || !mounted) return;
+      _showOsd(
+        t.video_subtitle_load_failed(label: label),
+        severity: ToastSeverity.error,
+      );
+      return;
+    }
+    if (!mounted) return;
     await _applyRemoteSubtitle(
       controller,
       subtitle.path,
       selectedSource: source,
-      label: _remoteEmbeddedSubtitleLabel(track),
+      label: label,
     );
+  }
+
+  // ── BUG-2590 远端直出容器的内嵌轨：libmpv 自绘回落 ──────────────────────────
+  //
+  // 媒体服务器兼容层（飞牛、「UHD Media Server」等自研 Emby 兼容层）没有
+  // `/Videos/…/Subtitles/…/Stream` 抽取端点（nginx 404），PlaybackInfo 也如实标
+  // `SupportsExternalStream=false`；但 DirectPlay 送来的就是原始 mkv，文本轨在流里。
+  // 把轨交给 libmpv 自绘：瞬时、零额外流量、不可查词（与图形轨 BUG-122 同一降级）。
+  // 有意**不**在后台用 ffmpeg 把流再读一遍抽成 cue：那等于把整集流量翻倍（用户
+  // 2026-09-19 拍板不要）。
+
+  /// 按流号找当前集的远端内嵌轨（恢复路径只持久化了 `embedded:<n>` 的 n）。
+  RemoteVideoEmbeddedSubtitleTrack? _remoteEmbeddedTrackByStreamIndex(
+    int streamIndex,
+  ) {
+    for (final RemoteVideoEmbeddedSubtitleTrack track
+        in _remoteEmbeddedSubtitleTracks) {
+      if (track.streamIndex == streamIndex) return track;
+    }
+    return null;
+  }
+
+  /// 把远端直出容器里的文本轨交给 libmpv 自绘（复用图形轨通路
+  /// [VideoPlayerController.selectEmbeddedGraphicTrack]：同样是「libmpv 渲染、无 cue、
+  /// 不可查词」的降级），选中即持久化选择、OSD 说明降级。
+  ///
+  /// 返回 false = 流不是原始容器（转码 HLS 不带轨）/ 轨未就绪 / 序号越界，调用方
+  /// 按下载失败提示。
+  Future<bool> _showRemoteEmbeddedTrackViaPlayer(
+    VideoPlayerController controller,
+    RemoteVideoEmbeddedSubtitleTrack track, {
+    required String source,
+    required String label,
+  }) async {
+    if (!_remoteStreamIsOriginalContainer) return false;
+    final int seq = _episodeLoadSeq;
+    final bool shown = await controller.selectEmbeddedGraphicTrack(
+      track.containerTrackOrdinal ?? track.streamIndex,
+    );
+    if (!shown || !mounted || seq != _episodeLoadSeq) return shown;
+    _rebuild(() => _currentSubtitleSource = source);
+    final (String subUid, int subEp) = _remotePositionKeyForIndex(
+      _currentEpisode,
+    );
+    unawaited(appModel.setRemoteSubtitleSource(subUid, subEp, source));
+    _showOsd(
+      t.video_subtitle_remote_player_rendered(label: label),
+      severity: ToastSeverity.warning,
+    );
+    return true;
   }
 
   /// 远端模式：关闭字幕（清空 cue overlay + 关 libmpv 字幕轨；仅内存，不写本地 DB）。
@@ -1465,17 +1598,29 @@ extension _VideoSubtitle on _VideoFushiPageState {
         ),
       ),
     );
-    await client.getRemoteVideoSubtitle(
-      info.id,
-      subtitle,
-      embeddedStreamIndex: track.streamIndex,
-      episodeIndex: ep,
-    );
+    final String label = _remoteEmbeddedSubtitleLabel(track);
+    try {
+      await client.getRemoteVideoSubtitle(
+        info.id,
+        subtitle,
+        embeddedStreamIndex: track.streamIndex,
+        episodeIndex: ep,
+      );
+    } catch (e, stack) {
+      ErrorLogService.instance.log('VideoFushi.remoteSubtitle', e, stack);
+      if (!mounted) return;
+      _showOsd(
+        t.video_subtitle_load_failed(label: label),
+        severity: ToastSeverity.error,
+      );
+      return;
+    }
+    if (!mounted) return;
     await _applyRemoteSecondarySubtitle(
       controller,
       subtitle.path,
       selectedSource: _remoteEmbeddedSubtitleSource(track),
-      label: _remoteEmbeddedSubtitleLabel(track),
+      label: label,
     );
   }
 

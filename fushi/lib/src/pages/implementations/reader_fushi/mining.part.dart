@@ -130,6 +130,14 @@ extension _ReaderMining on _ReaderFushiPageState {
           imageTier: appModel.miningImageQuality,
           audioTier: appModel.miningAudioQuality,
         );
+        // 倍速制卡：开关开着且有声书正以非 1× 播放时，句子音频按同一倍率变速不变调
+        // （`-af atempo`），卡片听感与阅读时一致。开关关 / 1× 时 tempo 为 null，走
+        // 与现状逐字节相同的参数表（[buildFfmpegAtempoFilter] 对 1.0 返回 null）。
+        // 读的是控制器当前实时倍速而非落库偏好：用户刚拨的倍速就是这次制卡的倍速。
+        final double? sentenceAudioTempo =
+            appModel.miningAudioFollowPlaybackSpeed
+                ? _audiobookController?.speed
+                : null;
         sentenceAudioPath = await TtsChannel.instance.extractAudioSegment(
           inputPath: inputFile.path,
           startMs: clip.startMs,
@@ -137,6 +145,7 @@ extension _ReaderMining on _ReaderFushiPageState {
           outputPath: outputPath,
           audioChannels: mediaCompression.audioChannels,
           audioBitrate: mediaCompression.audioBitrate,
+          tempo: sentenceAudioTempo,
           onFailure: (String summary) {
             sentenceAudioFailure = summary;
           },
@@ -496,7 +505,10 @@ extension _ReaderMining on _ReaderFushiPageState {
         // context.documentTitle 已过显示门面，这里**必须直取 raw**；收藏页
         // 渲染端按 bookKey 再过门面显示新名。
         documentTitle: _book?.title,
-        chapterLabel: _currentChapterLabelFor(section),
+        chapterLabel: _currentChapterLabelFor(
+          section,
+          charOffset: context.sourceLink?.charOffset ?? sentenceRange?.offset,
+        ),
         bookKey: widget.bookKey,
         sectionIndex: section,
         normCharOffset: context.sourceLink?.charOffset ?? sentenceRange?.offset,

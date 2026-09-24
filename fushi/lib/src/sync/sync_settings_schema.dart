@@ -11,6 +11,7 @@ import 'package:flutter_exit_app/flutter_exit_app.dart';
 import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/models/module_registry.dart';
 import 'package:fushi/src/pages/implementations/migration_page.dart';
+import 'package:fushi/src/pages/implementations/game_stream_join_page.dart';
 import 'package:fushi/src/pages/implementations/migration_import_page.dart';
 import 'package:fushi/src/migration/migration_target_channel.dart';
 import 'package:fushi/src/profile/profile_repository.dart';
@@ -538,6 +539,22 @@ SettingsDestination buildInterconnectDestination() {
             icon: Icons.devices_outlined,
             child: _buildInterconnectDevicesPage,
           ),
+          SettingsActionItem(
+            id: 'interconnect.game_stream',
+            title: t.game_stream_join,
+            icon: Icons.cast,
+            visible: (SettingsContext ctx) => !kIsWeb && Platform.isAndroid,
+            onTap: (SettingsContext ctx) => pushSettingsPage(
+              ctx,
+              (BuildContext context) => GameStreamJoinPage(
+                repository: SyncRepository(ctx.appModel.database),
+                readSettings: () =>
+                    ctx.appModel.prefsRepo.gameStreamVideoSettings,
+                writeSettings:
+                    ctx.appModel.prefsRepo.setGameStreamVideoSettings,
+              ),
+            ),
+          ),
         ],
       ),
       // BUG-988：上传到互联对端——互联通道专属的「本设备内容要不要上传给对端」分项开关，
@@ -846,6 +863,41 @@ SettingsDestination _buildInterconnectHostPage() {
             icon: Icons.router_outlined,
             builder: (SettingsContext ctx) =>
                 _ServerModeWidget(settingsContext: ctx),
+          ),
+          // 弱网转码：对端在外面用手机网络播本机的片子时，host 按对端选的画质档
+          // 切段转码成 HLS。默认开——它是纯按需的，对端不报画质档就一个 ffmpeg
+          // 都不会起，行为与从前逐字节相同；关掉它的意愿（「这台机器不想被烤」）
+          // 该由用户显式表达。判据另有 ffmpeg 可用性那道（移动端当 host 时能力位
+          // 恒 false，这个开关开着也不会转）。
+          SettingsSwitchItem(
+            id: 'interconnect.transcode_host',
+            title: t.interconnect_transcode_host_toggle,
+            subtitle: t.interconnect_transcode_host_toggle_desc,
+            icon: Icons.hd_outlined,
+            value: (SettingsContext ctx) =>
+                ctx.appModel.prefsRepo.interconnectTranscodeEnabled,
+            onChanged: (SettingsContext ctx, bool value) async {
+              await ctx.appModel.prefsRepo.setInterconnectTranscodeEnabled(
+                value,
+              );
+            },
+          ),
+          // 游戏串流「从库里启动」许可。默认关：开了就等于允许已配对设备在本机起
+          // 游戏进程，必须是主机主人的显式意愿；端点另有 HTTPS + 已配对 peer token
+          // 两道门。只在有本地游戏库的 Windows 上出现。
+          SettingsSwitchItem(
+            id: 'interconnect.game_stream_remote_launch',
+            title: t.game_stream_remote_launch_title,
+            subtitle: t.game_stream_remote_launch_hint,
+            icon: Icons.sports_esports_outlined,
+            visible: (SettingsContext ctx) => Platform.isWindows,
+            value: (SettingsContext ctx) =>
+                ctx.appModel.prefsRepo.gameStreamRemoteLaunchEnabled,
+            onChanged: (SettingsContext ctx, bool value) async {
+              await ctx.appModel.prefsRepo.setGameStreamRemoteLaunchEnabled(
+                value,
+              );
+            },
           ),
           // host 侧「配置文件」读写许可。默认关：入站写没有显式开关就是一条无 UI 的
           // 隐形通道（BUG-988 立过的规矩），出站同理——整份 Profile 比四个内容上传

@@ -745,7 +745,6 @@ class AnkiConnectRepository extends BaseAnkiRepository {
         // 制卡所在字符数标签（`chars_12345`）：小说阅读器按「自动添加制卡位置到标签」
         // 开关注入；其它来源与开关关闭时为 null，buildNoteTags 不追加。
         charPositionTag: context.charPositionTag,
-        sourceLink: context.sourceLink,
       );
 
       // `fields` only holds entries that rendered to a non-empty value; if it is
@@ -776,10 +775,15 @@ class AnkiConnectRepository extends BaseAnkiRepository {
           modelName: noteType.name,
           fields: outgoing,
           tags: tags,
-          allowDuplicate: settings.allowDupes,
+          // BUG-2605：用户在「卡已在 Anki」对话框里选了「新增为重复卡」时，这一次
+          // 请求放行重复（payload 位），不动全局「允许重复」偏好。
+          allowDuplicate: settings.allowDupes || payload.allowDuplicate,
           duplicateScope: settings.duplicateScope,
         );
         mediaTransaction.commit();
+        // 制卡成功即「主机可达」的铁证：撤掉查重冷却，否则紧跟着那次 duplicateCheck
+        // 会在冷却窗内被短路成 false，刚制好的卡画不出 ✓。
+        _noteAnkiConnectReachable();
         // BUG-1549：把实际落卡的牌组名带回成功结果——toast 只认它，不再事后从
         // settings.selectedDeckName 猜（旧存档只有 id 时那是 null → 空引号）。
         return MineOutcome.success(
@@ -789,6 +793,10 @@ class AnkiConnectRepository extends BaseAnkiRepository {
         );
       } on AnkiConnectDuplicateException {
         await mediaTransaction.rollback();
+        // 「这张卡已经有了」也是主机给的应答 —— 同样证明可达（见
+        // [_noteAnkiConnectReachable]）。此时 popup 会据 duplicate 位画 ✓，
+        // 紧随其后的任何查重也该问到真值而不是被冷却短路。
+        _noteAnkiConnectReachable();
         return const MineOutcome.duplicate();
       } on AnkiConnectCommitUnknownException catch (e, stack) {
         // Without a separate preflight query, a matching note after a lost
@@ -935,9 +943,15 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   }
 
   @override
-  Future<List<int>> findSourceNoteIds(String markerTag) async {
+  Future<List<int>> findSourceNoteCandidates(String sourceId) async {
     final AnkiSettings settings = await loadSettings();
-    return _serviceForSettings(settings).findNotesBySourceMarker(markerTag);
+    return _serviceForSettings(settings).findNotesBySourceId(sourceId);
+  }
+
+  @override
+  Future<Map<String, String>?> sourceNoteFields(int noteId) async {
+    final AnkiConnectService service = await _getService();
+    return service.notesInfo(noteId);
   }
 
   @override
@@ -954,12 +968,18 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   /// 复用 [_renderMinedFields]（与制卡同一字段渲染 + 媒体上传链路）从
   /// [rawPayloadJson] + [context] 生成 fields，再调 [AnkiConnectService.updateNoteFields]
   /// 按 id 覆盖。与 [mineEntry] 一样保证**返回** [MineOutcome] 而非抛出（供调用方
-  /// 统一 switch 处理 toast/UI）。不新增卡片、不改 tag、不查重（更新语义）。
+  /// 统一 switch 处理 toast/UI）。不新增卡片、不查重（更新语义）。
   ///
   /// BUG-858：覆盖=整体替换。keepEmpty 令 [_renderMinedFields] 保留所有映射字段
   /// （含渲染为空的），使 `updateNoteFields` 真正按 id 替换每个映射字段（句子瞬时选区
   /// 为空时随之清空，不再静默保留旧句）。仅当**所有**字段渲染皆空白时拒绝——那是
   /// 「没有任何字段映射命中」会清空整卡，才拒绝；部分字段有内容时照常整体替换。
+  ///
+  /// BUG-2606：整体替换要覆盖到 note 的**每个**字段，不只映射到的——先 `notesInfo`
+  /// 读现有字段名，没映射的写空串（[fieldsForOverwrite]），否则 Lapis 的
+  /// `SentenceFurigana` 这类别的工具填过、模板又优先读的字段会让卡面停在旧句子。
+  /// 同时把新制会打的那组标签（`fushi` / 分类 / 书名…）经 `addTags` 并进去——覆盖
+  /// 后的卡与新制的卡在字段与标签上都一样，用户原有的其它标签保留。
   @override
   Future<MineOutcome> updateMinedNote({
     required int noteId,
@@ -968,13 +988,39 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   }) async {
     try {
       final settings = await loadSettings();
+      final service = _serviceForSettings(settings);
+      // 现有字段名是整体替换的清单来源；读不到（已删 / 不可达）就没法保证
+      // 「每个字段都被写」，明确失败而不是退回只写映射字段的半覆盖。
+      final AnkiConnectNoteInfo? existing = await service.noteInfo(noteId);
+      if (existing == null) {
+        return MineOutcome.failure(
+          'AnkiConnect: the card to overwrite could not be read '
+          '(was it deleted in Anki?).',
+        );
+      }
+      // 候选是按首字段名搜出来的（[findMatchingNotes]），别的笔记类型只要首字段同名
+      // 也会命中；整卡覆盖会把它没映射的字段全部清空，所以类型不符必须拒绝。
+      final String? targetModel = settings.selectedNoteType?.name;
+      if (existing.modelName != null &&
+          targetModel != null &&
+          existing.modelName != targetModel) {
+        return MineOutcome.failure(
+          'AnkiConnect: the matching card uses note type '
+          '"${existing.modelName}", not "$targetModel" — refusing to '
+          'overwrite a card of a different note type.',
+        );
+      }
+      final Map<String, String> existingFields = existing.fields;
       if (context.sourceLink != null ||
           settings.fieldMappings.values.any(
             (String mapping) => mapping.contains('{source-link}'),
           )) {
-        context = await contextForExistingSourceNote(noteId, context);
+        context = await contextForExistingSourceNote(
+          noteId,
+          context,
+          existingFields: existingFields,
+        );
       }
-      final service = _serviceForSettings(settings);
 
       final AnkiMiningPayload payload;
       try {
@@ -1009,8 +1055,27 @@ class AnkiConnectRepository extends BaseAnkiRepository {
         );
       }
 
+      // BUG-2606：与 [mineEntry] 同一组标签、同一个 helper——覆盖后的卡不该比新制
+      // 的少 `fushi` / 分类 / 书名标签。
+      final List<String> tags = buildNoteTags(
+        settings.tags,
+        source: context.source,
+        includeHibiki: settings.tagIncludeHibiki,
+        includeCategory: settings.tagIncludeCategory,
+        titleTag: context.bookTitleTag,
+        collectionTag: context.collectionTag,
+        charPositionTag: context.charPositionTag,
+      );
+
       try {
-        await service.updateNoteFields(noteId, fields);
+        await service.updateNoteFields(
+          noteId,
+          BaseAnkiRepository.fieldsForOverwrite(
+            existingFieldNames: existingFields.keys,
+            rendered: fields,
+          ),
+        );
+        await service.addTags(noteId, tags);
         // TODO-779: 覆盖路径同样把音频下载失败原因带给成功 toast。
         // BUG-1549：覆写成功 toast 的牌组名与新制同源（按设置解析的目标牌组）。
         return MineOutcome.success(
@@ -1061,6 +1126,19 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   static final Map<_DuplicateCheckBatchKey, _PendingDuplicateCheckBatch>
       _pendingDuplicateCheckBatches =
       <_DuplicateCheckBatchKey, _PendingDuplicateCheckBatch>{};
+  /// AnkiConnect 刚刚给过应答 —— 这台主机此刻**可达**，撤掉查重的不可达冷却。
+  ///
+  /// 为什么必须在制卡链路上也撤：冷却是进程级的静态窗（30s），此前只有 [isDuplicate]
+  /// 自己拿到应答才清零。于是用户的这条原始路径会让 ✓ 不亮：Anki 没开着时查了个词
+  /// （冷却武装）→ 打开 Anki → 点「+」制卡 → `addNote` 成功（制卡链路不看冷却）→
+  /// popup.js 紧跟着回问 `duplicateCheck` → 还在冷却窗里 → 直接返回 false → 按钮停在
+  /// 「+」，用户以为没制上，很可能再制一张重复卡。
+  ///
+  /// 「制卡拿到了应答」和 [isDuplicate] 的成功分支是同一个事实（主机应答了），所以
+  /// 撤冷却的理由完全同源；`addNote` 明确回「这张卡已经有了」同样是应答，一并算。
+  static void _noteAnkiConnectReachable() {
+    _duplicateCheckUnreachableUntil = null;
+  }
 
   /// 测试用：清掉进程级查重冷却，避免用例间互相污染。
   @visibleForTesting
@@ -1153,7 +1231,7 @@ class AnkiConnectRepository extends BaseAnkiRepository {
   Future<bool> isDuplicate(String expression, String reading) async {
     if (expression.isEmpty) return false;
     // 不可达冷却窗内直接判「非重复」（BUG-1302）。查重仍是渲染路径上**逐词条**发起的
-    // 装饰性探测，但 BUG-2264 已把同一波桥调用汇成一次 canAddNotes。冷却仍不可少：
+    // 装饰性探测，但 BUG-2264 已把同一波桥调用汇成一次请求。冷却仍不可少：
     // AnkiConnect 被防火墙丢包 / VPN 断开 / 配成离线远端时，若没有它，每次新弹窗
     // 都会重新付一次完整连接超时（5s，BUG-665 已给连接阶段单独设限）。
     //
@@ -1191,13 +1269,23 @@ class AnkiConnectRepository extends BaseAnkiRepository {
       try {
         // BUG-1915：与 addNote 物理同源的判据
         // （见 [AnkiConnectService.isDuplicateForAdd]）。
-        duplicate = await service.isDuplicateForAdd(
-          deckName: deck.name,
-          modelName: noteType.name,
-          firstFieldName: noteType.fields.first,
-          firstFieldValue: expression,
-          scope: settings.duplicateScope,
-        );
+        duplicate = service.runtimeType == AnkiConnectService
+            ? await _enqueueDuplicateCheck(
+                service: service,
+                settings: settings,
+                deckName: deck.name,
+                modelName: noteType.name,
+                fieldName: noteType.fields.first,
+                expression: expression,
+                fixedService: _fixedService,
+              )
+            : await service.isDuplicateForAdd(
+                deckName: deck.name,
+                modelName: noteType.name,
+                firstFieldName: noteType.fields.first,
+                firstFieldValue: expression,
+                scope: settings.duplicateScope,
+              );
       } on AnkiConnectException catch (e) {
         // 老版 AnkiConnect 没有 `canAddNotesWithErrorDetail`。只有这一种错误才退回
         // 按字段名查的旧判据——它在「卡组里只有一种笔记类型」时给的是对的答案，正是

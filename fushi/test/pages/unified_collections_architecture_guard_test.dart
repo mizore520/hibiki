@@ -312,8 +312,10 @@ void main() {
     );
     expect(detail.existsSync(), isTrue);
     final String detailSrc = detail.readAsStringSync();
+    // 集缩略图的视觉住在共享布局 `collectionEpisodeThumb`（本地系列 + 媒体服务器
+    // 详情页同一套）；页面只负责把**该集自己**的封面喂进去。
     expect(
-      detailSrc.contains('_episodeThumb'),
+      containsCodeLine(detailSrc, 'collectionEpisodeThumb('),
       isTrue,
       reason: 'playlist 详情页剧集行必须带每集封面缩略图',
     );
@@ -327,14 +329,25 @@ void main() {
     // BUG-1704 把成员抽象成 CollectionEpisodeSlot（本地行 + 只在对端的集同槽），
     // 封面解析随之从 _episodeThumb 内联挪进 _episodeCover。契约一点没变——缩略图
     // 仍必须取**该集自己**的封面；锚点跟着契约多走一层间接，判据本身不放宽。
-    final String thumbBody = methodBody(detailSrc, 'Widget _episodeThumb(');
+    // 视觉搬进共享布局后，「按该集自身解析封面」的契约锁在页面的调用点：喂给
+    // collectionEpisodeThumb 的 provider 必须来自 _episodeCover(该集)。
     expect(
-      containsCodeLine(thumbBody, '_episodeCover(slot)'),
+      containsCodeLine(
+        detailSrc,
+        'collectionEpisodeThumb(context, _episodeCover(',
+      ),
       isTrue,
       reason: '缩略图必须按该集自身解析封面（_episodeCover），不得直接吃合集封面',
     );
+    final String layoutSrc = File(
+      'lib/src/media/collections/collection_detail_layout.dart',
+    ).readAsStringSync();
+    final String thumbBody = methodBody(
+      layoutSrc,
+      'Widget collectionEpisodeThumb(',
+    );
     expect(
-      containsCodeLine(thumbBody, '_thumbPlaceholder('),
+      containsCodeLine(thumbBody, 'collectionEpisodeThumbPlaceholder('),
       isTrue,
       reason: '无封面 / 读取失败必须退占位图，不得留空或抛',
     );
@@ -659,17 +672,26 @@ void main() {
     // 加载时经 RemoteCollectionAdoptionService 把 DTO 的主合集归属写进本地合集表
     // （DAO 在事务里裁决墓碑 / 自然键 / 排序），渲染只读 _primaryCollectionByEntry。
     // 退回渲染期解析（撤收养、或重新出现 _resolveLocalCollectionId）即转红。
-    expect(homeSrc.contains('adoption.adoptVideo(video)'), isTrue,
-        reason: '视频远端占位的合集归属须在目录加载时持久化收养');
+    expect(
+      homeSrc.contains('adoption.adoptVideo(video)'),
+      isTrue,
+      reason: '视频远端占位的合集归属须在目录加载时持久化收养',
+    );
     // 书架的远端清单加载在 reader_history/remote.part.dart（主体的 part）。
     final String historyRemoteSrc = File(
       'lib/src/pages/implementations/reader_history/remote.part.dart',
     ).readAsStringSync();
-    expect(historyRemoteSrc.contains('adoption.adoptBooks('), isTrue,
-        reason: '书远端占位的合集归属须在目录加载时持久化收养（整份清单一次）');
+    expect(
+      historyRemoteSrc.contains('adoption.adoptBooks('),
+      isTrue,
+      reason: '书远端占位的合集归属须在目录加载时持久化收养（整份清单一次）',
+    );
     for (final String src in <String>[homeSrc, historySrc]) {
-      expect(src.contains('_resolveLocalCollectionId('), isFalse,
-          reason: '渲染期按 (name, type) 解析本地合集 id 的路线已废，归属只认 DAO 裁决');
+      expect(
+        src.contains('_resolveLocalCollectionId('),
+        isFalse,
+        reason: '渲染期按 (name, type) 解析本地合集 id 的路线已废，归属只认 DAO 裁决',
+      );
     }
     // 视频侧用 _VideoSlot union 把远端占位与本地成员折进同一合集行。
     expect(

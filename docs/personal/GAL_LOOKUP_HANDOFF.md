@@ -1,10 +1,17 @@
 # 内嵌查词当前交接
 
-更新：2026-09-22，独立测试程序 v24 算法已迁回，源码候选待用户编译与游戏验收。完整历史见 [样本记录](LOOKUP_CALIBRATION_SAMPLES.md)。
+更新：2026-09-24，作者源码已整合进原候选；独立测试程序 v24 算法此前已迁回，仍待用户编译与游戏验收。完整历史见 [样本记录](LOOKUP_CALIBRATION_SAMPLES.md)。
+
+## 2026-09-24 作者更新（本地候选）
+
+- 本工作区在原候选 `69d2d599d3288f9acbb0ce873da56186c37c2c6b` 上整合作者 `upstream/develop` 固定提交 `3d5d1608ed24c12ed74d869067e51ed24f42a578`；合并前检查点为 `codex/checkpoint/lookup-calibration-before-upstream-20260924`。只更新此候选，不改 `custom`，不推送。
+- 保留个人查词校准、Hook、漫画 OCR 和 Anki 批量查重，并接入作者的数据库 v112、视频及游戏流能力。Anki 批量查重采用作者的 `canAddNotesWithErrorDetail` 判据，只把明确重复的错误当作已制卡。
+- 已通过应用、core、Anki 的静态分析，Anki 定向 110 项；x64 / Win32 原生 IPC 契约、loopback 策略测试及 Hook 构建通过。engine 包静态分析仍有 17 条原有 lint，均非编译错误。应用数据库迁移、漫画、视频、Hook、查词校准定向 405 项通过（`.codex-test/merge-final-flutter-tests.log`）；之前 54 张样本对照是在作者更新之前完成，不当作新提交的实机验收。
+- 尚未完整构建应用 EXE、未打开真实游戏，也未触碰本机数据库。旧 v104 EXE 仍不能打开 v112 数据库；新源码需完整构建后才能使用。本节记录本地候选，不表示正式线已采用。
 
 ## 基线与范围
 
-- 唯一工作区 `.worktrees/lookup-calibration-samples-20260917`，唯一分支 `codex/lookup-calibration-samples-20260917`，本轮基线 `22bab6ce6c`。本轮候选由当前提交定位；不新建工作区，不改 custom，不合并、推送或提 PR。
+- 唯一工作区 `.worktrees/lookup-calibration-samples-20260917`，唯一分支 `codex/lookup-calibration-samples-20260917`，查词移植起点 `22bab6ce6c`。本轮候选由当前提交定位；不新建工作区，不改 custom，不合入正式线、推送或提 PR。
 - 用户授权等价迁回调好的 OCR + 字格算法；完整 Windows 构建和游戏操作由用户负责，禁止控制电脑。
 - 冻结版本 `anchors-v24-uniform-grid-virtual-normal-boundary`；源 SHA-256 `304C3F1FE9FFCA830294D2C526F93232288AC54F8FF6B2744BE0049F07E092A7`，已重新核验一致。本机来源与重放脚本在 `.codex-test/v24-parity/`；不提交游戏图片、私人路径或台词归档。
 - Hook 文本权威，OCR 提供位置证据。最终格宽、格高统一，续行起点一致，首行与续行差 -1/0/+1 格；不再推断特殊字符宽度。旧档案兼容读取，不自动重写。

@@ -183,32 +183,114 @@ void main() {
     ]);
     await provider.fetchSnapshot();
     expect(requests, 4);
-    expect(waits, List<Duration>.filled(3, const Duration(seconds: 1)));
+    // BUG-2595 起共享 gate 间隔 1.1 s（≈54/min，天然满足 Jikan 3/s + 60/min）。
+    expect(
+      waits,
+      List<Duration>.filled(3, const Duration(milliseconds: 1100)),
+    );
   });
 
-  for (final int status in <int>[403, 429, 503]) {
-    test('HTTP $status 明确失败且不绕过 gate 自动重试', () async {
-      int requests = 0;
-      final MalMangaDiscoveryProvider provider = providerWith((
-        http.Request request,
-      ) async {
-        requests++;
-        return http.Response('{"message":"upstream unavailable"}', status);
-      });
-      addTearDown(provider.close);
-      await expectLater(
-        provider.fetchSnapshot(),
-        throwsA(
-          isA<VideoMetadataNetworkException>().having(
-            (VideoMetadataNetworkException error) => error.statusCode,
-            'statusCode',
-            status,
-          ),
-        ),
-      );
-      expect(requests, 1);
+  test('HTTP 403 明确失败且不重试（4xx 不是瞬时故障）', () async {
+    int requests = 0;
+    final MalMangaDiscoveryProvider provider = providerWith((
+      http.Request request,
+    ) async {
+      requests++;
+      return http.Response('{"message":"forbidden"}', 403);
     });
-  }
+    addTearDown(provider.close);
+    await expectLater(
+      provider.fetchSnapshot(),
+      throwsA(
+        isA<VideoMetadataNetworkException>().having(
+          (VideoMetadataNetworkException error) => error.statusCode,
+          'statusCode',
+          403,
+        ),
+      ),
+    );
+    expect(requests, 1);
+  });
+
+  test('HTTP 503 由共享 gate 有界重试（2 s / 4 s 退避），用尽后仍明确失败', () async {
+    // BUG-2612：Jikan 整批 5xx 由共享 gate 就地重发（默认最多 2 次）；漫画发现与
+    // 视频刮削共用这把 gate，语义一致。退避走注入的 sleep 而不是真等。
+    int requests = 0;
+    final List<Duration> waits = <Duration>[];
+    DateTime now = DateTime(2026);
+    final MalMangaDiscoveryProvider provider = MalMangaDiscoveryProvider(
+      client: MockClient((http.Request request) async {
+        requests++;
+        return http.Response('{"message":"upstream unavailable"}', 503);
+      }),
+      requestGate: MalVideoMetadataRequestGate(
+        interval: Duration.zero,
+        now: () => now,
+        sleep: (Duration duration) async {
+          waits.add(duration);
+          now = now.add(duration);
+        },
+      ),
+    );
+    addTearDown(provider.close);
+    await expectLater(
+      provider.fetchSnapshot(),
+      throwsA(
+        isA<VideoMetadataNetworkException>().having(
+          (VideoMetadataNetworkException error) => error.statusCode,
+          'statusCode',
+          503,
+        ),
+      ),
+    );
+    expect(requests, 3, reason: '首发 + 2 次有界重试');
+    expect(
+      waits,
+      containsAllInOrder(<Duration>[
+        const Duration(seconds: 2),
+        const Duration(seconds: 4),
+      ]),
+      reason: '退避 transientBackoff × 第几次',
+    );
+  });
+
+  test('HTTP 429 按 Retry-After 有界重试（gate 级），用尽后仍明确失败', () async {
+    // BUG-2595：429 由共享 gate 就地重发同一请求（默认最多 2 次），冷却走注入的
+    // sleep 而不是真等；漫画发现与视频刮削共用这把 gate，语义一致。
+    int requests = 0;
+    final List<Duration> waits = <Duration>[];
+    DateTime now = DateTime(2026);
+    final MalMangaDiscoveryProvider provider = MalMangaDiscoveryProvider(
+      client: MockClient((http.Request request) async {
+        requests++;
+        return http.Response('limited', 429,
+            headers: <String, String>{'retry-after': '7'});
+      }),
+      requestGate: MalVideoMetadataRequestGate(
+        interval: Duration.zero,
+        now: () => now,
+        sleep: (Duration duration) async {
+          waits.add(duration);
+          now = now.add(duration);
+        },
+      ),
+    );
+    addTearDown(provider.close);
+    await expectLater(
+      provider.fetchSnapshot(),
+      throwsA(
+        isA<VideoMetadataNetworkException>().having(
+          (VideoMetadataNetworkException error) => error.statusCode,
+          'statusCode',
+          429,
+        ),
+      ),
+    );
+    expect(requests, 3, reason: '首发 + 2 次有界重试');
+    expect(waits.where((Duration d) => d >= const Duration(seconds: 7)).length,
+        greaterThanOrEqualTo(2),
+        reason: '每次重试前都等够 Retry-After');
+  });
 
   test('错误 JSON 不能伪装成空发现页', () async {
     final MalMangaDiscoveryProvider provider = providerWith(

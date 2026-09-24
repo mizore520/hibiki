@@ -9,7 +9,8 @@ import 'package:fushi_core/fushi_core.dart' show kStatSourceBook;
 import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'package:fushi/media.dart';
 import 'package:fushi/pages.dart';
-import 'package:fushi_anki/fushi_anki.dart' show AnkiOpenWordOutcome;
+import 'package:fushi_anki/fushi_anki.dart'
+    show AnkiMiningPayload, AnkiOpenWordOutcome;
 import 'package:fushi/src/anki/anki_view_model.dart';
 import 'package:fushi/src/anki/anki_mined_card_action_sheet.dart';
 import 'package:fushi/src/lookup/effective_lookup_size.dart';
@@ -162,6 +163,18 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
   /// popup itself keeps its native scrolling behavior.
   @protected
   void onDismissBarrierPointerSignal(PointerSignalEvent event) {}
+
+  /// 弹窗开着时「沿此轴继续滚动正文 = 关弹窗」（barrier 上的触摸/触控板拖动）。
+  /// null = 不启用（默认；只有阅读器滚动模式开了对应偏好才返回轴）。
+  @protected
+  Axis? get dismissBarrierScrollAxis => null;
+
+  /// [dismissBarrierScrollAxis] 上的拖动越过 slop 时回调（见
+  /// [LookupDismissBarrier.onScrollDismiss]）。默认直接清整栈。
+  @protected
+  void onDismissBarrierScrollDrag(int pointer, Offset delta) {
+    clearDictionaryResult();
+  }
 
   /// 本页面的快捷键作用域。非空即启用「弹窗内输入交回宿主」的桥
   /// （[dictionaryPopupForwardedActions] 决定交回哪些）。
@@ -786,6 +799,8 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
                         // opaque，页面根 Listener 收不到）——见该钩子的文档。
                         onNonPrimaryButtonDown:
                             onDismissBarrierNonPrimaryButton,
+                        scrollDismissAxis: dismissBarrierScrollAxis,
+                        onScrollDismiss: onDismissBarrierScrollDrag,
                       ),
                     ),
                   if (showLoadingPlaceholder) _buildLoadingPlaceholder(screen),
@@ -932,9 +947,16 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
         // 也显示，不卡死「点查词什么都不出」）。
         onRenderError: () => _onPopupLayerRendered(index, item),
         inputSpec: dictionaryPopupInputSpec,
+        // BUG-2627：与 [DictionaryPageMixin] 同一道门——对话框期间（选择句子上下文 /
+        // 已制卡动作 / 打开卡片）弹窗停靠屏外但仍挂载，它的 DOM 还可能拿着系统键盘
+        // 焦点，一个被绑的键就能把对话框背后的整条浮层栈关掉。与 `visible:` 的
+        // `_popupHidingDialogDepth == 0` 共用判据。
         onHostInputToken: dictionaryPopupInputScope == null
             ? null
-            : onDictionaryPopupInputToken,
+            : (String token) {
+                if (_popupHidingDialogDepth != 0) return;
+                onDictionaryPopupInputToken(token);
+              },
         headerWidget: index == 0 ? buildPopupAudioControls() : null,
         overlayWidget: isTop ? buildDictionaryLoading() : null,
         onTextSelected: (text, localRect) async {
@@ -1112,8 +1134,17 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
           previewAudio: supportsSentenceAudioPreview ? onPreviewSentenceAudio : null,
           stopAudioPreview:
               supportsSentenceAudioPreview ? onStopSentenceAudioPreview : null,
-          onConfirm: () =>
-              webViewKey.currentState?.mineEntryByIndex(entryIndex),
+          // BUG-2627：回传「有没有真的点到制卡按钮」，对话框据此提示，不再静默关窗。
+          onConfirm: () async =>
+              await webViewKey.currentState?.mineEntryByIndex(
+                    entryIndex,
+                    // BUG-2634 第二轮：阅读器的 onMineFromPopup 经制卡串行队列
+                    // 入队（TODO-644 / BUG-357），草稿要等前一次制卡整段跑完才被
+                    // 读走——提前关窗会让弹窗关栈把草稿清掉，排到的任务用空草稿
+                    // 合成。这条车道退回「等落地」，只是不会再因为宿主慢而误报。
+                    releaseWhenPayloadConsumed: false,
+                  ) ??
+                  false,
         ),
       ),
     );
@@ -1439,8 +1470,13 @@ abstract class BaseSourcePageState<T extends BaseSourcePage>
       repo: repo,
       expression: expression,
       reading: reading,
+      // BUG-2605：走到 mineNew 的三条路（点「新增为重复卡」/ AnkiMobile「再加一张」/
+      // 反查为空后重制）用户都已被告知「这张卡已有」并选择继续，请求必须带上
+      // allowDuplicate，否则两后端的 addNote 仍按全局 allowDupes（默认关）判重拒掉。
       mineNew: () async {
-        final res = await onMineFromPopup(fields);
+        final res = await onMineFromPopup(
+          AnkiMiningPayload.withAllowDuplicate(fields),
+        );
         return (ankiConnect: res.ankiConnect, noteId: res.noteId);
       },
       overwrite: (noteId) async {

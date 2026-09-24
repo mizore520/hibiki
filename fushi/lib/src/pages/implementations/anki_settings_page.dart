@@ -9,6 +9,7 @@ import 'package:fushi/utils.dart';
 import 'package:fushi_anki/fushi_anki.dart';
 import 'package:fushi_dictionary/fushi_dictionary.dart'
     show Dictionary, JapaneseLanguage;
+import 'package:fushi/src/ai/ai_feature.dart';
 import 'package:fushi/src/anki/anki_deck_reposition_dialogs.dart';
 import 'package:fushi/src/anki/anki_media_dedup_dialogs.dart';
 import 'package:fushi/src/anki/lapis_backup_retention.dart';
@@ -22,6 +23,7 @@ import 'package:fushi/src/media/audiobook/mining_audio_clip.dart'
     show kMiningPadMaxMs;
 import 'package:fushi_engine/mining/immersion_mining_request.dart'
     show MiningAnimatedFormat, MiningStillFormat, VideoMiningImageMode;
+import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/platform/platform_providers.dart';
 import 'package:fushi/src/platform/platform_services.dart';
 import 'package:fushi/src/profile/profile_selector.dart';
@@ -612,6 +614,21 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
             onChanged: appModel.setMiningAudioTailPadMs,
           ),
         ),
+        // 有声书倍速制卡：句子音频跟随播放倍速（变速不变调）。只有小说有声书链读它，
+        // 但与其余句子音频设置同区——用户找「卡片音频长什么样」只会来这里找。
+        SettingsSearchTarget(
+          id: 'card_creation.anki.mining_audio_follow_playback_speed',
+          child: AdaptiveSettingsSwitchRow(
+            title: t.mining_audio_follow_playback_speed,
+            subtitle: t.mining_audio_follow_playback_speed_hint,
+            icon: Icons.speed_outlined,
+            value: appModel.miningAudioFollowPlaybackSpeed,
+            onChanged: (bool value) {
+              appModel.toggleMiningAudioFollowPlaybackSpeed();
+              setState(() {});
+            },
+          ),
+        ),
         SettingsSearchTarget(
           id: 'card_creation.anki.video_mining_image_mode',
           child: _buildVideoMiningImageModePicker(),
@@ -1137,6 +1154,17 @@ class _AnkiSettingsBodyState extends ConsumerState<AnkiSettingsBody> {
                   ? null
                   : (String field, String currentValue) =>
                         _pickHandlebar(field, currentValue),
+              // 「让 AI 帮忙」的提供商按功能指派解析；编辑器本身零 Riverpod 依赖，
+              // 所以在这里读偏好再传进去。
+              resolveAiProvider: () {
+                final PreferencesRepository prefs = ref
+                    .read(appProvider)
+                    .prefsRepo;
+                return prefs.aiFeatureAssignments.resolve(
+                  AiFeature.lapisStyle,
+                  prefs.aiProviders,
+                );
+              },
             ),
           ),
         );

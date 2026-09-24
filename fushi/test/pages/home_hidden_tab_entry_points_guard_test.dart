@@ -182,7 +182,7 @@ void main() {
       expect(
         source
             .substring(handler, handlerEnd)
-            .contains('_revealDictionary(carryingPendingLookup: true)'),
+            .contains('_revealDictionary(carryingPendingLookup: true'),
         isTrue,
         reason:
             'homeDictionaryTabRequest（桌面取词 / 悬浮字幕点词 / 扩展回流）必须走 '

@@ -193,7 +193,7 @@ try {
   Get-ChildItem -LiteralPath $vgmStage -Force | ForEach-Object {
     Copy-Item -LiteralPath $_.FullName -Destination $runtimePath -Recurse -Force
   }
-  Copy-Item -LiteralPath $uabeaClassdata -Destination $classdata -Force
+  Copy-Item -LiteralPath $uabeaClassdata -Destination (Join-Path $runtimePath 'classdata.tpk') -Force
 }
 finally {
   if (Test-Path -LiteralPath $tempRoot) {

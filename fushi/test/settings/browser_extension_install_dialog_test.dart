@@ -200,6 +200,7 @@ void main() {
           isWindows: false,
           isDesktop: false,
           isIOS: false,
+          isAndroid: false,
         ),
         isFalse,
         reason: '手机浏览器装不了未解压扩展，非桌面必须没有这个模块',
@@ -209,6 +210,7 @@ void main() {
           isWindows: true,
           isDesktop: true,
           isIOS: false,
+          isAndroid: false,
         ),
         isTrue,
       );
@@ -218,6 +220,7 @@ void main() {
           isWindows: false,
           isDesktop: false,
           isIOS: false,
+          isAndroid: false,
         ).enabled,
         isNot(contains(ModuleId.browserExtension)),
       );
@@ -226,6 +229,7 @@ void main() {
           isWindows: false,
           isDesktop: true,
           isIOS: false,
+          isAndroid: false,
         ).enabled,
         contains(ModuleId.browserExtension),
       );

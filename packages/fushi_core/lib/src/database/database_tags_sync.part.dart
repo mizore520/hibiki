@@ -505,6 +505,100 @@ mixin _FushiDbTagsSync on _$FushiDatabase, _FushiDbInfra {
     return row?.id;
   }
 
+  /// Sparse per-book reader preferences, including reset tombstones for sync.
+  Future<MangaReaderOverrideRow?> getMangaReaderOverride(String bookUid) =>
+      (select(mangaReaderOverrides)..where((t) => t.bookUid.equals(bookUid)))
+          .getSingleOrNull();
+
+  Future<List<MangaReaderOverrideRow>> getAllMangaReaderOverrides() =>
+      select(mangaReaderOverrides).get();
+
+  Stream<MangaReaderOverrideRow?> watchMangaReaderOverride(String bookUid) =>
+      (select(mangaReaderOverrides)..where((t) => t.bookUid.equals(bookUid)))
+          .watchSingleOrNull();
+
+  /// 只改其中**几个键**，其余覆盖原样保留。
+  ///
+  /// [setMangaReaderOverride] 是**整行替换**语义（给设置面板用：它每次传的是合并
+  /// 后的完整 map）。顶栏那种「只切阅读模式」的局部改动必须走这条，否则用户在面板
+  /// 里调好的 scaleType / cropBorders / tapZones / background / zoomStart 等会被一
+  /// 次点击整片抹掉——而且这行带着新的 `updatedAt`，会作为权威全量快照经 sidecar 与
+  /// 互联清单发出，LWW 把**对端**的完整覆盖也一并擦掉。
+  Future<void> patchMangaReaderOverride(
+    String bookUid,
+    Map<String, Object?> patch,
+  ) async {
+    final MangaReaderOverrideRow? previous =
+        await getMangaReaderOverride(bookUid);
+    final Map<String, Object?> merged = <String, Object?>{};
+    if (previous != null && !previous.deleted) {
+      try {
+        final Object? decoded = jsonDecode(previous.overridesJson);
+        if (decoded is Map) merged.addAll(decoded.cast<String, Object?>());
+      } on FormatException {
+        // 坏 JSON 当没有覆盖：补丁照常落地，坏值不再传播。
+      }
+    }
+    merged.addAll(patch);
+    await setMangaReaderOverride(bookUid, merged);
+  }
+
+  Future<void> setMangaReaderOverride(
+    String bookUid,
+    Map<String, Object?> overrides,
+  ) => transaction(() async {
+    if (bookUid.isEmpty ||
+        await (select(epubBooks)..where((t) => t.uid.equals(bookUid)))
+                .getSingleOrNull() ==
+            null) {
+      throw ArgumentError.value(bookUid, 'bookUid', 'Unknown book');
+    }
+    final Map<String, Object?> sparse = Map<String, Object?>.from(overrides)
+      ..removeWhere((String key, Object? value) => value == null);
+    final MangaReaderOverrideRow? previous =
+        await getMangaReaderOverride(bookUid);
+    final int now = DateTime.now().millisecondsSinceEpoch;
+    await into(mangaReaderOverrides).insertOnConflictUpdate(
+      MangaReaderOverrideRow(
+        bookUid: bookUid,
+        overridesJson: jsonEncode(sparse),
+        updatedAt: previous != null && previous.updatedAt >= now
+            ? previous.updatedAt + 1
+            : now,
+        deleted: sparse.isEmpty,
+      ),
+    );
+  });
+
+  Future<bool> mergeMangaReaderOverride(
+    String bookUid, {
+    required Map<String, Object?> overrides,
+    required int updatedAt,
+    required bool deleted,
+  }) => transaction(() async {
+    if (bookUid.isEmpty ||
+        updatedAt < 0 ||
+        await (select(epubBooks)..where((t) => t.uid.equals(bookUid)))
+                .getSingleOrNull() ==
+            null) {
+      return false;
+    }
+    final MangaReaderOverrideRow? current =
+        await getMangaReaderOverride(bookUid);
+    if (current != null && current.updatedAt >= updatedAt) return false;
+    final Map<String, Object?> sparse = Map<String, Object?>.from(overrides)
+      ..removeWhere((String key, Object? value) => value == null);
+    await into(mangaReaderOverrides).insertOnConflictUpdate(
+      MangaReaderOverrideRow(
+        bookUid: bookUid,
+        overridesJson: jsonEncode(deleted ? <String, Object?>{} : sparse),
+        updatedAt: updatedAt,
+        deleted: deleted || sparse.isEmpty,
+      ),
+    );
+    return true;
+  });
+
   // ── per-book 自定义 CSS 跨端同步（LWW by updatedAt）──────────────────────────
 
   /// 记录/刷新书 [bookUid]（v82 起 = 书稳定 uid）的 CSS 文件 [relativePath] 自定义内容（保存时调，updatedAt=now）。
@@ -563,6 +657,15 @@ mixin _FushiDbTagsSync on _$FushiDatabase, _FushiDbInfra {
       }
     });
   }
+
+  /// 撤销书 [bookUid] 图片 [imageKey] 的揭开状态（插图册长按「恢复遮罩」）。删行而不是
+  /// 写一条「未揭开」标记：本表的语义就是「在册即已揭开」，补一个否定态会让同一事实有
+  /// 两种表示，同步与迁移都得再判一次。行不存在是正常入参（幂等）。
+  Future<void> unmarkImageRevealed(String bookUid, String imageKey) =>
+      (delete(revealedImages)
+            ..where((t) =>
+                t.bookUid.equals(bookUid) & t.imageKey.equals(imageKey)))
+          .go();
 
   /// 书 [bookUid] 全部已揭开图片 key 集合。阅读器打开时读它灌入会话集、图片库渲染时读它
   /// 判断哪些图不遮罩。
@@ -691,6 +794,58 @@ mixin _FushiDbTagsSync on _$FushiDatabase, _FushiDbInfra {
     final row = await q.getSingle();
     return row.read(cnt)!;
   }
+
+  // ── Profile 分区（v105：统计按 Profile 隔离）────────────────────
+  // 住这一层而不是 _FushiDbStatistics：删除原语在 _FushiDbContentMisc、写入 /
+  // 读取在 _FushiDbStatistics，mixin 只能向下看，公共解析点必须在两者之下。
+
+  Future<String?> _prefValueOf(String key) async {
+    final PreferenceRow? row =
+        await (select(preferences)..where((t) => t.key.equals(key)))
+            .getSingleOrNull();
+    return row?.value;
+  }
+
+  /// 当前激活的 Profile id（统计分区键的**唯一**解析点）。
+  ///
+  /// 读 `active_profile_id` 偏好并验证该 Profile 还在；不在 / 缺失时退到最早建的
+  /// Profile（与 fushi 层 `ensureDefaultProfile` 的兜底同序）；库里一个 Profile
+  /// 都没有时返回 0——只在纯 DB 测试里出现（app 启动即 `ensureDefaultProfile`），
+  /// 此时写入盖 0、读取滤 0，测试里写读自洽。**不在这里建 Profile**：建
+  /// Profile 必须连带快照设置（`snapshotCurrentSettings`，在 fushi 层），DB 层
+  /// 造一个空快照的 Profile 会让下次 `applyProfile` 把全部偏好剪光。
+  Future<int> resolveActiveProfileId() async {
+    final String? raw = await _prefValueOf(kActiveProfileIdPrefKey);
+    final int fromPref = int.tryParse(raw ?? '') ?? -1;
+    if (fromPref > 0 && await getProfileById(fromPref) != null) {
+      return fromPref;
+    }
+    final List<ProfileRow> all = await getAllProfiles();
+    return all.isEmpty ? 0 : all.first.id;
+  }
+
+  /// legacy 统计家族归属的 Profile id（[kStatLegacyProfileIdPrefKey]）；null =
+  /// 无归属 = 对所有 Profile 可见。
+  Future<int?> getStatLegacyProfileId() async {
+    final String? raw = await _prefValueOf(kStatLegacyProfileIdPrefKey);
+    final int? id = int.tryParse(raw ?? '');
+    return id != null && id > 0 ? id : null;
+  }
+
+  /// legacy 统计行对 [profileId] 是否可见（读取面与「清空全部」的 legacy 删行
+  /// 共用同一判据：看不见的历史不能被另一个 Profile 的清空连带删掉）。
+  Future<bool> legacyStatsVisibleTo(int profileId) async {
+    final int? owner = await getStatLegacyProfileId();
+    return owner == null || owner == profileId;
+  }
+
+  /// 缺席 `profileId` 的段补上当前激活 Profile（写入方不用知道 Profile）。
+  Future<StudySegmentsCompanion> _stampStudySegmentProfile(
+    StudySegmentsCompanion row,
+  ) async =>
+      row.profileId.present
+          ? row
+          : row.copyWith(profileId: Value(await resolveActiveProfileId()));
 
   // ── profile settings ─────────────────────────────────────────────
   Future<List<ProfileSettingRow>> getProfileSettings(int profileId) =>

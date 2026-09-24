@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:fushi_dictionary/fushi_dictionary.dart';
+import 'package:fushi/src/reader/reader_floating_ball.dart';
 import 'package:fushi/media.dart';
 import 'package:fushi/models.dart';
 import 'package:fushi/pages.dart';
@@ -1290,6 +1291,21 @@ class ReaderFushiSource extends ReaderMediaSource {
     await setPreference<bool>(key: 'pause_on_lookup', value: value);
   }
 
+  /// 悬停查词时，鼠标离开字幕与查词浮层后是否自动关掉浮层并恢复播放（免去「再点一下
+  /// 空白」那一步）。只作用于**悬停发起**的查词会话——点击查词是显式的「停在这儿看」，
+  /// 鼠标移开不关（判据见 `VideoFushiPage.shouldAutoResumeOnHoverLeave`）。
+  ///
+  /// 悬停是桌面鼠标行为，移动端没有 OS hover、自然不触发（设置项也走
+  /// `DesktopLookupService.isDesktop` 桌面门控）。默认开启：会走到这条路径的前提是
+  /// 用户已经在用悬停查词（`hover_auto_lookup` 或 Shift+悬停），而那时「移开就继续播」
+  /// 正是预期行为。
+  bool get resumeOnLookupLeave =>
+      getPreference<bool>(key: 'resume_on_lookup_leave', defaultValue: true);
+
+  Future<void> setResumeOnLookupLeave({required bool value}) async {
+    await setPreference<bool>(key: 'resume_on_lookup_leave', value: value);
+  }
+
   /// TODO-756b：是否“鼠标悬停即自动查词”。开启时无需按住 Shift，鼠标悬停在
   /// 字幕/正文字符上即触发查词（与 TODO-756a 的 Shift-悬停同链路）；关闭时退回
   /// 756a 的 Shift+悬停行为。悬停是桌面鼠标行为，移动端无 OS hover、自然不触发
@@ -1310,6 +1326,47 @@ class ReaderFushiSource extends ReaderMediaSource {
   Future<void> setSkipActionSeconds(int value) async {
     await setPreference<int>(key: 'skip_action_seconds', value: value);
     onSettingsChangedLive?.call();
+  }
+
+  /// 阅读器悬浮球开关（全局，与 [skipActionSeconds] 同层）。默认关。球上放哪些
+  /// 按钮由阅读器按钮布局的 `floatingBall` 槽决定（`ReaderControlLayout`）。改动
+  /// 只影响纯 Flutter chrome，经 [onChromeReloadLive] 让阅读器重建一次即可。
+  bool get readerFloatingBall =>
+      getPreference<bool>(key: 'reader_floating_ball', defaultValue: false);
+
+  Future<void> setReaderFloatingBall(bool value) async {
+    await setPreference<bool>(key: 'reader_floating_ball', value: value);
+    onChromeReloadLive?.call();
+  }
+
+  /// 悬浮球停靠边 + 球心在视口高度上的比例（拖动松手时落库，跨书记忆）。
+  ReaderFloatingBallDock get readerFloatingBallDock =>
+      ReaderFloatingBallDock.decode(
+        getPreference<String>(
+          key: 'reader_floating_ball_dock',
+          defaultValue: ReaderFloatingBallDock.left.id,
+        ),
+      );
+
+  double get readerFloatingBallVerticalFraction => getPreference<double>(
+        key: 'reader_floating_ball_y',
+        defaultValue: 0.6,
+      );
+
+  Future<void> setReaderFloatingBallPosition(
+    ReaderFloatingBallDock dock,
+    double verticalFraction,
+  ) async {
+    await setPreference<String>(
+      key: 'reader_floating_ball_dock',
+      value: dock.id,
+    );
+    await setPreference<double>(
+      key: 'reader_floating_ball_y',
+      value: verticalFraction.isFinite
+          ? verticalFraction.clamp(0.0, 1.0).toDouble()
+          : 0.6,
+    );
   }
 
   double get dismissSwipeSensitivity => getPreference<double>(
@@ -1354,6 +1411,20 @@ class ReaderFushiSource extends ReaderMediaSource {
     );
   }
 
+  /// 滚动（连续）模式下，查词弹窗开着时继续滚动正文（横排纵向滚、竖排横向滚）
+  /// 即关闭弹窗，并把这次滚动交给正文。默认开启；只在滚动模式生效。
+  bool get dismissPopupOnScroll => getPreference<bool>(
+        key: 'dismiss_popup_on_scroll',
+        defaultValue: true,
+      );
+
+  Future<void> setDismissPopupOnScroll(bool value) async {
+    await setPreference<bool>(
+      key: 'dismiss_popup_on_scroll',
+      value: value,
+    );
+  }
+
   /// 鼠标滚轮翻页节流间隔（毫秒），越大翻页越慢。默认 450ms。
   int get wheelPageTurnInterval =>
       readerSettings?.wheelPageTurnInterval ??
@@ -1367,21 +1438,39 @@ class ReaderFushiSource extends ReaderMediaSource {
         setPreference<int>(key: 'wheel_page_turn_interval', value: value));
   }
 
-  /// 翻页滑动灵敏度系数（TODO-113），缩放 JS `_gestureEnd` 的距离阈值；越大越迟钝。
-  double get swipePageTurnSensitivity =>
-      readerSettings?.swipePageTurnSensitivity ??
-      ReaderSettings.normalizeSwipePageTurnSensitivity(
-        getPreference<double>(
-          key: 'swipe_page_turn_sensitivity',
-          defaultValue: 1.0,
-        ),
+  /// 翻页滑动**灵敏度**（TODO-113 / BUG-2563），缩放 JS `_gestureEnd` 的距离阈值；
+  /// **值越大越灵敏**。语义与落盘 key 必须与 [ReaderSettings.swipePageTurnSensitivity]
+  /// 逐字一致：`readerSettings` 为 null 的 entry point（`:popup` / 悬浮查词，见
+  /// [resolveEffectiveReaderSettings]）若在这里读写旧的「阈值倍数」key，写进去的新语义值
+  /// 会被 [ReaderSettings] 当 legacy 倍数再取一次倒数，设置整个翻反。
+  double get swipePageTurnSensitivity {
+    final double? fromSettings = readerSettings?.swipePageTurnSensitivity;
+    if (fromSettings != null) return fromSettings;
+    final double? stored = getPreference<double?>(
+      key: ReaderSettings.swipeSensitivityKey,
+      defaultValue: null,
+    );
+    if (stored != null) {
+      return ReaderSettings.normalizeSwipePageTurnSensitivity(stored);
+    }
+    final double? legacyMultiplier = getPreference<double?>(
+      key: ReaderSettings.legacySwipeSensitivityMultiplierKey,
+      defaultValue: null,
+    );
+    if (legacyMultiplier != null && legacyMultiplier > 0) {
+      return ReaderSettings.normalizeSwipePageTurnSensitivity(
+        1.0 / legacyMultiplier,
       );
+    }
+    return ReaderSettings.defaultSwipePageTurnSensitivity;
+  }
 
   // 分支刻意不对称：settings 路径传原值（其内部自会归一），偏好路径先归一再落库。
+  // 旧倍数 key 只读不写（与 [ReaderSettings] 同一条纪律）。
   Future<void> setSwipePageTurnSensitivity(double value) async {
     await (readerSettings?.setSwipePageTurnSensitivity(value) ??
         setPreference<double>(
-          key: 'swipe_page_turn_sensitivity',
+          key: ReaderSettings.swipeSensitivityKey,
           value: ReaderSettings.normalizeSwipePageTurnSensitivity(value),
         ));
   }

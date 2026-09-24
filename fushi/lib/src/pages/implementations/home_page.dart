@@ -36,14 +36,24 @@ import 'package:fushi_engine/media/external_provider.dart';
 import 'package:fushi_engine/media/source_library/source_library_row.dart';
 import 'package:fushi/src/media/source_library/source_library_scanner.dart';
 import 'package:fushi/src/media/import/real_path_directory_picker.dart';
-import 'package:drift/drift.dart' show Value;
 import 'package:fushi/src/media/collections/collection_continue.dart';
-import 'package:fushi_engine/media/torrent/nyaa_resource_provider.dart';
+import 'package:fushi/src/sync/interconnect_download_client.dart';
 import 'package:fushi/src/sync/interconnect_subscription_client.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi_engine/media/torrent/magnet_utils.dart'
+    show magnetUriFromInfoHash;
 import 'package:fushi_engine/media/torrent/video_resource_provider.dart';
 import 'package:fushi_engine/media/video/discovery/video_discovery_provider.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_service.dart';
+import 'package:fushi/src/media/video/acquisition/video_acquisition_models.dart';
+import 'package:fushi/src/media/video/acquisition/video_acquisition_service.dart';
+import 'package:fushi/src/media/video/download/video_discovery_submit.dart';
+import 'package:fushi/src/models/preferences_repository.dart';
+import 'package:fushi/src/models/store_compliance.dart';
+import 'package:fushi/src/pages/implementations/ai_video_acquisition_page.dart';
+import 'package:fushi/src/pages/implementations/game_stream_library_page.dart';
+import 'package:fushi_engine/media/video/download/video_download_subtitle_language.dart';
+import 'package:fushi_engine/media/video/download/video_library_presence.dart';
 import 'package:fushi_engine/media/video/download/video_media_reference_codec.dart';
 import 'package:fushi_engine/media/video/download/video_download_backend_identity.dart';
 import 'package:fushi/src/media/drag_drop/drop_surface_scope.dart';
@@ -54,10 +64,14 @@ import 'package:fushi_engine/media/video/subtitle/video_subtitle_provider.dart'
 import 'package:fushi/src/media/video/video_subtitle_attach.dart';
 import 'package:fushi/src/media/video/video_subtitle_attach_messages.dart';
 import 'package:fushi/src/media/video/metadata/video_country_display.dart';
+import 'package:fushi_engine/media/video/metadata/tmdb_video_metadata_provider.dart';
 import 'package:fushi_engine/media/video/metadata/video_library_scrape_sweep.dart';
 import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
+import 'package:fushi_engine/media/video/metadata/video_metadata_provider.dart';
 import 'package:fushi_engine/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi_engine/media/video/metadata/video_source_scrape_coordinator.dart';
+import 'package:fushi/src/ai/ai_video_acquisition_assistant.dart';
+import 'package:fushi/src/ai/ai_video_identity_assistant.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_dialog.dart';
 import 'package:fushi_engine/media/video/metadata/video_source_scrape_task.dart';
 import 'package:fushi/src/media/video/metadata/video_scrape_cleanup_action.dart';
@@ -69,6 +83,12 @@ import 'package:fushi/src/pages/implementations/video_discovery_detail_page.dart
 import 'package:fushi/src/pages/implementations/video_discovery_page.dart'
     show VideoDiscoveryController;
 import 'package:fushi/src/pages/implementations/video_library_shell.dart';
+import 'package:fushi/src/pages/implementations/media_server/media_server_browse_page.dart'
+    show MediaServerEntry;
+import 'package:fushi/src/sync/jellyfin_video_client.dart'
+    show JellyfinServerConfig, JellyfinVideoClient;
+import 'package:fushi/src/sync/remote_library_cache.dart'
+    show remoteLibraryCacheProvider;
 import 'package:fushi/src/media/audiobook/now_listening_mini_bar.dart';
 import 'package:fushi/src/models/module_id.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
@@ -106,7 +126,6 @@ import 'package:fushi_core/fushi_core.dart'
         VideoDownloadJobRow,
         VideoDownloadJobStage,
         VideoDownloadSubscriptionRow,
-        VideoDownloadSubscriptionsCompanion,
         VideoMetadataProviderIdentityRow,
         VideoMetadataWorkRow,
         VideoSourceScrapeRunRow,
@@ -379,6 +398,10 @@ class _HomePageState extends BasePageState<HomePage>
 
   HomeTab _currentTab = HomeTab.home;
 
+  /// Android games tab（串流接收端）的依赖装配；只在首次切到该 tab 时构造。
+  late final GameStreamLibraryServices _gameStreamLibraryServices =
+      GameStreamLibraryServices.interconnect(appModel: appModelNoUpdate);
+
   /// 进入「设置」标签前的来源 tab，供设置全屏左上返回箭头切回。
   HomeTab _previousTab = HomeTab.home;
   final FocusNode _keyboardFocusNode = FocusNode();
@@ -420,8 +443,8 @@ class _HomePageState extends BasePageState<HomePage>
     super.initState();
     // 7a：把本页持有的刮削控制器借给互联 host（远程候选搜索 / 重刮）。getter 按
     // 当前偏好惰性建，所以解析器每次都返回配置正确的那一个。
-    appModelNoUpdate.videoScrapeControllerResolver =
-        () async => _videoSourceScrapeController;
+    appModelNoUpdate.videoScrapeControllerResolver = () async =>
+        _videoSourceScrapeController;
 
     _currentTab = homeInitialTab(
       startupDefaultDictionaryTab: appModelNoUpdate.startupDefaultDictionaryTab,
@@ -722,13 +745,25 @@ class _HomePageState extends BasePageState<HomePage>
     // 阅读器 / 播放器压在上面时那个 tab 被完全遮住，早退会让本次请求变成彻底的
     // no-op（窗口弹到前台、一点反馈都没有）。被遮住时继续走 [_revealDictionary]，
     // 由它推独立查词路由到最上层。
+    // app 外热键「置顶主窗并打开查词页」= 用户要打字：把用户送进搜索框并全选已有
+    // 文本（直接打字就替换、什么都不打就保留上次结果）。携带待查词的调用方
+    // （focusSearch: false）不碰焦点——它们正要把 pending 的词填进去出词卡。
+    final DictionaryFocusIntent? focus =
+        appModelNoUpdate.homeDictionaryTabRequest.value.focusSearch
+        ? DictionaryFocusIntent.selectQuery
+        : null;
     if (_currentTab == HomeTab.dictionaries &&
         (ModalRoute.of(context)?.isCurrent ?? true)) {
+      // 已经显示着：不切 tab，但聚焦意图仍要落地（否则「已在查词页时按热键」
+      // 就成了唯一一条不聚焦的路径）。
+      if (focus != null) {
+        _dictFocusSignal.value = DictionaryFocusRequest(focus);
+      }
       return;
     }
     // 这条是「用户刚用桌面取词 / 悬浮字幕点词 / 扩展回流发起了一次查词」，携带待
     // 消费的 pendingText，即便查词模块关着也必须给它落地面，否则请求永远挂着。
-    _revealDictionary(carryingPendingLookup: true);
+    _revealDictionary(carryingPendingLookup: true, focus: focus);
   }
 
   @override
@@ -833,8 +868,9 @@ class _HomePageState extends BasePageState<HomePage>
     // 焦点还停在本页键事件 sink 上）就放行冒泡，让 app 根的页面滚动兜底接住
     // ——按下沿的四个方向键在下面走的是**同一个**仲裁（六件套不在本页 return），
     // 重复沿若还自己 bootstrap 焦点，就成了「按一下滚页、按住却把焦点甩到首个卡片」。
-    final TraversalDirection? repeatDir =
-        event is KeyRepeatEvent ? arrowFocusMoveDirection(event) : null;
+    final TraversalDirection? repeatDir = event is KeyRepeatEvent
+        ? arrowFocusMoveDirection(event)
+        : null;
     if (repeatDir != null) {
       if (focusedEditableText() != null) return KeyEventResult.ignored;
       return arrowKeyClaimedByFocus(context, repeatDir)
@@ -983,8 +1019,7 @@ class _HomePageState extends BasePageState<HomePage>
   /// 两种情况下 tab 在就切 tab、tab 不在就推一个独立查词路由 —— 同一个
   /// [HomeDictionaryPage]，同一条消费路径，只是换了个承载面。
   void _revealDictionary({
-    bool focusSearch = false,
-    bool clearQuery = false,
+    DictionaryFocusIntent? focus,
     bool carryingPendingLookup = false,
   }) {
     if (!mounted) return;
@@ -993,8 +1028,8 @@ class _HomePageState extends BasePageState<HomePage>
       return;
     }
     void requestFocus() {
-      if (!focusSearch) return;
-      _dictFocusSignal.value = DictionaryFocusRequest(clearQuery: clearQuery);
+      if (focus == null) return;
+      _dictFocusSignal.value = DictionaryFocusRequest(focus);
     }
 
     // 切 tab 只有在 HomePage **真的是栈顶**时才等于「用户看得见查词页」：阅读器 /
@@ -1047,7 +1082,9 @@ class _HomePageState extends BasePageState<HomePage>
     _selectTab(tab);
     if (tab != HomeTab.dictionaries) return;
     if (!_activeTabs().contains(HomeTab.dictionaries)) return;
-    _dictFocusSignal.value = const DictionaryFocusRequest(clearQuery: true);
+    _dictFocusSignal.value = const DictionaryFocusRequest(
+      DictionaryFocusIntent.clearQuery,
+    );
   }
 
   /// 统一切换顶层 tab：进入「设置」前记录来源 tab，供设置全屏返回箭头切回。
@@ -1191,7 +1228,7 @@ class _HomePageState extends BasePageState<HomePage>
         if (!appModel.moduleVisibility.isEnabled(ModuleId.lookup)) {
           return KeyEventResult.ignored;
         }
-        _revealDictionary(focusSearch: true);
+        _revealDictionary(focus: DictionaryFocusIntent.keepQuery);
         return KeyEventResult.handled;
       case ShortcutAction.globalBack:
         Navigator.of(context).maybePop();
@@ -1581,21 +1618,11 @@ class _HomePageState extends BasePageState<HomePage>
             as String;
     final VideoSourceScrapeGlobalConfig config =
         VideoSourceScrapeGlobalConfig.fromPreferences(
-      appModelNoUpdate.prefsRepo,
-      resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
-      uiLocaleTag: appModelNoUpdate.appLocale.toLanguageTag(),
-    );
-    final String fingerprint = <Object>[
-      config.tmdbApiKey,
-      config.anidbClientName,
-      config.anidbClientVersion ?? 0,
-      config.hashEnabled,
-      config.anidbUsername,
-      config.anidbPassword,
-      config.locale,
-      config.primaryProvider.name,
-      config.identifierWords.source,
-    ].join('\u0000');
+          appModelNoUpdate.prefsRepo,
+          resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
+          uiLocaleTag: appModelNoUpdate.appLocale.toLanguageTag(),
+        );
+    final String fingerprint = config.runtimeFingerprint;
     final VideoDiscoveryController? existing = _videoDiscoveryController;
     if (existing != null && _videoDiscoveryConfigFingerprint == fingerprint) {
       return existing;
@@ -1640,6 +1667,9 @@ class _HomePageState extends BasePageState<HomePage>
       // 取消不经下载 tab，所以**不随** downloadsReachable 门控：下载模块被关掉的
       // 用户照样可能有一条在飞的任务需要停掉。
       onCancelDownloads: _cancelVideoDiscoveryDownloads,
+      // 「AI 下视频」入口：AI 提供商未指派 / 平台合规不可用 / 下载 runtime 没起时
+      // 不接线，发现页搜索行整颗按钮不渲染。
+      onAiAcquire: _canAiAcquire ? _openAiVideoAcquisition : null,
     );
   }
 
@@ -1829,17 +1859,31 @@ class _HomePageState extends BasePageState<HomePage>
         appModelNoUpdate.videoResourceRegistry;
     final VideoDownloadPipelineService? pipeline =
         appModelNoUpdate.videoDownloadPipelineService;
-    if (registry == null || pipeline == null) {
+    // 下载可以交给已配对 host（设计 §3.3，手机让电脑下）：先探一遍，有 host 时
+    // 本地下载后端 / 落地源都不是硬前置——手机上常常两个都没有。
+    final InterconnectDownloadClient downloadClient =
+        InterconnectDownloadClient(
+          repo: SyncRepository(appModelNoUpdate.database),
+        );
+    final List<HostDownloadTarget> remoteTargets = await downloadClient
+        .probeAll();
+    if (!context.mounted) return;
+    if (registry == null || (pipeline == null && remoteTargets.isEmpty)) {
       unawaited(_promptDownloadBackendSetup(context));
       return;
     }
-    final List<MediaSourceRow> sources =
-        await _managedVideoDownloadSourcesOrPrompt(context);
+    // 本机没有管线时「本机」这一档根本提交不了：不列本地落地源，下拉只剩 host。
+    final List<MediaSourceRow> sources = pipeline == null
+        ? const <MediaSourceRow>[]
+        : remoteTargets.isEmpty
+        ? await _managedVideoDownloadSourcesOrPrompt(context)
+        : await appModelNoUpdate.getManagedVideoDownloadSources();
     // PR #1021 把「后端 runtime 是否可用」延后到真正提交下载时（target 在
     // onSubmit 里取），后端没配好也能先搜资源。但「有没有受管视频来源」是另一
     // 回事：没有落地文件夹时来源下拉是空的、提交按钮永远灰着，所以 BUG-1872 的
     // 引导必须留在打开页面之前。两个原因本来就是两条分支，别再合成一条。
-    if (!context.mounted || sources.isEmpty) return;
+    // 有 host 可用时例外：落点在 host，没有本地来源也能下。
+    if (!context.mounted || (sources.isEmpty && remoteTargets.isEmpty)) return;
     await Navigator.of(context).push<void>(
       MaterialPageRoute<void>(
         builder: (_) => VideoDiscoveryResourceSearchPage(
@@ -1852,20 +1896,51 @@ class _HomePageState extends BasePageState<HomePage>
           // 失败必然发生在页面里。页面自己拿不到 AppModel，把配置引导按端口注入，
           // 失败态那句话才有一颗能真正解决它的按钮。
           onConfigureBackend: _promptDownloadBackendSetup,
+          remoteTargets: remoteTargets,
+          defaultRemoteTargetUrl:
+              appModelNoUpdate.prefsRepo.downloadExecutionHostUrl,
+          onRemoteSubmit:
+              (VideoDiscoveryRemoteDownloadSelection selection) async {
+                final VideoResourceCandidate resource = selection.resource;
+                // host 只收磁链：索引器没给现成磁链就用 infoHash 造一条；两者都没有
+                // （Torznab 只给 .torrent 地址）的候选投不了远端，如实报。
+                final String? infoHash = resource.infoHash;
+                final String? magnet =
+                    resource.magnetUri ??
+                    (infoHash == null
+                        ? null
+                        : magnetUriFromInfoHash(
+                            infoHash,
+                            displayName: resource.title,
+                          ));
+                if (magnet == null) {
+                  throw const HostDownloadException('magnet_only');
+                }
+                await downloadClient.addMagnet(
+                  selection.target,
+                  magnetUri: magnet,
+                  title: resource.title,
+                  mediaKind:
+                      selection.media.mediaKind == VideoMetadataMediaKind.tv
+                      ? 'tv'
+                      : 'movie',
+                );
+              },
           onSubmit: (VideoDiscoveryDownloadSelection selection) async {
+            if (pipeline == null) {
+              // 本机没有管线时 sources 为空、「本机」档不渲染，这里到不了；留
+              // 一道硬门免得日后有人把 sources 接回来。
+              throw const VideoDownloadPipelineActionRequired(
+                'no local download pipeline',
+              );
+            }
             final VideoDownloadBackendTarget target = await appModelNoUpdate
                 .currentVideoDownloadBackendTarget();
-            // 保留发现来源提供的 MAL / TMDB 精确身份，导入时优先 MAL。
-            final VideoMediaReference media = selection.media;
-            await pipeline.enqueue(
-              VideoDownloadEnqueueRequest(
-                media: media,
-                resource: selection.resource,
-                backendTarget: target,
-                targetSourceId: selection.source.id,
-                subtitlePolicy: selection.subtitlePolicy,
-                coverUrl: item.posterUrl,
-              ),
+            await enqueueLocalVideoDownload(
+              pipeline: pipeline,
+              coverUrl: item.posterUrl,
+              selection: selection,
+              target: target,
             );
           },
         ),
@@ -1896,12 +1971,13 @@ class _HomePageState extends BasePageState<HomePage>
     // 本地下载后端/落地源都不是硬前置。
     final InterconnectSubscriptionClient remoteClient =
         InterconnectSubscriptionClient(
-      repo: SyncRepository(appModelNoUpdate.database),
-    );
-    final List<HostSubscriptionTarget> remoteTargets =
-        await remoteClient.probeAll();
+          repo: SyncRepository(appModelNoUpdate.database),
+        );
+    final List<HostSubscriptionTarget> remoteTargets = await remoteClient
+        .probeAll();
     if (!context.mounted) return;
-    final bool localRunnable = registry != null &&
+    final bool localRunnable =
+        registry != null &&
         appModelNoUpdate.videoDownloadPipelineService != null &&
         appModelNoUpdate.videoDownloadSubscriptionService != null;
     if (registry == null || (!localRunnable && remoteTargets.isEmpty)) {
@@ -1930,97 +2006,239 @@ class _HomePageState extends BasePageState<HomePage>
           remoteTargets: remoteTargets,
           onRemoteSubmit:
               (VideoDiscoveryRemoteSubscriptionSelection selection) async {
-            final VideoMediaReference reference = selection.media;
-            await remoteClient.create(
-              selection.target,
-              HostSubscriptionCreate(
-                // 与本地订阅同一个稳定 id：同一作品在同一台 host 上重复订阅只 upsert。
-                subscriptionId: videoDiscoverySubscriptionId(reference),
-                title: reference.title,
-                searchQuery: _videoResourceSearchQuery(reference),
-                mediaKind: reference.mediaKind.name,
-                mode: reference.mediaKind == VideoMetadataMediaKind.movie
-                    ? 'oneShot'
-                    : 'ongoing',
-                resourceProvider:
-                    persistedVideoResourceProviderId(selection.resource),
-                identityJson: encodeVideoMediaReference(reference),
-                metadataProvider: reference.providerId,
-                externalId: reference.mediaId,
-                discoveryCategory: reference.discoveryCategory.name,
-                year: reference.year,
-                season: reference.season,
-                coverUrl: item.posterUrl,
-                filterJson: selection.filter.json,
-                startAfterEpisode: selection.startAfterEpisode,
-                subtitlePolicy: selection.subtitlePolicy.name,
-              ),
-            );
-          },
+                final VideoMediaReference reference = selection.media;
+                await remoteClient.create(
+                  selection.target,
+                  HostSubscriptionCreate(
+                    // 与本地订阅同一个稳定 id：同一作品在同一台 host 上重复订阅只 upsert。
+                    subscriptionId: videoDiscoverySubscriptionId(reference),
+                    title: reference.title,
+                    searchQuery: videoResourceSubscriptionSearchQuery(
+                      reference,
+                    ),
+                    mediaKind: reference.mediaKind.name,
+                    // 整包与电影同属「一次下完就结束」：按追更建出来的规则在整包上
+                    // 结构性地永不命中（BUG-2619）。
+                    mode:
+                        selection.batchRelease ||
+                            reference.mediaKind == VideoMetadataMediaKind.movie
+                        ? 'oneShot'
+                        : 'ongoing',
+                    resourceProvider: persistedVideoResourceProviderId(
+                      selection.resource,
+                    ),
+                    identityJson: encodeVideoMediaReference(reference),
+                    metadataProvider: reference.providerId,
+                    externalId: reference.mediaId,
+                    discoveryCategory: reference.discoveryCategory.name,
+                    year: reference.year,
+                    season: reference.season,
+                    coverUrl: item.posterUrl,
+                    filterJson: selection.filter.json,
+                    startAfterEpisode: selection.startAfterEpisode,
+                    subtitlePolicy: selection.subtitlePolicy.name,
+                  ),
+                );
+              },
           onSubmit: (VideoDiscoverySubscriptionSelection selection) async {
             final VideoDownloadBackendTarget target = await appModelNoUpdate
                 .currentVideoDownloadBackendTarget();
-            final int now = DateTime.now().millisecondsSinceEpoch;
-            final String subscriptionId = videoDiscoverySubscriptionId(
-              item.reference,
+            await createLocalVideoDownloadSubscription(
+              database: appModelNoUpdate.database,
+              reference: item.reference,
+              coverUrl: item.posterUrl,
+              selection: selection,
+              target: target,
+              checkNow: () async =>
+                  appModelNoUpdate.videoDownloadSubscriptionService?.checkNow(),
             );
-            final VideoDownloadSubscriptionRow? previous =
-                await appModelNoUpdate.database.getVideoDownloadSubscription(
-                  subscriptionId,
-                );
-            final VideoResourceCandidate resource = selection.download.resource;
-            // 订阅快照保留交叉 ID，每集下载可沿用同一个 MAL / TMDB 身份。
-            final VideoMediaReference reference = item.reference;
-            await appModelNoUpdate.database.upsertVideoDownloadSubscription(
-              VideoDownloadSubscriptionsCompanion.insert(
-                subscriptionId: subscriptionId,
-                resourceProvider: persistedVideoResourceProviderId(resource),
-                metadataProvider: Value<String?>(reference.providerId),
-                externalId: Value<String?>(reference.mediaId),
-                mediaKind: reference.mediaKind.name,
-                discoveryCategory: Value<String?>(
-                  reference.discoveryCategory.name,
-                ),
-                title: reference.title,
-                year: Value<int?>(reference.year),
-                season: Value<int?>(reference.season),
-                coverUrl: Value<String?>(item.posterUrl),
-                identityJson: Value<String?>(
-                  encodeVideoMediaReference(reference),
-                ),
-                searchQuery: _videoResourceSearchQuery(reference),
-                filterJson: Value<String>(selection.filter.json),
-                mode: Value<String>(
-                  item.reference.mediaKind == VideoMetadataMediaKind.movie
-                      ? 'oneShot'
-                      : 'ongoing',
-                ),
-                startAfterEpisode: Value<int?>(selection.startAfterEpisode),
-                backendKind: target.kind,
-                backendProfileId: Value<String?>(target.profileId),
-                fingerprint: target.fingerprint,
-                category: Value<String?>(target.category),
-                targetSourceId: Value<int?>(selection.download.source.id),
-                organizationPolicy: const Value<String>('library'),
-                subtitlePolicy: Value<String>(
-                  selection.download.subtitlePolicy.name,
-                ),
-                enabled: const Value<bool>(true),
-                nextCheckAt: Value<int?>(now),
-                claimedBy: const Value<String?>(null),
-                claimExpiresAt: const Value<int?>(null),
-                retryCount: const Value<int>(0),
-                fulfilledAt: const Value<int?>(null),
-                lastError: const Value<String?>(null),
-                createdAt: previous?.createdAt ?? now,
-                updatedAt: now,
-              ),
-            );
-            await appModelNoUpdate.videoDownloadSubscriptionService?.checkNow();
           },
         ),
       ),
     );
+  }
+
+  /// 「AI 下视频」入口可用的门（build 期求值，AI 指派变更后随 appModel 通知重算）：
+  /// AI 提供商已指派 + 下载中心与外部发现在本平台可用（iOS 合规）+ 资源 registry
+  /// 与下载管线已起。判据只问 [StoreRestrictedCapability]，不写 `Platform.isIOS`。
+  bool get _canAiAcquire =>
+      appModelNoUpdate.isPreferencesReady &&
+      resolveVideoAcquireAiProvider(appModelNoUpdate.prefsRepo) != null &&
+      StoreRestrictedCapability.downloads.isAvailable &&
+      StoreRestrictedCapability.externalDiscovery.isAvailable &&
+      appModelNoUpdate.videoResourceRegistry != null &&
+      appModelNoUpdate.videoDownloadPipelineService != null;
+
+  /// 打开「AI 下视频」对话页：组装全部端口后交给 [VideoAcquisitionService]。
+  ///
+  /// 前置与资源搜索页一致：后端 runtime 没起 → 配置引导；没有受管视频来源 → 补来源
+  /// 引导。页面本身不挂 Riverpod，所有能力按闭包注入，AI 提供商每次调用时现解析。
+  Future<void> _openAiVideoAcquisition() async {
+    final BuildContext context = this.context;
+    final VideoResourceRegistry? registry =
+        appModelNoUpdate.videoResourceRegistry;
+    final VideoDownloadPipelineService? pipeline =
+        appModelNoUpdate.videoDownloadPipelineService;
+    if (registry == null || pipeline == null) {
+      unawaited(_promptDownloadBackendSetup(context));
+      return;
+    }
+    final List<MediaSourceRow> sources =
+        await _managedVideoDownloadSourcesOrPrompt(context);
+    if (!context.mounted || sources.isEmpty) return;
+    final PreferencesRepository prefs = appModelNoUpdate.prefsRepo;
+    final VideoDiscoveryController discovery =
+        _productionVideoDiscoveryController;
+    final VideoDiscoveryService? discoveryService = _videoDiscoveryService;
+    final int? defaultSourceId = prefs.videoDownloadTargetSourceId;
+    MediaSourceRow sourceById(int id) =>
+        sources.firstWhere((MediaSourceRow source) => source.id == id);
+    final VideoAcquisitionService service = VideoAcquisitionService(
+      defaults: VideoAcquisitionDefaults(
+        qualityPref: prefs.aiVideoDownloadQuality,
+        subtitleLanguagePref: prefs.aiVideoDownloadSubtitleLanguage,
+        sources: <VideoAcquisitionSource>[
+          for (final MediaSourceRow source in sources)
+            VideoAcquisitionSource(id: source.id, label: source.label),
+        ],
+        defaultSourceId: (defaultSourceId ?? 0) == 0 ? null : defaultSourceId,
+        locale: appModelNoUpdate.appLocale.toLanguageTag(),
+      ),
+      ports: VideoAcquisitionPorts(
+        searchWorks: discovery.load,
+        loadDetails: (VideoDiscoveryItem item) async =>
+            discoveryService?.loadDetails(item),
+        queryPresence: _resolveAiAcquisitionPresence,
+        isSubscribed: (VideoMediaReference reference) async =>
+            (await _matchingVideoDiscoverySubscriptions(
+              reference,
+            )).any((VideoDownloadSubscriptionRow row) => row.enabled),
+        searchResources: registry.search,
+        parseIntent: createPreferencesVideoAcquisitionIntentParser(prefs),
+        decideIdentity: createPreferencesVideoAcquisitionIdentityDecider(prefs),
+        persistPreference:
+            (VideoAcquisitionPreference preference, String value) =>
+                switch (preference) {
+                  VideoAcquisitionPreference.quality =>
+                    prefs.setAiVideoDownloadQuality(value),
+                  VideoAcquisitionPreference.subtitleLanguage =>
+                    prefs.setAiVideoDownloadSubtitleLanguage(value),
+                },
+        // 键与导入落库的合集名同源（videoDownloadSeriesKey），管线字幕阶段按同一把
+        // 钥匙读回来。
+        setSeriesSubtitleLanguage:
+            (VideoMediaReference reference, String code) =>
+                appModelNoUpdate.setJimakuPreferredLanguage(
+                  videoDownloadSeriesKey(
+                    title: reference.title,
+                    year: reference.year,
+                  ),
+                  code,
+                ),
+        submitDownload: (VideoAcquisitionSubmitDownloadEffect effect) async {
+          final VideoDownloadBackendTarget target = await appModelNoUpdate
+              .currentVideoDownloadBackendTarget();
+          final MediaSourceRow source = sourceById(effect.targetSourceId);
+          // 串行入队、首条失败直接抛（后端 / 落地问题对整批成立）、后续失败只记数：
+          // 与资源搜索页的批量提交同一口径。
+          int queued = 0;
+          for (int i = 0; i < effect.plan.picks.length; i++) {
+            try {
+              await enqueueLocalVideoDownload(
+                pipeline: pipeline,
+                coverUrl: effect.item.posterUrl,
+                selection: VideoDiscoveryDownloadSelection(
+                  media: effect.item.reference,
+                  resource: effect.plan.picks[i],
+                  source: source,
+                  subtitlePolicy: effect.installSubtitles
+                      ? VideoDownloadSubtitlePolicy.bestEffort
+                      : VideoDownloadSubtitlePolicy.none,
+                ),
+                target: target,
+              );
+              queued++;
+            } on Object catch (error, stackTrace) {
+              if (i == 0) rethrow;
+              debugPrint(
+                '[ai-acquire] batch enqueue failed: $error\n$stackTrace',
+              );
+            }
+          }
+          return queued;
+        },
+        submitSubscription:
+            (VideoAcquisitionSubmitSubscriptionEffect effect) async {
+              final VideoDownloadBackendTarget target = await appModelNoUpdate
+                  .currentVideoDownloadBackendTarget();
+              final StrictVideoSubscriptionFilter? filter = effect.plan.filter;
+              if (filter == null) {
+                throw StateError('subscription plan without a strict filter');
+              }
+              await createLocalVideoDownloadSubscription(
+                database: appModelNoUpdate.database,
+                reference: effect.item.reference,
+                coverUrl: effect.item.posterUrl,
+                selection: VideoDiscoverySubscriptionSelection(
+                  download: VideoDiscoveryDownloadSelection(
+                    media: effect.item.reference,
+                    resource: effect.plan.picks.first,
+                    source: sourceById(effect.targetSourceId),
+                    subtitlePolicy: effect.installSubtitles
+                        ? VideoDownloadSubtitlePolicy.bestEffort
+                        : VideoDownloadSubtitlePolicy.none,
+                  ),
+                  filter: filter,
+                  startAfterEpisode: effect.plan.startAfterEpisode,
+                ),
+                target: target,
+                checkNow: () async => appModelNoUpdate
+                    .videoDownloadSubscriptionService
+                    ?.checkNow(),
+              );
+            },
+      ),
+    );
+    try {
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => AiVideoAcquisitionPage(
+            service: service,
+            onConfigureBackend: _promptDownloadBackendSetup,
+          ),
+        ),
+      );
+    } finally {
+      service.dispose();
+    }
+  }
+
+  /// 「这部作品在不在库」：按 provider:mediaId 与全部跨源 id 逐对查
+  /// [resolveVideoLibraryPresence]（单身份语义），首个命中即返回；都不命中回第一次
+  /// 的空答案（非 null，让对话层知道「查过了、没有」）。
+  Future<VideoLibraryPresence?> _resolveAiAcquisitionPresence(
+    VideoMediaReference reference,
+  ) async {
+    final List<(String, String)> identities = <(String, String)>[
+      (reference.providerId, reference.mediaId),
+      for (final MapEntry<String, String> entry
+          in reference.externalIds.entries)
+        (entry.key, entry.value),
+    ];
+    VideoLibraryPresence? first;
+    for (final (String provider, String externalId) in identities) {
+      final VideoLibraryPresence presence = await resolveVideoLibraryPresence(
+        appModelNoUpdate.database,
+        metadataProvider: provider,
+        externalId: externalId,
+        mediaKind: reference.mediaKind,
+      );
+      if (presence.inLibrary || presence.managedEpisodeKeys.isNotEmpty) {
+        return presence;
+      }
+      first ??= presence;
+    }
+    return first;
   }
 
   Future<void> _openVideoDiscoverySubtitleSearch(
@@ -2106,16 +2324,6 @@ class _HomePageState extends BasePageState<HomePage>
         ),
       ),
     );
-  }
-
-  String _videoResourceSearchQuery(VideoMediaReference reference) {
-    if (reference.discoveryCategory != VideoDiscoveryCategory.anime) {
-      return reference.title;
-    }
-    final List<String> queries = preferredNyaaSearchQueries(
-      VideoResourceSearchRequest(media: reference),
-    );
-    return queries.isEmpty ? reference.title : queries.first;
   }
 
   void _showVideoDiscoveryMessage(BuildContext context, String message) {
@@ -2433,18 +2641,13 @@ class _HomePageState extends BasePageState<HomePage>
             as String;
     final VideoSourceScrapeGlobalConfig config =
         VideoSourceScrapeGlobalConfig.fromPreferences(
-      appModelNoUpdate.prefsRepo,
-      resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
-      uiLocaleTag: appModelNoUpdate.appLocale.toLanguageTag(),
-    );
-    final String fingerprint = <Object>[
-      config.tmdbApiKey,
-      config.anidbClientName,
-      config.anidbClientVersion ?? 0,
-      config.locale,
-      config.primaryProvider.name,
-      config.identifierWords.source,
-    ].join('\u0000');
+          appModelNoUpdate.prefsRepo,
+          resolvedTmdbApiKey: resolveTmdbApiKey(configuredTmdbKey),
+          uiLocaleTag: appModelNoUpdate.appLocale.toLanguageTag(),
+        );
+    // BUG-2581：指纹统一取 [VideoSourceScrapeGlobalConfig.runtimeFingerprint]，
+    // 别再手抄字段——这里曾漏掉哈希开关与 AniDB 账号，填好账号后仍复用旧协调器。
+    final String fingerprint = config.runtimeFingerprint;
     if (existing != null &&
         (existing.isBusy ||
             _videoSourceScrapeConfigFingerprint == fingerprint)) {
@@ -2460,6 +2663,11 @@ class _HomePageState extends BasePageState<HomePage>
           // 生产装配点显式打开离线标题索引（AniDB 标题包 + Fribb 映射）；默认关是
           // 为了单测不联网。
           enableOfflineTitleIndex: true,
+          // 歧义候选交 AI 消解。decider 每次调用现取偏好里的指派，所以 AI 指派不进
+          // 上面的配置指纹：用户改了指派立即生效，不需要重建协调器。
+          aiIdentityDecider: createPreferencesAiVideoIdentityDecider(
+            appModelNoUpdate.prefsRepo,
+          ),
         );
     _videoSourceScrapeCoordinator = coordinator;
     _videoSourceScrapeConfigFingerprint = fingerprint;
@@ -2472,6 +2680,17 @@ class _HomePageState extends BasePageState<HomePage>
       database: appModel.database,
       controller: controller,
       isEnabled: () => appModelNoUpdate.videoLibraryAutoBackfillScrape,
+      // 与协调器同一份快照：哈希就绪时纯集号文件与已识别作品的新文件也进补刮。
+      isHashReady: () => config.anidbHashReady,
+      // Shoko 式增量刷新：TMDB /tv/changes 与库内 TMDB id 求交集，只重刷变过的剧。
+      tmdbChangedTvIds: ({required DateTime since}) {
+        final VideoMetadataProvider? tmdb = coordinator.registry.provider(
+          VideoMetadataProviderKind.tmdb,
+        );
+        return tmdb is TmdbVideoMetadataProvider && tmdb.isAvailable
+            ? tmdb.changedTvShowIds(since: since)
+            : Future<Set<int>>.value(const <int>{});
+      },
     );
     return controller;
   }
@@ -2747,6 +2966,45 @@ class _HomePageState extends BasePageState<HomePage>
     );
   }
 
+  /// 视频页「媒体服务器」分区的服务器清单：每台已登录的 Jellyfin/Emby 配置出一个
+  /// 浏览器（`client is MediaServerBrowser`）。每次进分区重取——设置页登入 / 登出
+  /// 立即反映，不缓存 client 实例。
+  Future<List<MediaServerEntry>> _loadMediaServerEntries() async {
+    final SyncRepository syncRepo = SyncRepository(appModelNoUpdate.database);
+    final List<JellyfinServerConfig> configs = await syncRepo
+        .getJellyfinServers();
+    return <MediaServerEntry>[
+      for (final JellyfinServerConfig config in configs)
+        MediaServerEntry(
+          browser: config.buildClient(),
+          accountName: config.username,
+          routeUrls: config.routeUrls,
+          onSwitchRoute: (String url) => _switchMediaServerRoute(config, url),
+        ),
+    ];
+  }
+
+  /// 视频页服务器卡片上的「切换线路」：写回配置并失效这台的远端清单缓存槽
+  /// （槽里的封面 / 流 URL 烤着旧线路的 host）。与设置页 `_switchRoute` 同口径；
+  /// 身份锚（[JellyfinServerConfig.serverUrl]）不变，历史 / 封面磁盘缓存照常。
+  Future<void> _switchMediaServerRoute(
+    JellyfinServerConfig config,
+    String url,
+  ) async {
+    final SyncRepository syncRepo = SyncRepository(appModelNoUpdate.database);
+    await syncRepo.upsertJellyfinServer(
+      config.copyWithRoutes(activeServerUrl: url),
+    );
+    ref
+        .read(remoteLibraryCacheProvider)
+        .invalidateSource(
+          JellyfinVideoClient.sourceIdFor(
+            serverUrl: config.serverUrl,
+            userId: config.userId,
+          ),
+        );
+  }
+
   Widget _buildTabContent(HomeTab tab) {
     final Widget content = switch (tab) {
       HomeTab.home => HomeDashboardPage(videoRepo: _videoRepository),
@@ -2767,6 +3025,8 @@ class _HomePageState extends BasePageState<HomePage>
             _videoLibraryScrapeSweep.sweepAndListPending(),
         discoveryController: _productionVideoDiscoveryController,
         discoveryActions: _productionVideoDiscoveryActions,
+        mediaServerServersLoader: _loadMediaServerEntries,
+        systemBackActive: _visibleTab == HomeTab.video,
       ),
       HomeTab.downloads => DownloadsPage(
         key: ValueKey<String>('downloads-$_downloadsGeneration'),
@@ -2775,7 +3035,12 @@ class _HomePageState extends BasePageState<HomePage>
         videoDiscoveryActions: _productionVideoDiscoveryActions,
       ),
       HomeTab.dictionaries => HomeDictionaryPage(focusSignal: _dictFocusSignal),
-      HomeTab.games => const HomeGamePage(),
+      // Android 的 games 模块是串流接收端：远端主机游戏库 + 远程启动串流；
+      // Windows 仍是本机 galgame 库。形态判据只在 [GamesModuleForm.on]。
+      HomeTab.games =>
+        appModelNoUpdate.gamesModuleForm == GamesModuleForm.streamClient
+            ? GameStreamLibraryPage(services: _gameStreamLibraryServices)
+            : const HomeGamePage(),
       HomeTab.browserExtension => const BrowserExtensionPage(),
       HomeTab.settings =>
         // 设置 tab 走侧栏/底栏切回，不显示页头返回箭头；但仍需 PopScope 拦截系统

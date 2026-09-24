@@ -17,8 +17,11 @@ import 'package:fushi/src/models/app_model.dart';
 import 'package:fushi/src/models/module_id.dart';
 import 'package:fushi/src/pages/implementations/book_css_editor_page.dart';
 import 'package:fushi/src/reader/reader_audiobook_panel.dart';
+import 'package:fushi/src/reader/reader_settings_side_dialog.dart';
 import 'package:fushi/src/reader/reader_desktop_chrome.dart'
     show ReaderSideSheet, ReaderSideSheetSectionLabel;
+import 'package:fushi/src/reader/ttu_toc_flatten.dart'
+    show resolveCurrentTocEntry;
 import 'package:fushi/src/settings/cupertino_settings_renderer.dart';
 import 'package:fushi/src/settings/master_detail_settings_sheet.dart';
 import 'package:fushi/src/settings/material_settings_renderer.dart';
@@ -71,6 +74,7 @@ class ReaderQuickSettingsSheet extends StatefulWidget {
     required this.readerProgress,
     required this.onJumpSection,
     required this.onExitReader,
+    this.readerCharOffset,
     required this.webViewController,
     required this.appModel,
     required this.ref,
@@ -123,6 +127,11 @@ class ReaderQuickSettingsSheet extends StatefulWidget {
 
   /// 0-indexed section index and total chapter count.
   final (int section, int total)? readerProgress;
+
+  /// 当前章内的字符偏移（`countStudyChars` 口径，与 [TtuTocEntry.anchorCharOffset]
+  /// 同尺），未知为 null。同一 spine 章下靠锚点分节的多条目录项只有它能分清
+  /// 读到哪一条。
+  final int? readerCharOffset;
   final (int current, int total)? pageProgress;
 
   /// 跳到目录条目。[fragment] 是该条目的章内锚（[TtuTocEntry.fragment]），
@@ -511,6 +520,7 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
     }
     return ReaderSideSheet(
       title: t.reader_settings_section,
+      headerActions: const <Widget>[ReaderSettingsSideButton()],
       onClose: _sideSheetClose(context),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -527,6 +537,7 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
       controller: widget.controller,
       toc: widget.toc,
       currentSection: widget.readerProgress?.$1,
+      currentCharOffset: widget.readerCharOffset,
       onJumpSection: widget.onJumpSection,
       title: widget.epubBook?.title ?? '',
       chapterLabel: widget.chapterLabel,
@@ -1291,16 +1302,29 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
   }
 
   Widget _buildCurrentTocSection(BuildContext context, ThemeData theme) {
-    final int? currentIdx = widget.readerProgress?.$1;
     final List<TtuTocEntry> toc = widget.toc;
+    // BUG-2545：目录是 spine 的**稀疏**映射（同一章横跨多个 xhtml 只有头一个进
+    // 目录，章间插图页根本不在目录里），所以「当前章」不能拿当前 spine 章号去和
+    // 目录项 index 精确相等——那样一来读在任何没被目录直接指向的 spine 位置上
+    // （实测一本 35 项 spine 的书里占 23 个位置）整个列表一行都不标、
+    // `_currentTocRowKey` 也挂不上，「打开即滚到当前章」跟着静默失效。判据统一成
+    // floor（最后一个不晚于当前位置的目录项），与页脚章名
+    // `_currentChapterLabelFor` 和有声书面板「章节」tab 同一口径。
+    //
+    // 同一 spine 章下靠 `#anchor` 分节的多条目录项（一个 xhtml 装整卷）章号全
+    // 相同，再按章内字符偏移比一次（[resolveCurrentTocEntry]），当前只落在
+    // **一条**上——旧判据只比章号，那一章下的每一条都被标成当前（四个勾）。
+    final int? currentRow = resolveCurrentTocEntry(
+      toc,
+      widget.readerProgress?.$1,
+      widget.readerCharOffset,
+    );
     // 折叠规则：深度 >= 2 的条目挂在其 parent 下，parent 未展开则不画；当前章所在链
     // 上的父节自动视为展开。父节是否有可折叠子节：看下一条的深度是否更深且 >= 2。
     final Set<String> autoExpanded = <String>{};
-    for (final TtuTocEntry e in toc) {
-      if (!e.isHeader && currentIdx == e.index && e.depth >= 2) {
-        final String? parent = e.parent;
-        if (parent != null) autoExpanded.add(parent);
-      }
+    if (currentRow != null && toc[currentRow].depth >= 2) {
+      final String? parent = toc[currentRow].parent;
+      if (parent != null) autoExpanded.add(parent);
     }
     bool hasFoldableChildren(int i) =>
         i + 1 < toc.length &&
@@ -1312,12 +1336,8 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
     // 「当前章那一行」只能有**一行**：`_currentTocRowKey` 是 GlobalKey，同一个
     // key 挂到两个在场 widget 上，debug 直接抛 `Multiple widgets used the same
     // GlobalKey`，release 则由 `Element._retakeInactiveElement` 把 element 从前
-    // 一行手里抢走——那一行被摘出渲染树，**目录里真的少一行**。而同章多行是常态
-    // 而非例外：一个 xhtml 装整卷、目录靠 `#anchor` 分节的书，那一章下的每条目录
-    // 项 index 全相同。取第一条（阅读顺序最靠前的那条）作为滚动锚点。
-    final int currentRow = toc.indexWhere(
-      (TtuTocEntry e) => !e.isHeader && e.index == currentIdx,
-    );
+    // 一行手里抢走——那一行被摘出渲染树，**目录里真的少一行**。
+    // [resolveCurrentTocEntry] 返回的就是唯一一条的下标。
     return AdaptiveSettingsSection(
       title: t.toc_section(n: toc.length),
       children: [
@@ -1329,7 +1349,7 @@ class _ReaderQuickSettingsSheetState extends State<ReaderQuickSettingsSheet>
             _InBookTocRow(
               key: i == currentRow ? _currentTocRowKey : null,
               entry: toc[i],
-              selected: !toc[i].isHeader && currentIdx == toc[i].index,
+              selected: i == currentRow,
               foldable: hasFoldableChildren(i),
               expanded: hasFoldableChildren(i) && isExpanded(toc[i]),
               onToggleExpanded: hasFoldableChildren(i)

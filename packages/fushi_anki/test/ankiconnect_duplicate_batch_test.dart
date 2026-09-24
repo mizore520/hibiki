@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// BUG-2264: popup entries dispatch detached duplicate probes in a burst.
 /// They must rendezvous across freshly-created repository instances and use a
-/// single indexed canAddNotes request instead of N GUI-thread findNotes calls.
+/// single detailed duplicate request instead of N GUI-thread findNotes calls.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -54,14 +54,19 @@ void main() {
             jsonDecode(request.body) as Map<String, dynamic>;
         final List<dynamic> notes =
             (body['params'] as Map<String, dynamic>)['notes'] as List<dynamic>;
-        final List<bool> canAdd = notes.map((dynamic rawNote) {
+        final List<Map<String, Object?>> details = notes.map((dynamic rawNote) {
           final Map<String, dynamic> note = rawNote as Map<String, dynamic>;
           final Map<String, dynamic> fields =
               note['fields'] as Map<String, dynamic>;
-          return fields['Expression'] != '既存';
+          return fields['Expression'] == '既存'
+              ? <String, Object?>{
+                  'canAdd': false,
+                  'error': kAnkiConnectDuplicateError,
+                }
+              : <String, Object?>{'canAdd': true, 'error': null};
         }).toList(growable: false);
         return http.Response(
-          jsonEncode(<String, Object?>{'result': canAdd, 'error': null}),
+          jsonEncode(<String, Object?>{'result': details, 'error': null}),
           200,
         );
       }),
@@ -79,7 +84,7 @@ void main() {
     expect(issued, hasLength(1), reason: 'one popup burst = one HTTP request');
     final Map<String, dynamic> body =
         jsonDecode(issued.single.body) as Map<String, dynamic>;
-    expect(body['action'], 'canAddNotes');
+    expect(body['action'], 'canAddNotesWithErrorDetail');
     final List<dynamic> notes =
         (body['params'] as Map<String, dynamic>)['notes'] as List<dynamic>;
     expect(notes, hasLength(2), reason: 'identical expressions share a probe');

@@ -125,6 +125,8 @@ class RemoteAudiobookInfo {
     this.positionUpdatedAtMs = 0,
     this.delayMs = 0,
     this.delayUpdatedAtMs = 0,
+    this.importedAt,
+    this.hasAudio,
   });
 
   final String bookKey;
@@ -146,6 +148,21 @@ class RemoteAudiobookInfo {
   final int delayMs;
   final int delayUpdatedAtMs;
 
+  /// host 端 `SrtBooks.importedAt`（epoch 毫秒；null = 旧 host 不带该字段）。
+  /// 与 [RemoteBookInfo.importedAt] 同范式：纯 SRT 远端占位卡据此排进「导入时间」
+  /// 序，缺失时回落既有负数目录序。
+  final int? importedAt;
+
+  /// host 上这本有声书的音频**此刻真的在磁盘上**吗（BUG-2551）。
+  ///
+  /// 清单的其余字段全是 DB 行的投影，而「有 Audiobooks / SrtBooks 行」不等于
+  /// 「有音频」：零音频行与断链行在表里长得和正常有声书一模一样。没有这个能力位，
+  /// client 的 sweep 只能凭「清单里有这一项」认定对端已有音频，于是 host 上一本
+  /// 坏书会把该 key 永久挡在 `toPush` 之外——再点多少次「立即同步」都不自愈。
+  ///
+  /// null = 旧 host 不下发此字段，**未知**（消费方必须按旧行为放行，不能当 false）。
+  final bool? hasAudio;
+
   /// 传输/URL 身份键：srt-backed=bookKey；纯 SRT（bookKey 空）=uid。
   String get identity => bookKey.isNotEmpty ? bookKey : (uid ?? '');
 
@@ -160,6 +177,8 @@ class RemoteAudiobookInfo {
         if (positionUpdatedAtMs > 0) 'positionUpdatedAtMs': positionUpdatedAtMs,
         if (delayMs != 0) 'delayMs': delayMs,
         if (delayUpdatedAtMs > 0) 'delayUpdatedAtMs': delayUpdatedAtMs,
+        if (importedAt != null) 'importedAt': importedAt,
+        if (hasAudio != null) 'hasAudio': hasAudio,
       };
 
   static RemoteAudiobookInfo fromJson(Map<String, Object?> json) =>
@@ -174,6 +193,9 @@ class RemoteAudiobookInfo {
             (json['positionUpdatedAtMs'] as num?)?.toInt() ?? 0,
         delayMs: (json['delayMs'] as num?)?.toInt() ?? 0,
         delayUpdatedAtMs: (json['delayUpdatedAtMs'] as num?)?.toInt() ?? 0,
+        importedAt: (json['importedAt'] as num?)?.toInt(),
+        // 缺键 / 非 bool → null（未知），**不是** false：旧 host 的清单一律放行。
+        hasAudio: json['hasAudio'] is bool ? json['hasAudio']! as bool : null,
       );
 }
 
@@ -310,11 +332,15 @@ class RemoteBookInfo {
     this.collection,
     this.progressPercent = 0,
     this.progressUpdatedAtMs = 0,
+    this.importedAt,
     this.kind = MediaKind.epub,
     this.format = 'epub',
     this.hasMangaContent = false,
     this.hasMangaChapters = false,
     this.mangaReadingMode,
+    this.mangaReaderOverrides = const <String, Object?>{},
+    this.mangaReaderOverrideUpdatedAt = 0,
+    this.mangaReaderOverrideDeleted = false,
   });
 
   /// 书身份格式（`EpubBooks.format` 值域：'epub'/'pdf'/'manga'，见 [BookFormat]）。
@@ -341,6 +367,9 @@ class RemoteBookInfo {
   /// 判定）。additive；下载落地时作为初始值带过来（无持续 LWW——列无时间戳，
   /// 后续调整各端各自记忆）。
   final String? mangaReadingMode;
+  final Map<String, Object?> mangaReaderOverrides;
+  final int mangaReaderOverrideUpdatedAt;
+  final bool mangaReaderOverrideDeleted;
 
   /// 该书的媒体种类（BUG-1119）。additive wire 字段 `'kind'`：epub 缺省**不写键**
   /// （旧书清单 wire 字节完全不变），缺失/未知一律回落 [MediaKind.epub]（旧 host
@@ -355,6 +384,15 @@ class RemoteBookInfo {
   /// host 端该书最近阅读时刻（epoch 毫秒，来自 host `reader_positions.updatedAt`）；
   /// 0 = 无记录/旧 host。仪表盘「继续」混排排序用。
   final int progressUpdatedAtMs;
+
+  /// host 端 `EpubBooks.importedAt`（epoch 毫秒；null = 旧 host 不带该字段）。
+  ///
+  /// 与 [RemoteVideoInfo.importedAt] 同范式、同理由：缺了它，client 书架的远端
+  /// 占位卡没有入库时刻，「导入时间」排序只能给它们造一个负数假戳去占位——于是
+  /// 无论选哪种排序，远端书恒堆在本地书之后（用户实报「合集外排序不对」）。
+  ///
+  /// 旧 host 不带 → null → 与改动前逐字节同行为（排序回落假值）。
+  final int? importedAt;
 
   final String title;
 
@@ -436,11 +474,17 @@ class RemoteBookInfo {
         if (collection != null) 'collection': collection!.toJson(),
         if (progressPercent > 0) 'progressPercent': progressPercent,
         if (progressUpdatedAtMs > 0) 'progressUpdatedAtMs': progressUpdatedAtMs,
+        if (importedAt != null) 'importedAt': importedAt,
         if (kind != MediaKind.epub) 'kind': kind.dbValue,
         if (format != 'epub') 'format': format,
         if (hasMangaContent) 'hasMangaContent': true,
         if (hasMangaChapters) 'hasMangaChapters': true,
         if (_isNonEmpty(mangaReadingMode)) 'mangaReadingMode': mangaReadingMode,
+        if (mangaReaderOverrides.isNotEmpty || mangaReaderOverrideDeleted)
+          'mangaReaderOverrides': mangaReaderOverrides,
+        if (mangaReaderOverrideUpdatedAt > 0)
+          'mangaReaderOverrideUpdatedAt': mangaReaderOverrideUpdatedAt,
+        if (mangaReaderOverrideDeleted) 'mangaReaderOverrideDeleted': true,
       };
 
   RemoteBookInfo copyWith({
@@ -457,11 +501,15 @@ class RemoteBookInfo {
     RemoteCollectionMembership? collection,
     int? progressPercent,
     int? progressUpdatedAtMs,
+    int? importedAt,
     MediaKind? kind,
     String? format,
     bool? hasMangaContent,
     bool? hasMangaChapters,
     String? mangaReadingMode,
+    Map<String, Object?>? mangaReaderOverrides,
+    int? mangaReaderOverrideUpdatedAt,
+    bool? mangaReaderOverrideDeleted,
   }) =>
       RemoteBookInfo(
         title: title,
@@ -479,11 +527,17 @@ class RemoteBookInfo {
         collection: collection ?? this.collection,
         progressPercent: progressPercent ?? this.progressPercent,
         progressUpdatedAtMs: progressUpdatedAtMs ?? this.progressUpdatedAtMs,
+        importedAt: importedAt ?? this.importedAt,
         kind: kind ?? this.kind,
         format: format ?? this.format,
         hasMangaContent: hasMangaContent ?? this.hasMangaContent,
         hasMangaChapters: hasMangaChapters ?? this.hasMangaChapters,
         mangaReadingMode: mangaReadingMode ?? this.mangaReadingMode,
+        mangaReaderOverrides: mangaReaderOverrides ?? this.mangaReaderOverrides,
+        mangaReaderOverrideUpdatedAt: mangaReaderOverrideUpdatedAt ??
+            this.mangaReaderOverrideUpdatedAt,
+        mangaReaderOverrideDeleted: mangaReaderOverrideDeleted ??
+            this.mangaReaderOverrideDeleted,
       );
 
   static RemoteBookInfo fromJson(Map<String, Object?> json) {
@@ -512,6 +566,8 @@ class RemoteBookInfo {
       progressPercent:
           _jsonNonNegativeInt(json['progressPercent']).clamp(0, 100),
       progressUpdatedAtMs: _jsonNonNegativeInt(json['progressUpdatedAtMs']),
+      // 旧 host 无该键 → null → 书架排序回落既有负数目录序（向后兼容）。
+      importedAt: _jsonInt(json['importedAt']),
       // 缺失（旧 host）/未知（对端未来新增）一律回落 epub，绝不抛异常。
       kind: MediaKind.tryParse(_jsonString(json['kind'])) ?? MediaKind.epub,
       // 互联完整支持批次（漫画）：缺失（旧 host）回落 'epub' / false / null。
@@ -519,6 +575,10 @@ class RemoteBookInfo {
       hasMangaContent: json['hasMangaContent'] == true,
       hasMangaChapters: json['hasMangaChapters'] == true,
       mangaReadingMode: _jsonString(json['mangaReadingMode']),
+      mangaReaderOverrides: _jsonObjectMap(json['mangaReaderOverrides']),
+      mangaReaderOverrideUpdatedAt:
+          _jsonNonNegativeInt(json['mangaReaderOverrideUpdatedAt']),
+      mangaReaderOverrideDeleted: json['mangaReaderOverrideDeleted'] == true,
     );
   }
 }
@@ -586,6 +646,14 @@ class RemoteActivityEvent {
 int _jsonNonNegativeInt(Object? raw) {
   if (raw is int && raw >= 0) return raw;
   return 0;
+}
+
+Map<String, Object?> _jsonObjectMap(Object? raw) {
+  if (raw is! Map) return const <String, Object?>{};
+  return <String, Object?>{
+    for (final MapEntry<Object?, Object?> e in raw.entries)
+      e.key.toString(): e.value,
+  };
 }
 
 /// 按 `sanitizeTtuFilename(title)` union 的书籍同步 diff 结果。
@@ -1513,8 +1581,12 @@ class RemoteVideoEmbeddedSubtitleTrack {
     this.isText = true,
     this.url,
     this.fileName,
+    this.containerTrackOrdinal,
   });
 
+  /// 服务端定位该轨用的流号：Fushi host 是 ffmpeg `-map 0:s:N` 的字幕相对序号，
+  /// Jellyfin / Emby 是 `MediaStreams[].Index`（**全局**流号，视频/音频也占号）。
+  /// 两者语义不同，只能原样回传给同一 host 下载；容器内选轨用 [containerTrackOrdinal]。
   final int streamIndex;
   final String codec;
   final String? language;
@@ -1522,6 +1594,12 @@ class RemoteVideoEmbeddedSubtitleTrack {
   final bool isText;
   final String? url;
   final String? fileName;
+
+  /// 该轨在**容器内字幕轨**里的 0 基序号（按 demux 顺序、含图形轨、不含外挂文件），
+  /// 与 libmpv `tracks.subtitle` 去掉 auto/no 后的下标同构——服务器抽不出该轨时
+  /// （兼容层无字幕端点，BUG-2590）播放页据此把它交给 libmpv 自绘。
+  /// null = 旧 host / 未换算，调用方按 [streamIndex] 兜底（Fushi host 两者同值）。
+  final int? containerTrackOrdinal;
 
   Map<String, Object?> toJson() => <String, Object?>{
         'streamIndex': streamIndex,
@@ -1531,6 +1609,8 @@ class RemoteVideoEmbeddedSubtitleTrack {
         'isText': isText,
         if (_isNonEmpty(url)) 'url': url,
         if (_isNonEmpty(fileName)) 'fileName': fileName,
+        if (containerTrackOrdinal != null)
+          'containerTrackOrdinal': containerTrackOrdinal,
       };
 
   RemoteVideoEmbeddedSubtitleTrack copyWith({
@@ -1545,6 +1625,7 @@ class RemoteVideoEmbeddedSubtitleTrack {
         isText: isText,
         url: url ?? this.url,
         fileName: fileName ?? this.fileName,
+        containerTrackOrdinal: containerTrackOrdinal,
       );
 
   static RemoteVideoEmbeddedSubtitleTrack fromJson(
@@ -1558,6 +1639,7 @@ class RemoteVideoEmbeddedSubtitleTrack {
         isText: json['isText'] != false,
         url: _jsonString(json['url']),
         fileName: _jsonString(json['fileName']),
+        containerTrackOrdinal: _jsonInt(json['containerTrackOrdinal']),
       );
 }
 
@@ -1960,11 +2042,18 @@ class RemoteVideoStreamUrls {
     this.miningVideoUrl,
     this.miningVideoHasAudio = false,
     this.embeddedSubtitleTracks = const <RemoteVideoEmbeddedSubtitleTrack>[],
+    this.streamIsOriginalContainer = true,
   });
 
   final String streamUrl;
   final String? subtitleUrl;
   final String? subtitleFileName;
+
+  /// [streamUrl] 是否原样送出源文件容器（Fushi host 直传 / Jellyfin·Emby
+  /// DirectPlay·DirectStream）。true 时 [embeddedSubtitleTracks] 里的轨也在 libmpv
+  /// 正在 demux 的流里，服务器抽不出文本时可交给 libmpv 自绘（BUG-2590）；转码
+  /// HLS 流不带内嵌字幕轨，这条回落路不可用。
+  final bool streamIsOriginalContainer;
 
   /// TODO-1000：分离音视频流（YouTube video-only）时的 audio-only 流 URL；播放页经
   /// `AudioTrack.uri` 外挂、制卡音频从它裁。同轨/muxed 时为 null。
@@ -1990,6 +2079,10 @@ class RemoteVideoStreamUrls {
     final bool miningVideoHasAudio = json['miningVideoHasAudio'] == true;
     final List<RemoteVideoEmbeddedSubtitleTrack> embeddedSubtitleTracks =
         _jsonEmbeddedSubtitleTracks(json['embeddedSubtitleTracks']);
+    // 老 host 不发这个字段 → 缺省 true（整文件直传，与从前一致）；转码 host 会明确
+    // 报 false，让内嵌字幕回落到 host 外挂下发而不是指望 libmpv 自绘（BUG-2590）。
+    final bool streamIsOriginalContainer =
+        json['streamIsOriginalContainer'] != false;
     return RemoteVideoStreamUrls(
       streamUrl: streamUrl,
       subtitleUrl: subtitleUrl,
@@ -1998,6 +2091,7 @@ class RemoteVideoStreamUrls {
       miningVideoUrl: miningVideoUrl,
       miningVideoHasAudio: miningVideoHasAudio,
       embeddedSubtitleTracks: embeddedSubtitleTracks,
+      streamIsOriginalContainer: streamIsOriginalContainer,
     );
   }
 }
@@ -2362,6 +2456,26 @@ abstract interface class VideoMetadataHost {
     required VideoMetadataLookup lookup,
     required VideoMetadataWork work,
     bool replaceIdentity = false,
+  });
+}
+
+/// host 端「TMDB 备选排序」的**可选**能力（Shoko `PreferredAlternateOrderingID` 的
+/// 互联面）：客户端列出 host 上某部剧的 episode groups，选定后由 host 写作品行、
+/// 上 `episodeGroup` 锁并按分组重刮。与 [VideoMetadataHost] 同范式：server 用 `is`
+/// 探测，不实现 → `/api/library/metadata/episode-group*` 404，能力位
+/// `liveLibrary.videoMetadataOrdering=false`。
+abstract interface class VideoMetadataOrderingHost {
+  /// [key] 对应作品的全部备选排序 + 当前选定。作品没有 TMDB 剧集身份 / host 无
+  /// 刮削链 → 空 groups；合集对应多个单元 → null（调用方走 ambiguousWork）。
+  Future<VideoMetadataEpisodeGroupListing?> listVideoMetadataEpisodeGroups({
+    required VideoMetadataWorkKey key,
+  });
+
+  /// 选定 [groupId]（null = TMDB 默认排序）：写作品行 + 锁 → 以既有身份重刮，
+  /// 结果与 [VideoMetadataHost.scrapeVideoMetadata] 同形。
+  Future<VideoMetadataWriteResult> setVideoMetadataEpisodeGroup({
+    required VideoMetadataWorkKey key,
+    required String? groupId,
   });
 }
 

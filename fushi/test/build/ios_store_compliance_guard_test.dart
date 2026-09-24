@@ -54,6 +54,7 @@ void main() {
           isWindows: false,
           isDesktop: false,
           isIOS: true,
+          isAndroid: false,
         ),
         isFalse,
       );
@@ -62,6 +63,7 @@ void main() {
           isWindows: false,
           isDesktop: false,
           isIOS: false,
+          isAndroid: true,
         ),
         isTrue,
         reason:
@@ -70,15 +72,49 @@ void main() {
       );
     });
 
-    test('iOS 这个维度只动下载中心，不误伤其它模块', () {
+    test('iOS 与 Android 的模块集合只差下载中心（外加 games 这一条技术例外）', () {
       for (final ModuleId module in ModuleId.values) {
         if (module == ModuleId.downloads) continue;
+        // games 是**技术**例外，不是合规边界：Android 的 games 模块是串流接收端
+        // （WebRTC 接收入口只接了 Android），iOS 没有这个接收端，所以两端结论
+        // 不同。它不属于 StoreRestrictedCapability，别据此把它登记进合规边界。
+        if (module == ModuleId.games) continue;
         expect(
-          module.availableOn(isWindows: false, isDesktop: false, isIOS: true),
-          module.availableOn(isWindows: false, isDesktop: false, isIOS: false),
+          module.availableOn(
+            isWindows: false,
+            isDesktop: false,
+            isIOS: true,
+            isAndroid: false,
+          ),
+          module.availableOn(
+            isWindows: false,
+            isDesktop: false,
+            isIOS: false,
+            isAndroid: true,
+          ),
           reason: '${module.name} 的可用性不该随 iOS 与否改变。',
         );
       }
+      expect(
+        ModuleId.games.availableOn(
+          isWindows: false,
+          isDesktop: false,
+          isIOS: true,
+          isAndroid: false,
+        ),
+        isFalse,
+        reason: 'iOS 没有串流接收端，也没有 galgame hook。',
+      );
+      expect(
+        ModuleId.games.availableOn(
+          isWindows: false,
+          isDesktop: false,
+          isIOS: false,
+          isAndroid: true,
+        ),
+        isTrue,
+        reason: 'Android 的 games 是串流接收端的远端游戏库。',
+      );
     });
 
     test('可见集合在 iOS 上滤掉下载中心（用户把开关打开也一样）', () {
@@ -86,6 +122,7 @@ void main() {
         isWindows: false,
         isDesktop: false,
         isIOS: true,
+        isAndroid: false,
       );
       expect(ios.isEnabled(ModuleId.downloads), isFalse);
       expect(
@@ -98,6 +135,7 @@ void main() {
         isWindows: false,
         isDesktop: false,
         isIOS: false,
+        isAndroid: true,
       );
       expect(android.isEnabled(ModuleId.downloads), isTrue);
     });
@@ -181,6 +219,56 @@ void main() {
       );
     });
 
+    test('「AI 下视频」入口 / 设置分类 / 功能指派行三处都过 downloads + '
+        'externalDiscovery 两道门', () {
+      // 对话页里说作品名 → 识别 → 下载或订阅：既是在线发现又是下载中心。三处消费
+      // 点必须问同一对判据；其中功能指派行最容易漏——它不是入口也不是分类，只是
+      // 设置页里一行文案，但那行写着「然后下载或订阅」，iOS 上留着等于把被拆掉
+      // 的能力写在审核员眼前（PR #1592 审查补的就是这一处）。
+      const String gates =
+          'StoreRestrictedCapability.downloads.isAvailable&&'
+          'StoreRestrictedCapability.externalDiscovery.isAvailable';
+
+      // 首页入口：AI 已指派 + 两道门 + 运行时就绪。
+      expect(
+        compactCode(read('lib/src/pages/implementations/home_page.dart')),
+        contains(
+          'boolget_canAiAcquire=>appModelNoUpdate.isPreferencesReady&&'
+          'resolveVideoAcquireAiProvider(appModelNoUpdate.prefsRepo)!=null&&'
+          '$gates&&',
+        ),
+      );
+
+      // 设置分类：section 级 visible，正文 / 主从详情 / 搜索索引三条路径共用。
+      expect(
+        compactCode(read('lib/src/settings/settings_schema_ai.dart')),
+        contains(
+          "id:'ai.video_download',title:t.ai_video_download_section,"
+          'visible:(SettingsContextc)=>$gates&&'
+          'c.appModel.moduleVisibility.isEnabled(ModuleId.downloads),',
+        ),
+      );
+
+      // 功能指派行：AiFeature.values 逐行渲染前过滤。
+      final String section = compactCode(
+        read('lib/src/pages/implementations/ai_provider_settings_section.dart'),
+      );
+      expect(
+        section,
+        contains(
+          'for(finalAiFeaturefeatureinAiFeature.values)'
+          'if(_featureAvailableOnThisStore(feature))_featureRow(feature),',
+        ),
+      );
+      expect(
+        section,
+        contains(
+          'staticbool_featureAvailableOnThisStore(AiFeaturefeature)=>'
+          'feature!=AiFeature.videoAcquire||($gates);',
+        ),
+      );
+    });
+
     test('设置里的资源索引器分区在 iOS 上整节不渲染', () {
       expect(
         compactCode(read('lib/src/settings/settings_schema_services.dart')),
@@ -212,18 +300,59 @@ void main() {
         reason: 'Mihon 扩展提供的源行也在这节里，不能只挡住标题。',
       );
     });
+
+    test('视频「导入」视图的在线源三段（Aniyomi）由 onlineVideoSource 门控', () {
+      // 判据只写在 video_online_sources_gate.dart 一处（合规门 + 运行时平台门），
+      // 导入页只问它——这条边界失效是静默的（本地与 CI 全绿、上架才被拒）。
+      final String gate = compactCode(
+        read('lib/src/media/video/online/video_online_sources_gate.dart'),
+      );
+      expect(
+        gate,
+        contains(
+          'boolgetisVideoOnlineSourcesAvailable=>'
+          'StoreRestrictedCapability.onlineVideoSource.isAvailable&&'
+          'MihonRuntimeFactory.isSupported;',
+        ),
+      );
+      final String sources = compactCode(
+        read('lib/src/pages/implementations/media_sources_page.dart'),
+      );
+      expect(
+        sources,
+        contains("if(widget.mediaKind=='video'&&isVideoOnlineSourcesAvailable)"),
+        reason: '视频导入页取 animeMihonManager（仓库 / 扩展 / 在线源三段）必须挂在这个门后。',
+      );
+      expect(
+        sources,
+        contains('if(animeManager!=null)...<Widget>['),
+        reason: '三段的 sliver 只在拿到 manager 时才进树，门失效时整段不出现。',
+      );
+      expect(
+        sources,
+        isNot(contains('Platform.isIOS')),
+        reason: '消费端不得各自写平台判断，只问 StoreRestrictedCapability。',
+      );
+    });
   });
 
   group('Aidoku 的 iOS 宿主已整条移除', () {
-    test('Dart 工厂只认 macOS', () {
+    test('Dart 工厂不认任何平台（macOS 宿主随后也已移除）', () {
       final String runtime = compactCode(
         read('lib/src/media/manga/aidoku/aidoku_runtime.dart'),
       );
-      expect(runtime, contains('staticboolgetisSupported=>Platform.isMacOS;'));
+      expect(runtime, contains('staticboolgetisSupported=>false;'));
       expect(
         runtime,
         isNot(contains('Platform.isIOS')),
         reason: 'iOS 分支必须消失，而不是留着抛异常——留着就还需要 native 侧配合。',
+      );
+      expect(
+        runtime,
+        isNot(contains('Platform.isMacOS')),
+        reason:
+            'macOS 子进程宿主随 Rust CLI、打包脚本与 CI 步骤一并移除；'
+            '分支留着就是一条指向不存在 helper 的死路径。',
       );
       expect(
         runtime,
@@ -274,17 +403,31 @@ void main() {
       }
     });
 
-    test('macOS 侧的 Aidoku 打包不受影响', () {
-      // 反向断言：这次移除的是 iOS 宿主，macOS 仍然是受支持平台。两条 macOS
-      // workflow 的打包步骤见 macos_aidoku_runtime_packaging_guard_test.dart，
-      // 这里只钉「不要顺手把 macOS 也删了」。
+    test('macOS 侧的 Aidoku 宿主也已整条移除', () {
+      // 曾是反向断言「不要顺手把 macOS 也删了」；macOS 宿主随后按同一口径移除，
+      // 这里改钉新事实：Dart 侧没有子进程实现，两条 macOS workflow 也不再打
+      // runtime 进 bundle，发布包里不带 WASM 解释器。
       expect(
         read('lib/src/media/manga/aidoku/aidoku_runtime.dart'),
-        contains('DesktopAidokuRuntime'),
+        isNot(contains('DesktopAidokuRuntime')),
       );
+      for (final String path in <String>[
+        '../.github/workflows/build-multiplatform.yml',
+        '../.github/workflows/release-desktop.yml',
+      ]) {
+        final String workflow = read(path);
+        expect(workflow, isNot(contains('tool/aidoku/')));
+        expect(workflow, isNot(contains('aidoku_runtime')));
+        expect(
+          workflow,
+          isNot(contains('apple-darwin')),
+          reason: '$path 里的 macOS Rust target 只为 Aidoku runtime 而装。',
+        );
+      }
+      expect(Directory('../tool/aidoku').existsSync(), isFalse);
       expect(
-        read('../.github/workflows/release-desktop.yml'),
-        contains('tool/aidoku/build_macos_runtime.sh'),
+        File('../native/aidoku_runtime/src/main.rs').existsSync(),
+        isFalse,
       );
     });
   });

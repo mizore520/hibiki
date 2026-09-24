@@ -5,7 +5,15 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 // SelectedContent 住在 rendering 层（selection.dart），material 不转出它。
 import 'package:flutter/rendering.dart' show SelectedContent;
-import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:flutter/services.dart'
+    show
+        Clipboard,
+        ClipboardData,
+        HardwareKeyboard,
+        KeyDownEvent,
+        KeyEvent,
+        LogicalKeyboardKey,
+        TextInputAction;
 import 'package:macos_ui/macos_ui.dart'
     show MacosTextField, MacosIcon, OverlayVisibilityMode;
 import 'package:fushi/src/shortcuts/context_menu_trigger.dart';
@@ -460,6 +468,15 @@ class FushiSearchField extends StatelessWidget {
                   minHeight: 32,
                 ),
               ),
+              // 搜索框的提交动作必须显式声明：不声明时软键盘/IME 给的是
+              // 「完成」，而 `TextInputAction.done` 的默认收尾是 unfocus——焦点
+              // 一掉，[FushiFocusRoot] 的修复链又会把它以编程方式还回来，桌面端
+              // 的 EditableText 对非点击获得的焦点整段选中，于是按下回车的观感
+              // 就是「文字被全选、什么也没搜」（BUG-2620）。
+              textInputAction: TextInputAction.search,
+              // 给了 onEditingComplete 就不会走默认的 unfocus 收尾，焦点留在
+              // 框里；onSubmitted 仍照常触发。composing 要自己清。
+              onEditingComplete: controller.clearComposing,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
             ),
@@ -467,12 +484,41 @@ class FushiSearchField extends StatelessWidget {
         },
       );
     }
-    if (focusId == null) return searchBar;
-    if (FushiFocusRoot.maybeControllerOf(context) == null) return searchBar;
+    // 物理回车的兜底：提交动作本该由平台 text-input 桥转成 onSubmitted，但那条
+    // 路要穿过 engine 的输入插件，桌面端一旦没走到，按回车就是「什么也没发生」，
+    // 用户只能靠改动输入再等防抖才搜得出来（BUG-2620）。键事件这一层是确定性的，
+    // 直接在这里认领裸回车并调 onSubmitted，handled 同时挡住重复提交。
+    //
+    // 两种情况必须放行：带修饰键的回车（不是提交语义），以及 IME 组字期间的回车
+    // ——那一下是确认候选词，抢走它等于日文/中文输入法在搜索框里没法选词。
+    final Widget submittable = Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
+      onKeyEvent: (FocusNode node, KeyEvent event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey != LogicalKeyboardKey.enter &&
+            event.logicalKey != LogicalKeyboardKey.numpadEnter) {
+          return KeyEventResult.ignored;
+        }
+        if (HardwareKeyboard.instance.isControlPressed ||
+            HardwareKeyboard.instance.isShiftPressed ||
+            HardwareKeyboard.instance.isAltPressed ||
+            HardwareKeyboard.instance.isMetaPressed) {
+          return KeyEventResult.ignored;
+        }
+        if (!focusNode.hasFocus) return KeyEventResult.ignored;
+        if (controller.value.composing.isValid) return KeyEventResult.ignored;
+        onSubmitted(controller.text);
+        return KeyEventResult.handled;
+      },
+      child: searchBar,
+    );
+    if (focusId == null) return submittable;
+    if (FushiFocusRoot.maybeControllerOf(context) == null) return submittable;
     return FushiFocusRegistration(
       id: focusId!,
       focusNode: focusNode,
-      child: searchBar,
+      child: submittable,
     );
   }
 }
@@ -874,22 +920,34 @@ class _FushiTagChipState extends State<FushiTagChip> {
   Widget build(BuildContext context) {
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
     final ColorScheme colors = Theme.of(context).colorScheme;
+    // eink：这里的每一档 alpha（0.44 / 0.88 / 0.2 / 0.12 / 0.4）在墨水屏上都是
+    // 抖动灰，而 overlay 底又塌成页面底色——未选中的 surface chip 整个消失。
+    // 一律实心：selected 反色（chipTheme 同款），未选中页面底色 + 描边，dimmed
+    // 只保留文字不加透明。
+    final bool eink = isEinkTheme(context);
     final Color tagColor = widget.color ?? colors.primary;
     final Color baseColor = widget.color ??
         (widget.selected ? colors.primaryContainer : tokens.surfaces.overlay);
     final Color background = switch (widget.tone) {
-      FushiTagChipTone.filled => widget.dimmed
-          ? baseColor.withValues(alpha: 0.44)
-          : baseColor.withValues(alpha: widget.color == null ? 1 : 0.88),
-      FushiTagChipTone.surface => widget.selected
-          ? tagColor.withValues(alpha: widget.dimmed ? 0.12 : 0.2)
-          : tokens.surfaces.overlay.withValues(alpha: widget.dimmed ? 0.44 : 1),
+      FushiTagChipTone.filled => eink
+          ? baseColor
+          : widget.dimmed
+              ? baseColor.withValues(alpha: 0.44)
+              : baseColor.withValues(alpha: widget.color == null ? 1 : 0.88),
+      FushiTagChipTone.surface => eink
+          ? (widget.selected ? colors.onSurface : colors.surface)
+          : widget.selected
+              ? tagColor.withValues(alpha: widget.dimmed ? 0.12 : 0.2)
+              : tokens.surfaces.overlay
+                  .withValues(alpha: widget.dimmed ? 0.44 : 1),
     };
     final Color foreground = switch (widget.tone) {
       FushiTagChipTone.filled => _foregroundFor(background),
-      FushiTagChipTone.surface => widget.dimmed
-          ? colors.onSurface.withValues(alpha: 0.4)
-          : colors.onSurface,
+      FushiTagChipTone.surface => eink
+          ? (widget.selected ? colors.surface : colors.onSurface)
+          : widget.dimmed
+              ? colors.onSurface.withValues(alpha: 0.4)
+              : colors.onSurface,
     };
     final BoxBorder? border = widget.selected
         ? Border.all(
@@ -897,7 +955,9 @@ class _FushiTagChipState extends State<FushiTagChip> {
                 ? tagColor
                 : colors.primary,
           )
-        : null;
+        : eink && widget.tone == FushiTagChipTone.surface
+            ? Border.all(color: colors.outline)
+            : null;
     final Text labelText = Text(
       widget.label,
       maxLines: 1,
@@ -938,7 +998,7 @@ class _FushiTagChipState extends State<FushiTagChip> {
       children: contentChildren,
     );
     final Widget chip = AnimatedContainer(
-      duration: fushiMd3StateDuration,
+      duration: einkSafeDuration(context, fushiMd3StateDuration),
       curve: fushiMd3StateCurve,
       padding: EdgeInsets.symmetric(
         horizontal: tokens.spacing.gap,
@@ -3411,6 +3471,7 @@ class FushiCompactSearchRow extends StatelessWidget {
     this.fieldKey,
     this.closeButtonKey,
     this.searchButtonKey,
+    this.hintLocales,
   });
 
   final TextEditingController controller;
@@ -3421,6 +3482,13 @@ class FushiCompactSearchRow extends StatelessWidget {
   final Key? fieldKey;
   final Key? closeButtonKey;
   final Key? searchButtonKey;
+
+  /// 希望输入法切到哪种语言（Android `EditorInfo.hintLocales`，API 24+）。
+  ///
+  /// 由调用方从「查词输入法语言」偏好算出来传进来（`AppModel.lookupImeHintLocales`），组件
+  /// **不自己读设置**：这几个组件被大量无 ProviderScope 的 widget 测试直接 pump，
+  /// 往 build 路径里加 Riverpod 读取会让整页 build 抛。
+  final List<Locale>? hintLocales;
 
   void _submit() {
     final String query = controller.text.trim();
@@ -3468,6 +3536,7 @@ class FushiCompactSearchRow extends StatelessWidget {
                   focusedBorder: InputBorder.none,
                 ),
                 textInputAction: TextInputAction.search,
+                hintLocales: hintLocales,
                 onSubmitted: (_) => _submit(),
               ),
             ),

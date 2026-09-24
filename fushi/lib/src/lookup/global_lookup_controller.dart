@@ -90,7 +90,11 @@ class GlobalLookupController {
   @visibleForTesting
   static bool? platformOverride;
 
-  static bool get isSupported => platformOverride ?? Platform.isWindows;
+  /// Windows: runner GlobalLookupWindow (WebView2). macOS: Runner
+  /// GlobalLookupOverlay.swift (NSPanel + WKWebView) on the SAME channel
+  /// contract. Linux has no native overlay yet.
+  static bool get isSupported =>
+      platformOverride ?? (Platform.isWindows || Platform.isMacOS);
 
   /// 覆盖窗此刻能否接查词（平台支持且 [start] 已跑）。悬浮字幕点词以此决定走
   /// 覆盖窗还是退回主窗 tab，请求不丢。
@@ -118,6 +122,11 @@ class GlobalLookupController {
   // the OS hotkey immediately, instead of the key being a compile-time const.
   FushiShortcutRegistry? _registry;
   bool _started = false;
+  // macOS cannot read another app's selection until the user grants
+  // Accessibility access. The first explicit global-lookup trigger opens the
+  // system permission pane; do that once per process and let the user return
+  // to the source app before we try to capture its selection.
+  bool _macAccessibilityPrompted = false;
   // TODO-1233 -- optional consumer notified when the overlay is GENUINELY
   // dismissed (foreground hook / click-outside / JS dismiss), so a caller can
   // hang a resume-on-dismiss. The video subtitle lookup (path A) would use this
@@ -522,6 +531,9 @@ class GlobalLookupController {
   ///     「功能模块 → 查词」关掉时推独立查词路由承载同一个 HomeDictionaryPage。这是
   ///     一次**用户显式发起**的查词，绝不能被模块门静默吞掉（吞掉的表现是窗口弹到
   ///     前台却什么都没变，比没有这个热键更糟）。
+  ///     `focusSearch: true`：用户按这个键就是为了打字（Flow Launcher 式用法），页面
+  ///     弹出来还得先点一下搜索框等于热键只做了一半——与携带待查词的悬浮字幕点词
+  ///     不同，本动作不取任何文本，抢焦点不会打断任何事。
   Future<void> openLookupPageInMainWindow() async {
     final AppModel? model = _appModel;
     if (model == null) {
@@ -529,7 +541,7 @@ class GlobalLookupController {
       return;
     }
     await DesktopLookupService.instance.bringMainWindowToFront();
-    model.requestHomeDictionaryTab();
+    model.requestHomeDictionaryTab(focusSearch: true);
     glog('openLookupPage: main window fronted + dictionary tab requested');
   }
 
@@ -637,15 +649,43 @@ class GlobalLookupController {
     );
   }
 
-  /// Absolute folder that holds popup.html on Windows:
-  /// <exeDir>/data/flutter_assets/assets/popup.
-  String _popupAssetsDir() => p.join(
-    p.dirname(Platform.resolvedExecutable),
-    'data',
-    'flutter_assets',
-    'assets',
-    'popup',
-  );
+  /// Absolute folder that holds popup.html — see [popupAssetsDirFor].
+  String _popupAssetsDir() =>
+      popupAssetsDirFor(Platform.resolvedExecutable, isMacOS: Platform.isMacOS);
+
+  /// Absolute popup assets folder for the native overlay to serve:
+  ///   · Windows / Linux: `<exeDir>/data/flutter_assets/assets/popup`;
+  ///   · macOS: `<App>.app/Contents/Frameworks/App.framework/Resources/
+  ///     flutter_assets/assets/popup` (the executable lives in Contents/MacOS;
+  ///     same bundle layout webview_asset_url.dart probes for in-app assets).
+  ///
+  /// [context] is the path style to resolve with (defaults to the running
+  /// platform's); tests pass `p.windows` / `p.posix` explicitly so the
+  /// Windows layout can be asserted on a Linux CI runner and vice versa.
+  @visibleForTesting
+  static String popupAssetsDirFor(
+    String resolvedExecutable, {
+    required bool isMacOS,
+    p.Context? context,
+  }) {
+    final p.Context ctx = context ?? p.context;
+    final String exeDir = ctx.dirname(resolvedExecutable);
+    if (isMacOS) {
+      return ctx.normalize(
+        ctx.join(
+          exeDir,
+          '..',
+          'Frameworks',
+          'App.framework',
+          'Resources',
+          'flutter_assets',
+          'assets',
+          'popup',
+        ),
+      );
+    }
+    return ctx.join(exeDir, 'data', 'flutter_assets', 'assets', 'popup');
+  }
 
   /// TODO-1066 — app 外查词的**触发源无关**入口：抓前台程序当前选中的文本，
   /// 查词，弹出覆盖窗卡片。
@@ -679,6 +719,15 @@ class GlobalLookupController {
       final AppModel? model = _appModel;
       if (model == null) {
         glog('hotkey: appModel null — abort');
+        return;
+      }
+      if (Platform.isMacOS && !await _ensureMacAccessibilityForSelection()) {
+        // Showing the permission pane changes the foreground application, so
+        // capturing now would read the wrong app. The user can press the same
+        // hotkey again after granting access.
+        if (_isCurrentRoute) {
+          glog('hotkey: macOS Accessibility permission required — abort');
+        }
         return;
       }
       // TODO-1079 (D) — collapse native + Dart reveal state to known-hidden
@@ -736,6 +785,36 @@ class GlobalLookupController {
     } catch (e, st) {
       glog('hotkey: EXCEPTION $e\n$st');
     }
+  }
+
+  /// Returns whether macOS can read/capture the foreground app's selection.
+  /// The permission request is only made after an explicit global-lookup
+  /// trigger, never during app startup or silently in the capture fallback.
+  ///
+  /// 未授权时**每次**触发都要留下用户看得见的痕迹：授权面板只开一次（再开一次
+  /// 也只是把同一个系统设置页翻到前台，徒增骚扰），但之后每一次热键 / 手柄 /
+  /// 鼠标侧键触发都往 [ErrorLogService] 记一条——这条链路的失败形态是「按了键
+  /// 什么都没发生」，只写 glog 临时诊断文件等于静默吞掉（TODO-1086 已为热键注册
+  /// 失败立过同一条规矩）。
+  Future<bool> _ensureMacAccessibilityForSelection() async {
+    if (!Platform.isMacOS) return true;
+    if (await SelectionCapture.isAccessibilityTrusted()) return true;
+    if (!_macAccessibilityPrompted) {
+      _macAccessibilityPrompted = true;
+      final bool granted = await SelectionCapture.requestAccessibilityTrust();
+      glog('hotkey: macOS Accessibility request granted=$granted');
+      if (granted && await SelectionCapture.isAccessibilityTrusted()) {
+        return true;
+      }
+    }
+    glog('hotkey: macOS Accessibility not granted, selection capture skipped');
+    ErrorLogService.instance.log(
+      'GlobalLookupController.macAccessibility',
+      'Global lookup could not read the foreground selection: Fushi is not '
+          'trusted for Accessibility. Grant it in System Settings > Privacy & '
+          'Security > Accessibility, then trigger the lookup again.',
+    );
+    return false;
   }
 
   /// TODO-872 — programmatic app-external lookup (desktop floating-lyric word

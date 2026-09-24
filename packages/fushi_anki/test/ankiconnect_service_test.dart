@@ -363,7 +363,7 @@ void main() {
   });
 
   group('batched indexed duplicate checks', () {
-    test('sends all values through one canAddNotes request', () async {
+    test('sends all values through one detailed duplicate request', () async {
       final issued = <http.Request>[];
       final List<bool> duplicates = await withMock(
         (s) => s.areDuplicates(
@@ -374,13 +374,19 @@ void main() {
           scope: AnkiDuplicateScope.deckRoot,
         ),
         sink: issued,
-        // canAddNotes: false means the note is already a duplicate.
-        result: const <bool>[false, true],
+        // Only the explicit duplicate error counts as a duplicate.
+        result: const <Map<String, Object?>>[
+          <String, Object?>{
+            'canAdd': false,
+            'error': kAnkiConnectDuplicateError,
+          },
+          <String, Object?>{'canAdd': true, 'error': null},
+        ],
       );
 
       expect(duplicates, const <bool>[true, false]);
       final Map<String, dynamic> body = bodyOf(issued.single);
-      expect(body['action'], 'canAddNotes');
+      expect(body['action'], 'canAddNotesWithErrorDetail');
       final List<dynamic> notes =
           (body['params'] as Map<String, dynamic>)['notes'] as List<dynamic>;
       expect(notes, hasLength(2));
@@ -404,6 +410,23 @@ void main() {
       );
     });
 
+    test('a missing deck is not reported as an existing note', () async {
+      final issued = <http.Request>[];
+      final List<bool> duplicates = await withMock(
+        (s) => s.areDuplicates(
+          deckName: 'Missing',
+          modelName: 'M',
+          fieldName: 'F',
+          fieldValues: const <String>['word'],
+        ),
+        sink: issued,
+        result: const <Map<String, Object?>>[
+          <String, Object?>{'canAdd': false, 'error': 'deck was not found'},
+        ],
+      );
+      expect(duplicates, const <bool>[false]);
+      expect(issued, hasLength(1));
+    });
     test('an empty batch does not touch the network', () async {
       final issued = <http.Request>[];
       final List<bool> result = await withMock(
@@ -432,7 +455,9 @@ void main() {
             fieldValues: const <String>['a', 'b'],
           ),
           sink: issued,
-          result: const <bool>[true],
+          result: const <Map<String, Object?>>[
+            <String, Object?>{'canAdd': true, 'error': null},
+          ],
         ),
         throwsA(isA<AnkiConnectException>()),
       );

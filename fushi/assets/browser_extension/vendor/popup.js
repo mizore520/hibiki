@@ -198,6 +198,55 @@ function mineEntryKey(expression, reading) {
     return `${expression || ''}\u0000${reading || ''}`;
 }
 
+// 宿主回头刷新**已经画好**的「已制卡 ✓ / 可制卡 +」。
+//
+// 为什么非得由宿主来推：lookup-time 探测（createEntryHeader 末尾那条
+// scheduleEntryStateCheck）问的是「此刻 Anki 里有没有这张卡」，画完就不再动，除非
+// 用户点按钮或重新查一次这个词。AnkiMobile 后端上「卡真的进库了」比 mineEntry 返回
+// 晚好几秒——它只能确认「AnkiMobile 被拉起来了」，落账要等 x-callback 的 x-success
+// 回跳（Dart: AnkiMobileMinedLedger），那时用户才刚从 AnkiMobile 切回来。所以制卡
+// 成功后紧跟着那次 refreshFromAnki **必然**问在落账之前、拿到 false，✓ 不亮（用户报
+// 「iOS 添加完卡片并没有出现打勾，要重新点一次词才出现」）。这是时序错配，不能靠
+// 延迟重试蒙对；由落账那一侧（Dart: MinedStateSignal）拿到真值后调本函数。
+//
+// target = {expression, reading?}：只刷这个词（省略 reading 就只比 expression——
+// x-success 只带回 expression）。target 省略/null = 「范围未知」（例如从后台切回
+// 前台，期间用户可能在 Anki 里删了卡）：此时**只刷已经探测过的按钮**，否则一次刷新
+// 会把 BUG-1833 好不容易改成懒探测的整屏词条重新变成几十次桥调用。
+//
+// 返回真的重问了几个按钮（诊断与测试用）。
+async function refreshRenderedMineStates(target) {
+    const wantedExpression = target && typeof target.expression === 'string'
+        ? target.expression.trim()
+        : '';
+    const wantedReading = target && typeof target.reading === 'string'
+        ? target.reading.trim()
+        : '';
+    const pending = [];
+    // 走 __fushiRootNode()（BUG-688）：扩展车道里弹窗活在 shadow root 里，裸 document
+    // 一个按钮都找不到。与同族的 fushiPopupMineFirstEntry / 上下文选择器刷新同一口径。
+    for (const button of __fushiRootNode().querySelectorAll('.mine-button')) {
+        const refresh = button.__fushiRefreshMineState;
+        if (typeof refresh !== 'function') continue;
+        if (wantedExpression) {
+            if ((button.__fushiMineExpression || '').trim() !== wantedExpression) {
+                continue;
+            }
+            if (wantedReading &&
+                (button.__fushiMineReading || '').trim() !== wantedReading) {
+                continue;
+            }
+        } else if (button.__fushiMineStateKnown !== true) {
+            continue;
+        }
+        pending.push(refresh());
+    }
+    if (pending.length === 0) return 0;
+    await Promise.all(pending);
+    return pending.length;
+}
+window.fushiRefreshMineStates = refreshRenderedMineStates;
+
 // BUG-1833 follow-up: favorite/Anki state is decoration for each result header,
 // not a prerequisite for revealing the dictionary card. A large lookup can
 // contain dozens of entry headers; firing both bridges while synchronously
@@ -3105,6 +3154,51 @@ function redirectMarkerKind(content) {
     return 0;
 }
 
+// glossary.content 经桥接过来时可能是 JSON 字符串；两个 redirect 谓词共用同一种归一。
+function parseGlossaryContent(content) {
+    if (typeof content === 'string') {
+        const trimmed = content.trim();
+        if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+            try {
+                return JSON.parse(trimmed);
+            } catch (_) {
+                // Not JSON: dictionary HTML or plain text.
+            }
+        }
+    }
+    return content;
+}
+
+function glossaryVisibleText(content) {
+    if (typeof content === 'string') {
+        return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+    }
+    if (Array.isArray(content)) {
+        return content.map(glossaryVisibleText).join(' ').trim();
+    }
+    if (content && typeof content === 'object') {
+        if (Object.prototype.hasOwnProperty.call(content, 'content')) {
+            return glossaryVisibleText(content.content);
+        }
+        if (typeof content.text === 'string') return glossaryVisibleText(content.text);
+    }
+    return '';
+}
+
+// BUG-2566: a record is redirect-only when the redirect label is all it has.
+// OALDPE10 prefixes every phrasal-verb record with a self-redirect label
+// `["give up", ["Redirected from give up"]]` and carries the real
+// structured-content definition right next to it (its alias records such as
+// `give-up` consist of that label alone). The label must not hide the
+// definition: a top-level item that has visible text and no redirect marker of
+// its own is a definition, and its presence keeps the record.
+function hasStandaloneDefinition(content) {
+    const parsed = parseGlossaryContent(content);
+    if (!Array.isArray(parsed)) return false;
+    return parsed.some(
+        (item) => redirectMarkerKind(item) === 0 && glossaryVisibleText(item) !== '');
+}
+
 function isRedirectGlossary(glossary) {
     if (!glossary) return false;
     const tags = `${glossary.definitionTags || ''} ${glossary.termTags || ''}`
@@ -3113,8 +3207,9 @@ function isRedirectGlossary(glossary) {
     if (/(?:^|\s)redirect(?:ed)?(?:\s|$)/.test(tags)) return true;
 
     const marker = redirectMarkerKind(glossary.content);
-    if (marker === 2) return true;
-    return marker === 1 && /(?:^|\s)non-lemma(?:\s|$)/.test(tags);
+    const redirectMarked =
+        marker === 2 || (marker === 1 && /(?:^|\s)non-lemma(?:\s|$)/.test(tags));
+    return redirectMarked && !hasStandaloneDefinition(glossary.content);
 }
 
 function createGlossarySectionWrapper(entry) {
@@ -3557,6 +3652,9 @@ function createEntryHeader(entry, idx) {
         ? window.fushiIsEntryQueued({ expression, reading }) === true
         : queuedLocally;
     const setMineState = (isMined) => {
+        // 本按钮的制卡态至少有过一次真值（lookup-time 探测，或点按钮后的回问）。
+        // 「范围未知」的宿主刷新只重问这类按钮，见 refreshRenderedMineStates。
+        mineButton.__fushiMineStateKnown = true;
         const queued = isEntryQueued();
         mineButton.dataset.queued = queued ? '1' : '';
         mineButton.title = queued ? (window.i18nMineQueued || '已加入制卡队列') : '';
@@ -3842,6 +3940,24 @@ function createEntryHeader(entry, idx) {
     // 制卡模块关掉时上面一颗制卡按钮都没渲染，这里的查重探测也一并停掉——模块
     // 关掉 = 它的后台流量（每次查词一次 Anki 查重 + 可能的覆写目标反查）也一起停。
     if (miningEnabled) {
+        // 宿主推来的刷新入口（window.fushiRefreshMineStates → 本闭包）。setMineState
+        // 是 createEntryHeader 的闭包局部，外面拿不到，所以把重问+重画整条挂到按钮上。
+        mineButton.__fushiMineExpression = expression || '';
+        mineButton.__fushiMineReading = reading || '';
+        mineButton.__fushiRefreshMineState = async () => {
+            try {
+                // 先作废在途的 lazy 探测：它问得比这次早，答案更旧，settle 后不得再
+                // 覆盖我们刚拿到的真值（applyIfCurrent 靠的就是这个 version）。
+                invalidateEntryStateCheck(mineButton);
+                const isMined = await window.flutter_inappwebview.callHandler(
+                    'duplicateCheck', { expression, reading });
+                setMineState(isMined === true);
+            } catch (e) {
+                // 刷新只是纠正装饰态：失败一律保持现状，绝不把 ✓ 抹回 +（那会诱导
+                // 用户再制一张重复卡，比不刷新更糟）。
+                console.error('refreshMineState failed', e);
+            }
+        };
         scheduleEntryStateCheck(
             mineButton,
             `duplicate\u0000${mineEntryKey(expression, reading)}`,
@@ -4076,8 +4192,14 @@ window.fushiPopupMineEntryByIndex = function(idx) {
     if (!entry) return false;
     const b = entry.querySelector('.mine-button');
     if (!b || b.disabled) return false;
-    b.click();
-    return true;
+    // 回点后**等它落地**再回给 Dart（BUG-2627 审查）：mine 按钮的 onclick 是 async
+    // （查重 → 取音 → mineEntry 桥调用），同步 `return true` 只代表「点下去
+    // 了」。Dart 拿到 true 就关对话框、撤掉弹窗保护，落地前那几百毫秒到几秒里悬停离开
+    // 自动关栈 / 低内存 dismiss 会把弹窗连制卡草稿一起撤掉——卡制成了但上下文全丢，
+    // 或 WebView 半路销毁回到「无卡无提示」。所以直接调 onclick 取回它的 promise，让
+    // Dart await 到 mineEntry 回执再关窗。三条 `return false` 保持同步（没点到）。
+    const result = typeof b.onclick === 'function' ? b.onclick() : b.click();
+    return Promise.resolve(result).then(() => true);
 };
 
 // TODO-1325 #5 part1：多词条焦点导航（上/下一条词条跳转）。一次查询可能返回多个词条
@@ -4617,14 +4739,18 @@ function appendNextDeferredGlossaryBlock(entryDiv) {
 }
 
 function postProcessRuby(container) {
-    // BUG-1098: `.expression ruby` (the entry HEADWORD's furigana, built as a
-    // bare <ruby>/<rt> by buildFuriganaEl) joins the glossary bodies here. It
-    // used to be skipped entirely, so it never got the per-base unit and never
-    // got popup.css's em padding-top reserve; the reading then overflowed the
-    // header line box and .expression-scroll (a scroll container whose TOP
-    // overflow is unreachable) clipped it. Same wrap, same reserve, no new
-    // mechanism.
-    container.querySelectorAll('.glossary-content ruby, .expression ruby').forEach(ruby => {
+    // BUG-2568: the entry HEADWORD (`.expression ruby`) is deliberately NOT in
+    // this selector. BUG-1098 had added it so the headword would inherit the
+    // vertical reserve, but the per-base unit below also imposes the glossary's
+    // COMPACT base — the base box never widens to its reading and the annotation
+    // hangs off it, start-aligned (measured in Blink: 入寮 base [10.0,62.0],
+    // reading [10.0,73.8]). Hoshi renders the headword with the engine's own
+    // ruby algorithm, which widens the base run to the annotation and centres
+    // them. So the headword keeps the bare <ruby>/<rt> buildFuriganaEl emits and
+    // popup.css's `.expression ruby` block gives it native ruby plus its own em
+    // padding-top reserve (the real content of BUG-1098's fix). Glossary bodies
+    // keep the compaction — BUG-345/1778 want it — and therefore keep this pass.
+    container.querySelectorAll('.glossary-content ruby').forEach(ruby => {
         // Wrap each base — a bare text node OR an element base like <rb>/<span>
         // (monolingual dicts such as 明鏡 emit element bases, not bare text) — in
         // a <span class="ruby-unit"> and pull that base's OWN <rt> into the span.
@@ -5853,6 +5979,17 @@ const POPUP_EINK_WHEEL_VIEWPORT_FRACTION = 0.5; // 一次跳半屏
 const POPUP_EINK_WHEEL_MIN_STEP = 48;           // 视口异常小时的下限（布局 px）
 const POPUP_EINK_WHEEL_COOLDOWN_MS = 140;       // 一次手势内的跳跃合并窗口
 let _popupEinkWheelAt = 0;
+// 步长比例用户可调：滚轮 / 触摸各一个旋钮（app 设置 lookup.popup_instant_scroll_
+// {wheel,touch}_step，偏好 popup_instant_scroll_{wheel,touch}_step）。in-app 由
+// popup_settings_injection 注入 window.__fushiPopupInstantScroll{Wheel,Touch}Step；
+// 扩展经查词响应 theme 的 --fushi-instant-scroll-wheel-step 由 content.js /
+// side-panel.js 设同名全局（触摸半边扩展侧不挂，见 BUG-2415 块注释）。缺省 / 非法
+// → 上面的 VIEWPORT_FRACTION 常量，即改前行为；夹在 [0.1, 1]，与 Dart 侧 clamp 同界。
+const POPUP_EINK_STEP_FRACTION_MIN = 0.1;
+function popupEinkStepFraction(value, fallback) {
+    if (typeof value !== 'number' || !isFinite(value) || value <= 0) return fallback;
+    return Math.min(1, Math.max(POPUP_EINK_STEP_FRACTION_MIN, value));
+}
 // 被滚表面的视口高度，单位与 scrollBy 的实参一致（布局 px）。扩展的滚动者是 shadow
 // host（zoom 设在 host 上，clientHeight 已是它自己的布局 px）；in-app 滚 document，
 // window.innerHeight 是视觉 px，要除以 documentElement 的 zoom 才是布局 px。
@@ -6046,9 +6183,11 @@ const __fushiPopupWheelListener = (e) => {
         _popupEinkWheelAt = nowMs;
         _popupWheelResidual = 0; // 比例模式的余量在瞬时模式下无意义，切换回去也别延迟跳
         const extent = popupEinkWheelExtent(scroller);
+        const wheelFraction = popupEinkStepFraction(
+            window.__fushiPopupInstantScrollWheelStep, POPUP_EINK_WHEEL_VIEWPORT_FRACTION);
         const jump = Math.max(
             POPUP_EINK_WHEEL_MIN_STEP,
-            Math.min(extent, extent * POPUP_EINK_WHEEL_VIEWPORT_FRACTION * wheelSpeed));
+            Math.min(extent, extent * wheelFraction * wheelSpeed));
         const step = Math.trunc(deltaPx < 0 ? -jump : jump);
         if (step === 0) return;
         if (scroller) { scroller.scrollBy({ top: step, behavior: 'auto' }); }
@@ -6131,9 +6270,11 @@ function __fushiPopupEinkTouchReset() {
 // 内容）。复用滚轮那条的 extent 解析——zoom → 布局 px 的换算已经在里面。
 function popupEinkTouchStep(scroller) {
     const extent = popupEinkWheelExtent(scroller);
+    const touchFraction = popupEinkStepFraction(
+        window.__fushiPopupInstantScrollTouchStep, POPUP_EINK_TOUCH_VIEWPORT_FRACTION);
     return Math.max(
         POPUP_EINK_TOUCH_MIN_STEP,
-        Math.min(extent, extent * POPUP_EINK_TOUCH_VIEWPORT_FRACTION));
+        Math.min(extent, extent * touchFraction));
 }
 
 // 从触点向上找**真正横向溢出**的祖先（不是只看 CSS 声明）。找到 → 本轮不接管。

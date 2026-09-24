@@ -577,12 +577,10 @@ void main() {
         isFalse,
         reason: '裸图单击必须留在阅读器，不再打开独立大图',
       );
-      // onTapEmpty 从无参变成带落页 payload（点击即识别要知道该识别哪一页）。
-      // 这条断言看的仍是同一件事：裸图单击走空白回传、留在阅读器。
-      expect(
-        doc.contains("b.callHandler('onTapEmpty', JSON.stringify("),
-        isTrue,
-      );
+      // 空白单击等待双击缩放窗口，最终仍带落页信息供点击 OCR 使用。
+      expect(doc.contains('function _emptyTapPayload(x, y)'), isTrue);
+      expect(doc.contains('_deferEmptyTap(_emptyTapPayload(x, y))'), isTrue);
+      expect(doc.contains("b.callHandler('onTapEmpty', payload)"), isTrue);
       expect(doc.contains('function _hitOcrChar(x, y)'), isTrue);
       expect(
         doc.contains('r.left - 4'),
@@ -604,7 +602,11 @@ void main() {
         isTrue,
         reason: 'Shift 悬停必须复用同一精确字符命中路径',
       );
-      expect(doc.contains('if (!e.shiftKey)'), isTrue);
+      expect(
+        doc.contains('if (!e.shiftKey && !false)'),
+        isTrue,
+        reason: '默认仍需 Shift，显式开启 hover 后才省略修饰键',
+      );
       // 收敛不变式：恰好一个 pointerup 监听。
       expect(
         "addEventListener('pointerup'".allMatches(doc).length,
@@ -1017,6 +1019,16 @@ void main() {
         isTrue,
         reason: '字符命中层的公共布局应只在文档 CSS 中声明一次',
       );
+
+      expect(doc.contains('window.__mangaUpdatePageGeometry'), isTrue);
+      expect(doc.contains('image.naturalWidth'), isTrue);
+      expect(doc.contains('image.naturalHeight'), isTrue);
+      expect(
+        doc.contains("page.style.aspectRatio = width + ' / ' + height"),
+        isTrue,
+      );
+      expect(doc.contains('_inspectSource(page);'), isTrue);
+      expect(doc.contains('var fit = Math.min(sx, sy);'), isTrue);
     });
 
     test(
@@ -1026,7 +1038,7 @@ void main() {
           <MokuroImage>[
             const MokuroImage(
               url: 'online.jpg',
-               size: MokuroSize(1000, 1400),
+              size: MokuroSize(1000, 1400),
               blocks: <MokuroBlock>[],
             ),
           ],
@@ -1043,7 +1055,7 @@ void main() {
           doc.contains("page.style.aspectRatio = width + ' / ' + height"),
           isTrue,
         );
-        expect(doc.contains("page.style.width =\n        'min('"), isTrue);
+        expect(doc.contains('_applyWidePolicy();'), isTrue);
       },
     );
 
@@ -1174,8 +1186,25 @@ void main() {
       final String on = docFor(tapZonePaging: true, direction: 'rtl');
       expect(on.contains('var TAP_ZONE_PAGING = true;'), isTrue);
       expect(on.contains('var IS_RTL = true;'), isTrue);
-      // RTL 下左边缘前进（LTR 相反）——同一份 JS 靠 IS_RTL 分流。
-      expect(on.contains("IS_RTL ? 'next' : 'prev'"), isTrue);
+      // RTL 下左边缘前进（LTR 相反）。镜像已从 JS 的 `IS_RTL ? ...` 三元挪到
+      // Dart 的 mangaTapZones()，注入的热区表里 forward 就是最终值——JS 不得再
+      // 镜像一次（会抵消）。表本身的几何见 manga_tap_zones_test.dart。
+      expect(
+        on.contains('[0,0,0.25,1,true]'),
+        isTrue,
+        reason: 'RTL 左竖条必须已经是前进',
+      );
+      final String ltrOn = docFor(tapZonePaging: true, direction: 'ltr');
+      expect(
+        ltrOn.contains('[0,0,0.25,1,false]'),
+        isTrue,
+        reason: 'LTR 左竖条必须是后退',
+      );
+      expect(
+        on.contains("IS_RTL ? 'next' : 'prev'"),
+        isFalse,
+        reason: 'JS 侧不得二次镜像',
+      );
       final String off = docFor(tapZonePaging: false, direction: 'ltr');
       expect(off.contains('var TAP_ZONE_PAGING = false;'), isTrue);
       expect(off.contains('var IS_RTL = false;'), isTrue);
