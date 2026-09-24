@@ -2,6 +2,8 @@
 
 本文件维护技术、数据与平台约束；协作、验证范围和正式采用授权见 [个人工作规则](docs/personal/PERSONAL_FORK_RULES.md)。根入口和本文件不要求每次操作重读，专项文档按任务触发。
 
+@docs/personal/PERSONAL_FORK_RULES.md
+
 ## 基本规则
 
 - 所有修改在独立 worktree 中完成，不覆盖用户或其他任务的改动。已授权的实现、定向验证和本地提交持续完成；合并/推送边界遵守个人规则。
@@ -79,7 +81,7 @@
 
 ## 提交与发布
 
-- 本地提交、正式采用、推送与交付说明统一见个人规则第 7 节。
+- 本地提交、正式采用、推送与交付说明统一见个人规则第 6 节。
 - 准备发布时按 [构建规则](docs/agent/build.md) 判断版本：每次发布 `+build` 单调增加，语义版本按里程碑调整，不随每个提交递增。
 - `main` / `develop` push 只能进入 debug / prerelease / non-Latest；测试版和正式版通过手动 `workflow_dispatch` 或手动发布 GitHub Release，push 不得更新 Latest/正式 release。
 - Android/Windows debug/beta 发布使用跨 workflow 统一 release 序列，通过 `tool/check_release_policy.ps1`；同一 commit/语义版本不得被各自 run number 拆成多个预发布入口。
