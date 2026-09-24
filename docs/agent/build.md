@@ -59,6 +59,14 @@ Galgame helper 的普通本地构建不传 `-RunTests`；`native/galgame_hook/to
 
 构建失败先按阶段归类：依赖/网络、Visual Studio/CMake 环境、源码编译、测试、打包、运行时。若失败发生在编译器启动前，先记录 VS 安装路径、CMake/NMake/MSBuild 版本、x86/x64 开发环境和 `TrackFileAccess` 状态，做最小工具链预检；不得把环境错误反复当成源码错误全量重编译。若失败发生在测试或打包，则保留原始日志和退出码，不能用管道截断输出或零测试执行来判绿。
 
+启动 BAT 的三条复用规则（个人 Windows 线）：
+
+- **共享候选编译目录**：在任务 worktree 里运行 BAT 时，已提交的候选统一切到 `.worktrees/_candidate-build`（detached，自动创建）编译，复用未变插件的 C++ 目标。主 checkout、有未提交编译输入的候选或 `FUSHI_BUILD_IN_PLACE=1` 原地编译。`_candidate-build` 是长期缓存，清理 worktree 时不删；不要在里面编辑。
+- **按内容判定**：`get_windows_build_state.ps1` 对编译输入的树内容取指纹，不看提交号；只提交文档不重编，内容相同的两个 checkout 状态相同。编译输入的范围只在 `tool/windows_build_inputs.ps1` 定义。
+- **合并后复用**：主 checkout 状态与 `_candidate-build` 的 stamp 相同时，直接把已验证的 Release 复制过来（只覆盖不删除，跳过 `fushi.exe.WebView2`），不再编译。BAT 在改动 Release 前先删 stamp，所以半成品不会被启动或复用。
+
+每次编译在该 checkout 的 `.build-cache/launcher-logs/` 写带时间戳的完整日志（保留 20 份），逐步耗时追加到同目录 `timings.csv`；失败时另存为 `last-failure.log`。排查编译失败先读这份日志，不要求用户复制控制台输出。Flutter 增量缓存仍在提交或分支变化时重置（防合并后旧包代码混入 app.so 的回归），这一条不要为提速去掉。
+
 ### TODO-207 release channel invariants
 
 客户端按 stable / beta / debug 三个通道过滤 GitHub Release。stable 只看正式 Latest；beta/debug 扫描最近 releases，但只接受 tag 形如 `v<version>-beta.<seq>` / `v<version>-debug.<seq>+<short-sha>` 且 `prerelease=true` 的 release。旧的 `debug-<sha>` tag 不可比较，客户端会忽略。
