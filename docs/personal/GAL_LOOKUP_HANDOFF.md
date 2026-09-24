@@ -9,6 +9,7 @@
 - 已通过应用、core、Anki 的静态分析，Anki 定向 110 项；x64 / Win32 原生 IPC 契约、loopback 策略测试及 Hook 构建通过。engine 包静态分析仍有 17 条原有 lint，均非编译错误。应用数据库迁移、漫画、视频、Hook、查词校准定向 405 项通过（`.codex-test/merge-final-flutter-tests.log`）；之前 54 张样本对照是在作者更新之前完成，不当作新提交的实机验收。
 - 用户首次完整构建在 `flutter_webrtc_plugin` 编译 `window_capture.cpp` 时遇到 Windows `min/max` 宏冲突（C4003/C2220）；四处 `numeric_limits<LONG>::min/max()` 已改为括号调用。该插件的 Release 目标增量构建通过；主程序 runner 目标本来定义 `NOMINMAX`。修复后用户报告已完成完整编译，测试未发现问题；具体游戏场景未逐项记录。
 - 旧 v104 EXE 仍不能打开 v112 数据库；这次采用的是包含 v112 的新源码。代理未操作本机数据库，完整编译与使用检查来自用户反馈。
+- 集成时自动重建 `docs/BUGS.md`，索引 2487 条；本次新增的 4 个编号碰撞已重编为 BUG-2670～2673，只改问题记录及其引用。`dart run tool/bug.dart check --no-scan` 仍报告 28 个候选既有的历史同号，未扩大到本轮清理；本次集成的功能代码与已验收候选逐文件一致。
 
 ## 基线与范围
 

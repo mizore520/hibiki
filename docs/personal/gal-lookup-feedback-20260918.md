@@ -12,10 +12,10 @@
 
 | 项目 | 已有事实 | 尚不能下的结论 |
 | --- | --- | --- |
-| [验证后闪退](../bugs/BUG-2536-fushi-access-violation-after-calibration.md) | 用户报告；已有 WER 访问冲突记录 | 还没有定位到具体崩溃调用链 |
-| [跨游戏检测失败](../bugs/BUG-2537-gal-cross-game-calibration-unrecognized.md) | 画面可见正文，截图校准报找不到正文行 | 不等于 Hook 取文本失败；无底色必失败尚未实测 |
-| [字符限制与样本指向](../bugs/BUG-2538-gal-calibration-unmeasurable-glyph.md) | 当前显示样本 4，报错指向样本 3；代码会先检查整批文本的字符范围 | 不能断言当前显示句中的符号就是触发字符，也不代表完成了字体宽度测量 |
-| [两行仍提示需要多行](../bugs/BUG-2540-gal-calibration-alignment-uncertain.md) | 浅底深色两行均在框内，程序未给出可用结果；错误选择逻辑可能掩盖另一检测分支的原因 | 不能归咎于用户框不准或没有找够长句 |
+| [验证后闪退](../bugs/BUG-2670-fushi-access-violation-after-calibration.md) | 用户报告；已有 WER 访问冲突记录 | 还没有定位到具体崩溃调用链 |
+| [跨游戏检测失败](../bugs/BUG-2671-gal-cross-game-calibration-unrecognized.md) | 画面可见正文，截图校准报找不到正文行 | 不等于 Hook 取文本失败；无底色必失败尚未实测 |
+| [字符限制与样本指向](../bugs/BUG-2672-gal-calibration-unmeasurable-glyph.md) | 当前显示样本 4，报错指向样本 3；代码会先检查整批文本的字符范围 | 不能断言当前显示句中的符号就是触发字符，也不代表完成了字体宽度测量 |
+| [两行仍提示需要多行](../bugs/BUG-2673-gal-calibration-alignment-uncertain.md) | 浅底深色两行均在框内，程序未给出可用结果；错误选择逻辑可能掩盖另一检测分支的原因 | 不能归咎于用户框不准或没有找够长句 |
 | 通用方案评估 | 用户要求考虑成熟通用文字检测/OCR，减少逐游戏适配与手工校准 | 尚未检索核实并用失败样本比较，不能宣称某模型更准或已经解决通用适配 |
 
 后续新反馈继续补这张表；已有 BUG 文件保留，不为每条体验反馈再建工作区或启动独立修复。
