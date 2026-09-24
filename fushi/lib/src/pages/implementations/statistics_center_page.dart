@@ -13,9 +13,11 @@ import 'package:fushi/src/pages/implementations/galgame_detail_page.dart';
 import 'package:fushi/src/pages/implementations/stat_activity.dart';
 import 'package:fushi/src/pages/implementations/stat_charts.dart';
 import 'package:fushi/src/pages/implementations/stat_delete_confirm_dialog.dart';
+import 'package:fushi/src/pages/implementations/stat_day_reset_hour_dialog.dart';
 import 'package:fushi/src/pages/implementations/stat_period_detail_sheet.dart';
 import 'package:fushi/src/pages/implementations/stat_session_list.dart';
 import 'package:fushi/src/pages/implementations/stat_shared.dart';
+import 'package:fushi/src/profile/profile_view_model.dart';
 import 'package:fushi_engine/stats/stat_facts.dart';
 import 'package:fushi/src/stats/stat_window.dart';
 import 'package:fushi_engine/stats/study_sessions.dart';
@@ -49,8 +51,28 @@ class StatisticsCenterPage extends BasePage {
 class _StatisticsCenterPageState extends BasePageState<StatisticsCenterPage> {
   @override
   Widget build(BuildContext context) {
+    // v105：统计按 Profile 隔离——页头点明当前看的是哪个 Profile 的数字，否则
+    // 切个 Profile「统计全没了」无从解释。名字取 ProfileViewModel 的激活项
+    // （它在 _load 前是 -1 哨兵，此时不显示副标题，等它装好再重建）。
+    final String? profileName =
+        ref.watch(profileViewModelProvider).activeProfile?.name;
     return FushiPageScaffold(
       title: t.stat_center_title,
+      subtitle: profileName == null
+          ? null
+          : t.stat_center_profile_scope(name: profileName),
+      actions: <Widget>[
+        // 「今日」重置整点是三域学习段共用的 dateKey 输入，所以入口放在统计中心
+        // 页头而不是某一域的设置页；宽窗展开成「图标 + 文字」药丸（label），窄窗
+        // 回落为纯图标、tooltip 仍是完整标题。
+        FushiIconButton(
+          icon: Icons.update_outlined,
+          tooltip: t.stat_center_day_reset_hour,
+          label: t.stat_center_day_reset_action,
+          onTap: () =>
+              showStatDayResetHourDialog(context, ref.read(appProvider)),
+        ),
+      ],
       body: DefaultTabController(
         length: StatsCenterTab.values.length,
         initialIndex: widget.initialTab.index,

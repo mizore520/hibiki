@@ -5,6 +5,11 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:fushi_engine/dictionary/dictionary_media_types.dart';
+import 'package:fushi_engine/foundation/engine_log.dart';
+import 'package:fushi_engine/foundation/pref_store.dart';
+import 'package:fushi_engine/media/video/live_transcode.dart';
+import 'package:fushi_engine/media/video/video_duration_probe.dart'
+    show probeVideoDurationMs;
 import 'package:fushi_engine/media/video/video_subtitle_source.dart'
     show
         EmbeddedSubtitleTrack,
@@ -23,6 +28,7 @@ import 'package:fushi_engine/sync/video_metadata_manifest.dart';
 import 'package:fushi_engine/sync/fushi_library_host_service.dart';
 import 'package:fushi_engine/sync/interconnect_profile_transfer.dart';
 import 'package:fushi_engine/sync/interconnect_service_config.dart';
+import 'package:fushi_engine/sync/interconnect_transcode_prefs.dart';
 import 'package:fushi_engine/sync/fushi_manga_ocr_host.dart';
 import 'package:fushi_engine/sync/downloads/host_download_host.dart';
 import 'package:fushi_engine/sync/downloads/host_download_routes.dart';
@@ -34,9 +40,12 @@ import 'package:fushi_engine/sync/interconnect_device_name.dart';
 import 'package:fushi_engine/sync/fushi_remote_api_handlers.dart';
 import 'package:fushi_engine/sync/pairing/fushi_pairing_protocol.dart';
 import 'package:fushi_engine/sync/fushi_remote_lookup_service.dart';
+import 'package:fushi_engine/sync/game_stream/game_stream_service.dart';
 import 'package:fushi_engine/sync/remote_lookup_routes.dart';
-import 'package:fushi_core/fushi_core.dart' show mimeTypeForFilePath;
+import 'package:fushi_core/fushi_core.dart'
+    show fushiDebugPrint, mimeTypeForFilePath;
 import 'package:meta/meta.dart';
+import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
@@ -49,6 +58,7 @@ part 'fushi_sync_server/video.part.dart';
 part 'fushi_sync_server/video_metadata.part.dart';
 part 'fushi_sync_server/sync_state.part.dart';
 part 'fushi_sync_server/webdav.part.dart';
+part 'fushi_sync_server/game_stream.part.dart';
 
 /// Embedded WebDAV-style server used for device-to-device LAN sync.
 ///
@@ -135,8 +145,8 @@ bool isAddressInUseError(SocketException e) {
   // Fall back to the message: cross-process conflicts carry an errno above,
   // but a same-process re-bind raises Dart's "shared flag" guard with no code,
   // and some platforms phrase EADDRINUSE without a numeric code.
-  final String message =
-      '${e.osError?.message ?? ''} ${e.message}'.toLowerCase();
+  final String message = '${e.osError?.message ?? ''} ${e.message}'
+      .toLowerCase();
   return message.contains('address already in use') ||
       message.contains('address in use') ||
       message.contains('only one usage of each socket address') ||
@@ -172,8 +182,10 @@ String? _extractVideoId(String reqPath, String suffix) {
   final String fullSuffix = '/$suffix';
   if (!reqPath.startsWith(prefix)) return null;
   if (!reqPath.endsWith(fullSuffix)) return null;
-  final String id =
-      reqPath.substring(prefix.length, reqPath.length - fullSuffix.length);
+  final String id = reqPath.substring(
+    prefix.length,
+    reqPath.length - fullSuffix.length,
+  );
   if (id.isEmpty) return null;
   // 只拒 `..`（路径穿越），允许 `/`（bookUid 形如 video/xxx）
   if (id.contains('..') || id.contains('\\')) return null;
@@ -222,8 +234,10 @@ class FushiSyncServer {
     String? hostFingerprint,
     String? deviceName,
     DateTime Function()? now,
+    PrefStore? prefs,
     Uint8List? Function(String dictionary, String path)?
         dictionaryMediaProvider,
+    FushiRemoteGameStreamService? gameStreamService,
   })  : syncDataDir = p.join(syncDataDir, 'sync-data'),
         _requestedPort = port,
         _token = token,
@@ -240,6 +254,8 @@ class FushiSyncServer {
         _downloads = downloads,
         _subscriptions = subscriptions,
         _dictionaryMediaProvider = dictionaryMediaProvider,
+        _gameStreamService = gameStreamService,
+        _prefs = prefs,
         _now = now ?? DateTime.now;
 
   final String syncDataDir;
@@ -283,12 +299,18 @@ class FushiSyncServer {
   /// stays unit-testable. Returns null -> the media endpoint answers 404.
   final Uint8List? Function(String dictionary, String path)?
       _dictionaryMediaProvider;
+  final FushiRemoteGameStreamService? _gameStreamService;
+
+  /// 偏好读侧（互联 host 的实时转码开关）。null = 调用方没接线（老调用方、单测），
+  /// 按默认值走，行为与从前一致。
+  final PrefStore? _prefs;
   final DateTime Function() _now;
 
   /// 单词音频 token（TTL 5 分钟 + BUG-908(a) 上限 128）与查词/制卡端点的 handler
   /// 正文都收在 [RemoteLookupRoutes]，与 YomitanApiServer 共用一份。
-  late final RemoteAudioTokenStore _audioTokens =
-      RemoteAudioTokenStore(now: _now);
+  late final RemoteAudioTokenStore _audioTokens = RemoteAudioTokenStore(
+    now: _now,
+  );
   late final RemoteLookupRoutes _lookupRoutes = RemoteLookupRoutes(
     audioTokens: _audioTokens,
     lookup: _remoteLookupService,
@@ -426,11 +448,11 @@ class FushiSyncServer {
     return (shelf.Handler innerHandler) {
       return (shelf.Request request) async {
         final shelf.Response response = await innerHandler(request);
-        final String accept =
-            (request.headers['accept-encoding'] ?? '').toLowerCase();
+        final String accept = (request.headers['accept-encoding'] ?? '')
+            .toLowerCase();
         if (!accept.contains('gzip')) return response;
-        final String type =
-            (response.headers['content-type'] ?? '').toLowerCase();
+        final String type = (response.headers['content-type'] ?? '')
+            .toLowerCase();
         final bool compressible =
             type.contains('application/json') || type.contains('xml');
         if (!compressible) return response;
@@ -469,6 +491,18 @@ class FushiSyncServer {
     }
     if (reqPath == '/api/pair/v2/confirm') {
       return _handlePairConfirm(request);
+    }
+    if (reqPath == '/api/game-stream/sessions' ||
+        reqPath.startsWith('/api/game-stream/sessions/') ||
+        reqPath == '/api/game-stream/join' ||
+        reqPath == '/api/game-stream/signal' ||
+        reqPath == '/api/game-stream/stop' ||
+        reqPath == '/api/game-stream/mine' ||
+        reqPath == '/api/game-stream/library' ||
+        reqPath == '/api/game-stream/library/cover' ||
+        reqPath == '/api/game-stream/launch' ||
+        reqPath == '/api/game-stream/launch/status') {
+      return _handleGameStream(request, method, reqPath);
     }
     if (reqPath.startsWith('/api/lookup/')) {
       return _handleLookupApi(request, method, reqPath);
@@ -532,13 +566,21 @@ class FushiSyncServer {
     }
     if (reqPath == '/api/downloads' || reqPath.startsWith('/api/downloads/')) {
       final HostDownloadHost? downloads = _downloads;
-      if (downloads == null) return shelf.Response.notFound('Host downloads off');
+      if (downloads == null)
+        return shelf.Response.notFound('Host downloads off');
       return handleHostDownloadRequest(downloads, request, method, reqPath);
     }
-    if (reqPath == '/api/subscriptions' || reqPath.startsWith('/api/subscriptions/')) {
+    if (reqPath == '/api/subscriptions' ||
+        reqPath.startsWith('/api/subscriptions/')) {
       final HostSubscriptionHost? subscriptions = _subscriptions;
-      if (subscriptions == null) return shelf.Response.notFound('Host subscriptions off');
-      return handleHostSubscriptionRequest(subscriptions, request, method, reqPath);
+      if (subscriptions == null)
+        return shelf.Response.notFound('Host subscriptions off');
+      return handleHostSubscriptionRequest(
+        subscriptions,
+        request,
+        method,
+        reqPath,
+      );
     }
     if (reqPath == '/api/library/dictionaries' ||
         reqPath.startsWith('/api/library/dictionaries/')) {
@@ -618,10 +660,13 @@ class FushiSyncServer {
       case 'HEAD':
         return _handleHead(fsPath);
       case 'OPTIONS':
-        return shelf.Response.ok('', headers: {
-          'Allow': 'OPTIONS, GET, POST, PUT, DELETE, MKCOL, PROPFIND, HEAD',
-          'DAV': '1',
-        });
+        return shelf.Response.ok(
+          '',
+          headers: {
+            'Allow': 'OPTIONS, GET, POST, PUT, DELETE, MKCOL, PROPFIND, HEAD',
+            'DAV': '1',
+          },
+        );
       default:
         return shelf.Response(405);
     }
@@ -843,11 +888,7 @@ class ExportPackageCache {
 
   /// 取 (kind,id) 的缓存导出文件；TTL 内直接命中，否则经 [export] 重新打包。
   /// [export] 返回的临时文件（连同其父临时目录）所有权移交本缓存。
-  Future<File> obtain(
-    String kind,
-    String id,
-    Future<File> Function() export,
-  ) {
+  Future<File> obtain(String kind, String id, Future<File> Function() export) {
     final String key = '$kind|$id';
     final File? hit = _latest[key];
     if (hit != null && hit.existsSync()) {
@@ -874,8 +915,9 @@ class ExportPackageCache {
   static String etagFor(File file) {
     final String base = p.basename(file.path);
     final int us = base.indexOf('_');
-    final String seq =
-        (base.startsWith('e') && us > 1) ? base.substring(1, us) : '0';
+    final String seq = (base.startsWith('e') && us > 1)
+        ? base.substring(1, us)
+        : '0';
     final int mtime = file.lastModifiedSync().millisecondsSinceEpoch;
     return '"pkg-$seq-${file.lengthSync()}-$mtime"';
   }
@@ -884,8 +926,9 @@ class ExportPackageCache {
     final File exported = await export();
     // 保留原始文件名（扩展名决定 Content-Type，如 .epub → application/epub+zip），
     // 前缀序号防同名不同 key 撞车。
-    final File target =
-        File(p.join(_dir.path, 'e${_seq++}_${p.basename(exported.path)}'));
+    final File target = File(
+      p.join(_dir.path, 'e${_seq++}_${p.basename(exported.path)}'),
+    );
     try {
       exported.renameSync(target.path);
     } on FileSystemException {
@@ -947,6 +990,9 @@ class _VideoStreamToken {
     required this.videoId,
     required this.createdAt,
     this.episodeIndex = 0,
+    this.transcodeProfile,
+    this.transcodeAudioStreamIndex,
+    this.transcodeDurationMs,
   });
 
   /// 绑定的视频 id（即 VideoBooks.bookUid，可含 `/`）。
@@ -955,4 +1001,23 @@ class _VideoStreamToken {
 
   /// 远端播放列表集下标（TODO-885）；单视频 / 当前集恒 0。
   final int episodeIndex;
+
+  /// 非 null 时 `/stream` 走实时转码（弱网降码率），null 是原文件 Range 直传。
+  ///
+  /// 档位**绑定在 token 上**而不是由 `/stream` 的 query 决定：`/stream` 是唯一豁免
+  /// Basic 鉴权的视频路径（auth.part.dart），谁拿到 URL 谁就能取流，让它自带 query
+  /// 就等于把「在 host 上起一个任意参数的 ffmpeg」敞开给 URL 持有者。签发侧
+  /// （`/streamurl`，要 Basic）定档，取流侧只认 token 里的那一份。
+  final VideoTranscodeProfile? transcodeProfile;
+
+  /// 转码流选哪条音轨（多音轨番剧的日配/中配）。null = 源的第一条音轨。转码后的流
+  /// 只能带一条音轨，播放器侧的音轨切换在这条流上是空的——所以选哪条必须在签发时定。
+  final int? transcodeAudioStreamIndex;
+
+  /// 转码流的源时长（毫秒），签发时 ffprobe 一次。
+  ///
+  /// HLS playlist 要按它切段，每个分段请求也要按它算自己的时间范围。存在 token 上
+  /// 而不是每次请求重探：一次播放会打几十上百个分段请求，每个都 ffprobe 一遍纯属
+  /// 白烧 CPU，而同一个 token 指向的文件在其生命周期内不会变。
+  final int? transcodeDurationMs;
 }

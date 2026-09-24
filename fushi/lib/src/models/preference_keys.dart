@@ -20,6 +20,19 @@ library;
 /// 已知的静态偏好键全集（守卫强制）。按字母序。
 const Set<String> kKnownPreferenceKeys = <String>{
   'active_profile_id',
+  // 「哪个功能用哪家 AI」的映射。不含凭据，但跟着 ai_providers 一起设备本地：
+  // providers 不跨设备，映射跨过去只会指向一个不存在的 id。
+  'ai_feature_providers',
+  // 用户自配的 AI 提供商清单，每条里带 base64 的 apiKeyB64 →
+  // 同时登记在 kCredentialPreferenceKeys、PrefRedactionPolicy.sensitiveKeys
+  // 与 deviceLocalPrefKeys。
+  'ai_providers',
+  // String：「AI 下视频」的默认画质。`''` 未设置（首次使用时问并按勾选写回）/
+  // `ask` 每次询问 / `2160p` `1080p` `720p` `480p` `any` 固定档。非凭据、跨设备。
+  'ai_video_download_quality',
+  // String：「AI 下视频」的字幕语言。`''` 未设置 / `ask` 每次询问 / `original`
+  // 跟随作品语言 / `ja` 等语言码 / `none` 不配字幕。非凭据、跨设备。
+  'ai_video_download_subtitle_language',
   'app_locale',
   'app_ui_scale',
   'asr_transcribe_language',
@@ -51,6 +64,10 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'design_system',
   'dictionary_entry_font_size',
   'dictionary_update_interval',
+  // 用户自配的 AList / OpenList 站点清单（JSON 数组：id/name/url/kinds/
+  // username/passwordB64/enabled/allowInsecureHttp）。String，读写见
+  // PreferencesRepository。与 discovery_opds_servers 同形、同隔离纪律。
+  'discovery_alist_sites',
   // 发现页「全部源」聚合默认排除的源 id（逗号分隔；默认 sukebei——18+ 源
   // 只在用户显式单选时使用）。String，读写见 PreferencesRepository。
   'discovery_disabled_sources',
@@ -119,6 +136,10 @@ const Set<String> kKnownPreferenceKeys = <String>{
   // bool（默认 true，BUG-1891）：进视频页时是否自动向 Jellyfin/Emby 服务器枚举
   // 条目。几十万条目的公共 Emby 服上自动枚举会被当成爬虫，关掉后改由下拉刷新手动触发。
   'jellyfin_auto_list_videos',
+  // bool（默认 false）：是否把媒体服务器条目混排进首页 / 系列 / 全部视频。默认只在
+  // 「媒体服务器」分区按服务器自己的树浏览；混排是显式 opt-in，因为它意味着整库
+  // 拍平枚举（BUG-1891 的根源），`jellyfin_auto_list_videos` 只在它开着时才有意义。
+  'jellyfin_show_in_library',
   'jimaku_api_key',
   'jimaku_default_language',
   // bool（默认 true）：Jimaku 是否参与字幕搜索。与 jimaku_api_key 组成
@@ -134,7 +155,13 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'local_audio_db_path',
   'local_audio_dbs',
   'lookup.global_context_capture',
+  'lookup.ime_language',
+  // bool（默认 false，桌面端）：查词页按「返回上一级」直接最小化主窗（一键收窗
+  // 回到之前的程序），不走关弹窗 → 清查询的阶梯。
+  'lookup_page_escape_minimizes_window',
   'low_memory_mode',
+  // String（`MangaBackground.key`，默认 `black`）：页图周围留白的底色。
+  'manga_background',
   // bool（默认 true）：漫画阅读器顶栏悬浮（不占布局、点页面中央/顶边悬停唤出）
   // 还是常驻钉在页图上方。
   'manga_chrome_floating',
@@ -147,19 +174,34 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'manga_external_mokuro_path',
   'manga_ocr_engine_preference',
   'manga_ocr_lens_language',
+  'manga_ocr_local_model',
+  'manga_ocr_parallel_tasks',
   'manga_online_catalog_base_url',
   'manga_online_catalog_enabled',
   'manga_page_animation',
+  // bool（默认 false）：启用本地 AI 分镜检测与逐分镜导航。
+  'manga_panel_navigation',
+  // String（JSON）：漫画阅读器的全局默认偏好（布局/缩放/裁边/点击区等，
+  // MangaReaderPreferences 序列化）。每作品覆盖落 manga_reader_overrides 表。
+  'manga_reader_preferences',
   'manga_reading_direction',
+  // int（默认 1）：跨页配对的整体偏移，用来把「封面独占一页」这类错位掰回来。
+  'manga_spread_offset',
   'manga_spread_preference',
   'manga_tap_to_ocr',
   'manga_tap_to_ocr_notice_shown',
+  // String（`MangaTapZoneLayout.key`，默认 `left_right`）：点击翻页热区布局。
+  'manga_tap_zone_layout',
   'manga_tap_zone_paging',
   'manga_volume_key_paging',
+  // bool（默认 true）：宽页（w/h >= 1）在双页模式下独占一屏，不塞进半个槽位。
+  'manga_wide_page_solo',
   'manga_zoom_percent',
   'manga_zoom_sensitivity',
   'maximum_terms',
   'mine_to_server',
+  // 有声书倍速制卡：句子音频跟随播放倍速（默认开）。
+  'mining_audio_follow_playback_speed',
   // #1447：制卡句子音频头/尾 padding（asbplayer 式），两条链共用。
   'mining_audio_head_pad_ms',
   'mining_audio_quality',
@@ -193,12 +235,18 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'popup_compact_glossaries',
   'popup_dictionary_columns',
   'popup_instant_scroll',
+  // double：瞬时滚动步长（占被滚表面视口高度的比例，0.1–1.0）。触摸 = 手指滑满
+  // 这么多才跳一步，默认 0.25；滚轮 = 一格跳这么多（再乘滚轮速度），默认 0.5。
+  'popup_instant_scroll_touch_step',
+  'popup_instant_scroll_wheel_step',
   'popup_max_height',
   'popup_max_width',
   'popup_wheel_speed',
   'qb_connection_config',
   // 阅读器顶栏 / 底栏按钮布局 JSON（ReaderControlLayout，v1 槽位表）。
   'reader_control_layout',
+  // String 'left' | 'right'：小说 / 漫画阅读设置侧边弹窗停靠在哪一侧（与翻页方向无关）。
+  'reader_settings_panel_side',
   'reading_goal_daily_chars',
   'reading_goal_weekly_chars',
   'remote_lookup_enabled',
@@ -216,6 +264,11 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'show_media_notification',
   'show_remote_entries',
   'startup_default_dictionary_tab',
+  // int（profiles.id）：v105 统计按 Profile 隔离——legacy 统计家族（v92 前的四张
+  // 投影表 + activity_events 学习行）归属哪个 Profile。由 v105 迁移一次性写下
+  // （升级那一刻激活的 Profile），fushi_core 侧常量 `kStatLegacyProfileIdPrefKey`。
+  // 设备本地键：值是本库自增 id，不进 Profile 快照、不随备份 / 分享出境。
+  'stats_legacy_profile_id',
   'sync_backend_type',
   'texthooker_enabled',
   'texthooker_urls',
@@ -254,8 +307,15 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_download_target_source_id',
   'video_fit_mode',
   'video_immersive_mode',
+  // int（默认 -1 = 自动）：互联远端视频画质档在 kInterconnectQualityPresets 里的
+  // 下标。自动 = 局域网原画直传、走公网压到中档（interconnect_video_quality.dart）。
+  'video_interconnect_quality_preset',
   'video_library_auto_backfill_scrape',
   'video_lock_window_aspect_ratio',
+  // int（默认 -1 = 自动）：媒体服务器（Jellyfin/Emby）串流画质档在
+  // JellyfinVideoClient.kQualityPresets 里的下标；选档 = 向服务器声明码率 / 宽度上限，
+  // 超限由服务器转码。
+  'video_media_server_quality_preset',
   'video_mining_animated_format',
   'video_mining_image_mode',
   'video_mining_still_format',
@@ -276,6 +336,11 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_secondary_subtitle_blur',
   'video_secondary_subtitle_obscure_hide',
   'video_shaders_enabled',
+  // bool（默认 false）：控制条淡出后，在视频最下方留一条主题色细进度条
+  // （B 站 / YouTube 同款）。默认关——控制条淡出就是要把画面让干净。小窗档不受
+  // 它管——那里完整进度条已被收起，细线是唯一的进度指示，见
+  // videoSlimProgressBarVisible。
+  'video_slim_progress_bar',
   'video_sort_mode',
   // bool（默认 true）：AJATT 日语字幕库（kitsunekko 镜像）是否参与字幕搜索。
   // 零配置源，没有 key 门控；默认开是因为它是没填 Jimaku/OpenSubtitles key 的
@@ -293,6 +358,11 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_subtitle_obscure_reveal',
   'video_subtitle_opensubtitles_config',
   'video_subtitle_style',
+  // string：SubDL（subdl.com）API key（用户在站点 panel 免费生成）。搜索必须带 key。
+  'video_subtitle_subdl_api_key',
+  // bool（默认 true）：SubDL 是否参与字幕搜索。与 api key 组成 `enabled && key`
+  // 双门控（形状对齐 Jimaku）；key 为空即不装配，所以默认开不会产生任何请求。
+  'video_subtitle_subdl_enabled',
   'video_youtube_quality_height',
   'yomitan_api_key',
   'yomitan_api_port',
@@ -345,10 +415,15 @@ const List<String> kKnownPreferenceKeyPrefixes = <String>[
 /// 🔴 凭据键：值为 base64 敏感凭据，不进日志 / 不进明文导出。
 /// （`media_source_secret_<id>` 前缀族见 [kKnownPreferenceKeyPrefixes]。）
 const Set<String> kCredentialPreferenceKeys = <String>{
+  // 每条 AI 提供商记录里带 base64 的 apiKeyB64。
+  'ai_providers',
+  // 每条 AList / OpenList 站点记录里带 base64 的 passwordB64。
+  'discovery_alist_sites',
   // 每条 OPDS 服务器记录里带 base64 的 passwordB64。
   'discovery_opds_servers',
   'jimaku_api_key',
   'network_proxy_password',
   'network_proxy_username',
+  'video_subtitle_subdl_api_key',
   'yomitan_api_key',
 };

@@ -315,7 +315,8 @@ extension _ReaderHistoryBooks on _ReaderFushiHistoryPageState {
         // TODO-1191：与 EPUB 卡菜单对称补「查看插画」。仅在该 SRT 书有对应
         // EpubBooks 行（[_epubBackedBookKeys] 命中 = extractDir 存在）时展示，
         // 复用 EPUB 侧同一 [_openIllustrations]（自行 Navigator.pop + 打开
-        // [IllustrationsViewerPage]，无插图时页面友好占位）。菜单里的「选择封面
+        // [IllustrationsViewerPage] = 阅读器内同一份插图册，无插图时页面友好
+        // 占位）。菜单里的「选择封面
         // 图片」动作已移除——选封面统一走「编辑信息」弹窗的封面字段（EPUB / SRT 皆可）。
         if (_epubBackedBookKeys.contains(bookKey))
           DialogQuickAction(
@@ -1127,6 +1128,19 @@ extension _ReaderHistoryBooks on _ReaderFushiHistoryPageState {
           extractDir: row.extractDir,
           bookUid: row.uid,
           database: appModel.database,
+          // 「跳到此插图」：画廊已自行 pop，这里按插图所在章 / 章内位置开书
+          // （与阅读器内切卷跳章同一条 initialBookmarkJump 路径）。
+          onJumpTo: (EpubImageRef image) => appModel.openMedia(
+            ref: ref,
+            mediaSource: item.getMediaSource(appModel: appModel),
+            item: item,
+            initialBookmarkJump: Bookmark(
+              sectionIndex: image.jumpChapterIndex,
+              normCharOffset: image.normCharOffset,
+              label: '',
+              createdAt: DateTime.now(),
+            ),
+          ),
         ),
       ),
     );
@@ -1339,6 +1353,24 @@ extension _ReaderHistoryBooks on _ReaderFushiHistoryPageState {
           return;
         }
         _openStreamImportPrefilled(streamUrl: files.urls.first);
+      case DropIntent.importTorrent:
+        // 拖入 .torrent → 下载中心「添加任务」对话框预填种子；内容类型按落点预填
+        // （漫画库→漫画、书架→小说），用户可在框里改。下载中心是独立模块，关掉
+        // 时与其它模块一样给可见提示而不是静默。
+        if (!modules.isEnabled(ModuleId.downloads)) {
+          showModuleDisabled();
+          return;
+        }
+        unawaited(
+          showManualDownloadTaskDialog(
+            context: context,
+            appModel: appModel,
+            torrentPaths: files.torrents,
+            initialDiscoveryKind: _mangaOnly
+                ? DiscoveryMediaKind.manga
+                : DiscoveryMediaKind.novel,
+          ),
+        );
       case DropIntent.unsupportedSurface:
         debugPrint('[fushi-drop] [reader-shelf] intent=unsupportedSurface');
         ScaffoldMessenger.of(context).showSnackBar(

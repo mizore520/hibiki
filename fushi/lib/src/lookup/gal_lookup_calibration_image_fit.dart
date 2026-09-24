@@ -312,7 +312,9 @@ void _removeIsolatedSpecks(List<int> columns, int rowHeight) {
   for (final (int left, int right) in groups) {
     if (right - left > rowHeight * 0.5) continue;
     int ink = 0;
-    for (int x = left; x < right; x++) ink += columns[x];
+    for (int x = left; x < right; x++) {
+      ink += columns[x];
+    }
     if (ink <= math.max(4, rowHeight * 0.5) && ink <= total * 0.01) {
       columns.fillRange(left, right, 0);
     }
@@ -327,8 +329,9 @@ _SampleInk? _measure(
   final img.Image? decoded = img.decodePng(sample.capture.pngBytes);
   if (decoded == null ||
       decoded.width != sample.capture.referenceClient.widthPx ||
-      decoded.height != sample.capture.referenceClient.heightPx)
+      decoded.height != sample.capture.referenceClient.heightPx) {
     return null;
+  }
   final double scale = math.min(1, 1600 / decoded.width);
   final img.Image image = scale == 1
       ? decoded
@@ -462,8 +465,9 @@ _SampleInk? _measure(
       if (start < 0) start = y;
       end = y + 1;
     } else if (start >= 0 && (y == height || y - end >= 2)) {
-      if (end - start >= math.max(6, image.height * 0.012))
+      if (end - start >= math.max(6, image.height * 0.012)) {
         bands.add((start, end));
+      }
       start = -1;
     }
   }
@@ -472,7 +476,9 @@ _SampleInk? _measure(
     if (b - a > image.height * 0.12) continue;
     final List<int> columns = List<int>.filled(image.width, 0);
     for (int y = a; y < b; y++) {
-      for (int x = 0; x < width; x++) columns[left + x] += mask[y * width + x];
+      for (int x = 0; x < width; x++) {
+        columns[left + x] += mask[y * width + x];
+      }
     }
     _removeIsolatedSpecks(columns, b - a);
     final int first = columns.indexWhere((int v) => v >= 2);
@@ -510,8 +516,9 @@ double _score(
     final double start = origin + (r == 0 ? 0 : indent * pitch);
     if (units.isEmpty ||
         start > row.left + 1 ||
-        start + units.length * pitch < row.right - 1)
+        start + units.length * pitch < row.right - 1) {
       return double.infinity;
+    }
     // A match must explain every visible stroke, not only a convenient subset.
     if (row.left - start > pitch * 0.85 ||
         start + units.length * pitch - row.right > pitch * 0.85) {
@@ -565,8 +572,9 @@ _GridFit? _fitSample(_SampleInk sample) {
         indent,
       );
       if (lines.length != sample.rows.length ||
-          lines.any((List<int> l) => l.isEmpty))
+          lines.any((List<int> l) => l.isEmpty)) {
         continue;
+      }
       final double nominal = _median([
         for (int row = 0; row < lines.length; row++)
           (sample.rows[row].right - sample.rows[row].left) / lines[row].length,
@@ -582,11 +590,14 @@ _GridFit? _fitSample(_SampleInk sample) {
           final double origin = sample.rows.first.left - pitch * phase * 0.025;
           if (origin < 0 || origin + capacity * pitch > sample.width) continue;
           final double score = _score(sample, capacity, indent, pitch, origin);
-          if (best == null || score < best.score)
+          if (best == null || score < best.score) {
             best = _GridFit(capacity, indent, pitch, origin, score);
+          }
         }
       }
-      if (best != null && best.score.isFinite) candidates.add(best);
+      if (best != null && best.score.isFinite) {
+        candidates.add(best);
+      }
     }
   }
   candidates.sort((_GridFit a, _GridFit b) => a.score.compareTo(b.score));
@@ -594,8 +605,9 @@ _GridFit? _fitSample(_SampleInk sample) {
   // E.g. explicit newlines reveal row locations but not the soft-wrap column.
   // Do not turn two equally plausible wrap/indent rules into a saved profile.
   if (candidates.length > 1 &&
-      candidates[1].score - candidates.first.score < 0.025)
+      candidates[1].score - candidates.first.score < 0.025) {
     return null;
+  }
   return candidates.first;
 }
 
@@ -656,8 +668,9 @@ GalCalibrationImageFit inferGalCalibrationGrid(
       for (final item in training)
         if (_quoted(item.$1.sample.capture.sourceText)) item.$2.indent,
     ];
-    if (plainIndents.toSet().length > 1 || quoteIndents.toSet().length > 1)
+    if (plainIndents.toSet().length > 1 || quoteIndents.toSet().length > 1) {
       continue;
+    }
     final int plainIndent = plainIndents.isEmpty ? 0 : plainIndents.first;
     final int quoteIndent = quoteIndents.isEmpty
         ? plainIndent
@@ -723,8 +736,9 @@ GalCalibrationImageFit inferGalCalibrationGrid(
     if (!valid) continue;
     final double aspect = training.first.$1.width / training.first.$1.height;
     final double width = columns * pitch / aspect;
-    if (left < 0 || top < 0 || left + width > 1 || top + cellHeight > 1)
+    if (left < 0 || top < 0 || left + width > 1 || top + cellHeight > 1) {
       continue;
+    }
     final GalLookupCellGridV1 grid = GalLookupCellGridV1(
       advancePerClientHeight: pitch,
       lineAdvancePerClientHeight: lineAdvance,

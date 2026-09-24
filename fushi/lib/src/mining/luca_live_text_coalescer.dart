@@ -33,8 +33,8 @@ bool isLucaLiveTextLine(GalHookedLine line) {
 /// 即时发布，避免引入回退合并器的收束延迟。
 bool isLucaAuthoritativeTextLine(GalHookedLine line) {
   return isLucaLiveTextLine(line) &&
-      ((line.hookCode?.startsWith('HQFN-8*14@') ?? false) ||
-          (line.hookCode?.startsWith('HQ24@') ?? false));
+      (line.hookCode.startsWith('HQFN-8*14@') ||
+          line.hookCode.startsWith('HQ24@'));
 }
 
 /// 是否是已经经过结构身份识别的 Luca Hook 面。

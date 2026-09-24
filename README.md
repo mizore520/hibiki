@@ -18,6 +18,10 @@
 </div>
 
 
+## Maintainer
+
+Fushi is maintained by [hajisensai](https://github.com/hajisensai). Contact: [hajisensai@gmail.com](mailto:hajisensai@gmail.com).
+
 ## Platform Support
 
 | Platform | Status | Rendering / UI |
@@ -182,12 +186,16 @@ Fushi builds on the following projects and ecosystem:
 | [Silero VAD](https://github.com/snakers4/silero-vad) | Voice activity detection model |
 | [manga-ocr](https://github.com/kha-white/manga-ocr) / [manga-ocr-onnx](https://huggingface.co/mayocream/manga-ocr-onnx) | Manga OCR model |
 | [comic-text-and-bubble-detector](https://huggingface.co/ogkalu/comic-text-and-bubble-detector) | Manga text and speech bubble detection model |
+| [manga-panel-detector-yolo26n](https://huggingface.co/leoxs22/manga-panel-detector-yolo26n) | Manga panel detection model, trained on [Manga109-s](http://www.manga109.org/en/download_s.html) |
+
+> The manga panel detection model is trained on the Manga109-s dataset (Matsui et al. 2017; Aizawa et al. 2020), whose terms require this use of the dataset to be clearly indicated.
 
 ### Content sources and integrations
 
 | Project | Description |
 |---|---|
 | [Mihon](https://github.com/mihonapp/mihon) | Manga source extension ecosystem |
+| [Aniyomi](https://github.com/aniyomiorg/aniyomi) | Anime source extension ecosystem (extensions-lib 14–16 hosted by the same runtime) |
 | [M-Extension-Server](https://github.com/kodjodevf/M-Extension-Server) | Manga extension runtime for desktop |
 | [aidoku-rs](https://github.com/Aidoku/aidoku-rs) | Manga source runtime ABI |
 | [asbplayer](https://github.com/asbplayer/asbplayer) | Streaming subtitle bridge reference for the browser extension |

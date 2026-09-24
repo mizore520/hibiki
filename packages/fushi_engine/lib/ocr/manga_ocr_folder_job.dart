@@ -29,10 +29,15 @@ const String kMangaOcrPagesCacheDirName = '_pages';
 // against the encoded pixel matrix while Chromium displayed the oriented page,
 // so portrait pages with orientation metadata had a shifted lookup layer.
 //
-// 这只是**坐标口径基线**，不代表模型身份：实际落盘的目录名要再接一段已安装模型
+// v3 matches manga-ocr's antialiased grayscale resize.
+// v4 retains nested regions through recognition and only removes text-confirmed
+// horizontal duplicates. Invalidate v3 caches that may have lost small body text.
+// 这只是**算法/坐标口径基线**，不代表模型身份：实际落盘的目录名要再接一段已安装模型
 // 的内容指纹（`manga_ocr_model_fingerprint.dart`），否则上游换模型后旧缓存被静默
 // 复用（BUG-1173）。
-const String kLocalMangaOcrEngineSignature = 'local-onnx-v2-oriented';
+const String kMangaOcrPipelineRevision = 'v4-antialias-text-dedup';
+const String kLocalMangaOcrEngineSignature =
+    'local-onnx-$kMangaOcrPipelineRevision';
 
 /// 产物文件名（`manga_ocr_out/manga.json`）。
 const String kMangaOcrOutputFileName = 'manga.json';
@@ -323,6 +328,7 @@ Future<String> runMangaOcrFolderJob({
   required OcrDetector detector,
   required OcrRecognizer recognizer,
   required String engineSignature,
+  List<String>? relativeUrls,
   OcrCancelToken? cancelToken,
   OcrProgressCallback? onProgress,
   Future<img.Image> Function(File file)? decodePage,
@@ -331,7 +337,20 @@ Future<String> runMangaOcrFolderJob({
   if (!root.existsSync()) {
     throw ArgumentError('image directory does not exist: $imageDirPath');
   }
-  final List<MangaOcrPageFile> pages = enumerateMangaPages(root);
+  final List<MangaOcrPageFile> allPages = enumerateMangaPages(root);
+  final Set<String>? requested = relativeUrls?.map(normalizeMangaUrl).toSet();
+  final List<MangaOcrPageFile> pages = requested == null
+      ? allPages
+      : allPages
+          .where(
+            (MangaOcrPageFile page) => requested.contains(page.relativeUrl),
+          )
+          .toList();
+  if (requested != null && pages.length != requested.length) {
+    throw ArgumentError(
+      'Requested OCR page is outside the managed image directory',
+    );
+  }
   if (pages.isEmpty) {
     throw StateError('no images found in $imageDirPath');
   }
@@ -367,6 +386,9 @@ Future<String> runMangaOcrFolderJob({
     cancelToken: cancelToken,
     onProgress: onProgress,
   );
+
+  // Reader requests own page caches, never the complete volume output.
+  if (requested != null) return cacheDir.path;
 
   final MokuroPayload generated = buildMangaPayloadFromResults(pages, results);
   final MokuroPayload payload = MokuroPayload(

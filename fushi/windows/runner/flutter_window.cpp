@@ -33,8 +33,12 @@
 #include "audio_loopback_capture.h"
 #include "voice_hook_reader.h"
 #include "foreground_selection.h"
+#include "game_client_extent.h"
+#include "game_stream_input.h"
 #include "global_mouse_trigger.h"
 #include "ime_space_dispatch.h"
+#include "low_level_mouse_hook.h"
+#include "utils.h"
 #include "window_capture.h"
 #include "window_recorder.h"
 #include "../../../native/galgame_hook/include/voice_hook_ipc.h"
@@ -689,6 +693,7 @@ bool FlutterWindow::OnCreate() {
           &flutter::StandardMethodCodec::GetInstance());
 
   RegisterImeGuardChannel();
+  RegisterLookupImeChannel();
   RegisterFloatingLyricChannel();
   RegisterGalHookTextChannel();
   RegisterGlobalLookupChannel();
@@ -698,6 +703,7 @@ bool FlutterWindow::OnCreate() {
   RegisterAudioLoopbackChannel();
   RegisterVoiceHookChannel();
   RegisterMagpieChannel();
+  RegisterGameStreamInputChannel();
 
   SetChildContent(flutter_controller_->view()->GetNativeWindow());
   return true;
@@ -1859,6 +1865,15 @@ flutter::EncodableMap WindowCaptureReplyMap(
   return reply;
 }
 
+// BUG-2613 — 覆盖窗口左键护盾要保护的游戏窗口：当前 galgame 会话进程里正在玩的
+// 那个客户区窗（与 direct galCard 用同一条 FindProcessClientWindow）。没有会话 = 0，
+// 登记就退化成空操作。跑在窗口线程（登记点），不在钩子回调里。
+HWND ResolveOverlayClickShieldGame() {
+  const uint32_t pid = fushi::VoiceHookReader::Instance().CurrentPid();
+  return pid == 0 ? nullptr
+                  : fushi::game_client_extent::FindProcessClientWindow(pid);
+}
+
 }  // namespace
 
 void FlutterWindow::RegisterFloatingLyricChannel() {
@@ -2113,7 +2128,109 @@ void FlutterWindow::RegisterImeGuardChannel() {
       });
 }
 
+void FlutterWindow::RegisterLookupImeChannel() {
+  // 查词输入框的输入法语言。Dart 在查词页面 mount 时说「期望日语」，页面走掉时
+  // 说 null；我们在**已安装**的键盘布局里找对应语言切过去，并记住用户原来那个。
+  // 还原是硬要求：Win8 起输入法是 per-user，不还原就会漏到用户的其它应用里。
+  ime_language_switcher_ = ImeLanguageSwitcher(
+      [](HWND hwnd, HKL hkl, void*) { return RequestInputLanguage(hwnd, hkl); },
+      nullptr);
+
+  lookup_ime_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "app.fushi.reader/lookup_ime",
+          &flutter::StandardMethodCodec::GetInstance());
+
+  lookup_ime_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        // 键盘焦点在 Flutter view 子窗口上（Win32Window::SetChildContent 做的
+        // SetFocus），输入语言请求要发给它；拆窗期间回退到顶层框架窗口。
+        HWND target = flutter_controller_ && flutter_controller_->view()
+                          ? flutter_controller_->view()->GetNativeWindow()
+                          : nullptr;
+        if (target == nullptr) {
+          target = GetHandle();
+        }
+        const DWORD thread_id = GetWindowThreadProcessId(target, nullptr);
+
+        if (call.method_name() == "setLanguage") {
+          std::wstring tag;
+          if (const auto* value = std::get_if<std::string>(call.arguments())) {
+            tag = Utf8ToWideString(*value);
+          }
+          desired_lookup_ime_tag_ = tag;
+          const ImeLanguageUpdate update = ime_language_switcher_.Activate(
+              target, tag, GetKeyboardLayout(thread_id),
+              InstalledKeyboardLayouts());
+          switch (update) {
+            case ImeLanguageUpdate::kFailed:
+              // 让 Dart 清掉乐观缓存，下次还能重试（否则它会以为已经设过了）。
+              result->Error("lookup_ime_failed",
+                            "WM_INPUTLANGCHANGEREQUEST was rejected");
+              return;
+            case ImeLanguageUpdate::kUnavailable:
+              // 用户选的语言系统里没装输入法。这不是错误，是「做不了」——绝不替他
+              // 装一个布局上去。
+              result->Success(flutter::EncodableValue("unavailable"));
+              return;
+            case ImeLanguageUpdate::kUnchanged:
+              result->Success(flutter::EncodableValue("unchanged"));
+              return;
+            case ImeLanguageUpdate::kApplied:
+              result->Success(flutter::EncodableValue("applied"));
+              return;
+          }
+          result->Success();
+          return;
+        }
+
+        if (call.method_name() == "probe") {
+          // 形状与 macOS 侧一致（语言标签而不是 LANGID），集成测试才能共用一份。
+          const auto locale_name = [](HKL layout) -> std::string {
+            const LANGID langid =
+                static_cast<LANGID>(reinterpret_cast<UINT_PTR>(layout) & 0xffff);
+            wchar_t buffer[LOCALE_NAME_MAX_LENGTH] = {};
+            const int written =
+                LCIDToLocaleName(MAKELCID(langid, SORT_DEFAULT), buffer,
+                                 LOCALE_NAME_MAX_LENGTH, 0);
+            return written > 0 ? Utf8FromUtf16(buffer) : std::string();
+          };
+          flutter::EncodableList enabled;
+          for (const HKL layout : InstalledKeyboardLayouts()) {
+            const std::string name = locale_name(layout);
+            if (!name.empty()) {
+              enabled.push_back(flutter::EncodableValue(name));
+            }
+          }
+          flutter::EncodableList current;
+          const std::string current_name =
+              locale_name(GetKeyboardLayout(thread_id));
+          if (!current_name.empty()) {
+            current.push_back(flutter::EncodableValue(current_name));
+          }
+          result->Success(flutter::EncodableValue(flutter::EncodableMap{
+              {flutter::EncodableValue("installed"), flutter::EncodableValue(true)},
+              {flutter::EncodableValue("active"),
+               flutter::EncodableValue(ime_language_switcher_.active())},
+              {flutter::EncodableValue("currentLanguages"),
+               flutter::EncodableValue(current)},
+              {flutter::EncodableValue("enabledLanguages"),
+               flutter::EncodableValue(enabled)},
+          }));
+          return;
+        }
+
+        result->NotImplemented();
+      });
+}
+
 void FlutterWindow::RegisterGalHookTextChannel() {
+  // BUG-2613 — 在任何覆盖窗口可能上屏之前装好游戏窗口解析器（正文窗 / 工具条 /
+  // 查词卡的登记都问它）。
+  fushi::SetOverlayClickShieldGameResolver(&ResolveOverlayClickShieldGame);
   gal_hook_text_window_ = std::make_unique<FloatingLyricWindow>();
   gal_hook_text_window_->SetHookTextMode(true);
   // BUG-2365 —— 正文窗的置顶守卫必须让位给查词卡：卡片自己也每 800ms 重申置顶
@@ -3915,6 +4032,109 @@ void FlutterWindow::RegisterMagpieChannel() {
   }
 }
 
+void FlutterWindow::RegisterGameStreamInputChannel() {
+  game_stream_input_channel_ =
+      std::make_unique<flutter::MethodChannel<flutter::EncodableValue>>(
+          flutter_controller_->engine()->messenger(),
+          "app.fushi/game_stream_input",
+          &flutter::StandardMethodCodec::GetInstance());
+  game_stream_input_ = std::make_unique<fushi::GameStreamInput>();
+  game_stream_input_channel_->SetMethodCallHandler(
+      [this](const flutter::MethodCall<flutter::EncodableValue>& call,
+             std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>>
+                 result) {
+        const auto* args =
+            std::get_if<flutter::EncodableMap>(call.arguments());
+        if (call.method_name() == "bind") {
+          if (args == nullptr) {
+            result->Error("bad_args", "Missing window handle");
+            return;
+          }
+          const auto it = args->find(flutter::EncodableValue("hwnd"));
+          const int64_t value =
+              it == args->end() ? 0 : it->second.TryGetLongValue().value_or(0);
+          std::string reason;
+          if (!game_stream_input_->Bind(static_cast<uintptr_t>(value),
+                                        &reason)) {
+            result->Error("bind_rejected", reason);
+            return;
+          }
+          result->Success();
+          return;
+        }
+        if (call.method_name() == "send") {
+          if (args == nullptr) {
+            result->Error("bad_args", "Missing input event");
+            return;
+          }
+          std::string reason;
+          if (!game_stream_input_->Send(*args, &reason)) {
+            // Dart reads the specific reason from PlatformException.message
+            // (window_not_foreground, unsupported_native_pointer, ...).
+            result->Error("input_rejected",
+                          reason.empty() ? "input_rejected" : reason);
+            return;
+          }
+          result->Success();
+          return;
+        }
+        if (call.method_name() == "inspect") {
+          const uintptr_t value =
+              args == nullptr
+                  ? 0
+                  : static_cast<uintptr_t>(
+                        args->find(flutter::EncodableValue("hwnd")) ==
+                                args->end()
+                            ? 0
+                            : args->at(flutter::EncodableValue("hwnd"))
+                                  .TryGetLongValue()
+                                  .value_or(0));
+          const fushi::GameStreamWindowInfo info =
+              value == 0 ? game_stream_input_->InspectBound()
+                         : game_stream_input_->Inspect(value);
+          result->Success(flutter::EncodableValue(flutter::EncodableMap{
+              {flutter::EncodableValue("alive"),
+               flutter::EncodableValue(info.alive)},
+              {flutter::EncodableValue("minimized"),
+               flutter::EncodableValue(info.minimized)},
+              {flutter::EncodableValue("visible"),
+               flutter::EncodableValue(info.visible)},
+              {flutter::EncodableValue("foreground"),
+               flutter::EncodableValue(info.foreground)},
+              {flutter::EncodableValue("processMatches"),
+               flutter::EncodableValue(info.process_matches)},
+              {flutter::EncodableValue("width"),
+               flutter::EncodableValue(info.width)},
+              {flutter::EncodableValue("height"),
+               flutter::EncodableValue(info.height)},
+              {flutter::EncodableValue("pid"),
+               flutter::EncodableValue(static_cast<int64_t>(info.pid))},
+          }));
+          return;
+        }
+        if (call.method_name() == "release") {
+          game_stream_input_->Release();
+          result->Success();
+          return;
+        }
+        if (call.method_name() == "activate") {
+          std::string reason;
+          if (!game_stream_input_->Activate(&reason)) {
+            result->Error(reason, "Game window could not receive input");
+          } else {
+            result->Success();
+          }
+          return;
+        }
+        if (call.method_name() == "unbind") {
+          game_stream_input_->Unbind();
+          result->Success();
+          return;
+        }
+        result->NotImplemented();
+      });
+}
+
 void FlutterWindow::NotifyMagpieScalingChanged(WPARAM wparam, LPARAM lparam) {
   // The foreground WinEvent hook covers ordinary focus changes, but Magpie can
   // recreate, move, or raise its scaled output while the foreground HWND stays
@@ -4043,6 +4263,9 @@ void FlutterWindow::OnDestroy() {
   // （RIDEV_INPUTSINK 要求 hwndTarget），HWND 一销毁那条登记就成了悬空目标，
   // 必须在这里主动摘掉而不是等进程退出兜底。
   fushi::SetGlobalMouseTrigger(nullptr, fushi::kGlobalMouseTriggerNone);
+  if (game_stream_input_) {
+    game_stream_input_->Unbind();
+  }
   // Attached surface callbacks invoke gal_hook_text_channel_; tear the HWND and
   // its follow timer down while the Flutter messenger is still alive.
   attached_text_surface_window_.reset();
@@ -4171,6 +4394,25 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   // 默认处理，保持既有消息语义不变。
   if (magpie_scaling_message_ != 0 && message == magpie_scaling_message_) {
     NotifyMagpieScalingChanged(wparam, lparam);
+  }
+
+  // 查词输入法语言：窗口失去激活就立刻还原用户原来的输入法——Win8 起输入法状态是
+  // per-user，留着不还原，用户 Alt-Tab 去别的应用打字也会变成日语。重新激活时按
+  // Dart 最后表达的期望再切回来（查词页面可能还开着）。不消费消息。
+  if (message == WM_ACTIVATE) {
+    HWND ime_target = flutter_controller_ && flutter_controller_->view()
+                          ? flutter_controller_->view()->GetNativeWindow()
+                          : GetHandle();
+    if (ime_target != nullptr) {
+      if (LOWORD(wparam) == WA_INACTIVE) {
+        ime_language_switcher_.Restore(ime_target);
+      } else if (!desired_lookup_ime_tag_.empty()) {
+        ime_language_switcher_.Activate(
+            ime_target, desired_lookup_ime_tag_,
+            GetKeyboardLayout(GetWindowThreadProcessId(ime_target, nullptr)),
+            InstalledKeyboardLayouts());
+      }
+    }
   }
 
   switch (message) {

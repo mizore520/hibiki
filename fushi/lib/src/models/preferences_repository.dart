@@ -3,7 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:fushi_audio/fushi_audio.dart'
     show kDefaultReadingIdleTimeout, kStudyIdleTimeoutPrefKey;
 import 'package:fushi_core/fushi_core.dart';
+import 'package:fushi/src/ai/ai_feature.dart';
+import 'package:fushi/src/ai/ai_provider_config.dart';
 import 'package:fushi/src/dictionary/dict_style_rules.dart';
+import 'package:fushi/src/media/discovery/alist_site_config.dart';
 import 'package:fushi/src/media/discovery/opds_server_config.dart';
 import 'package:fushi/src/models/module_id.dart';
 import 'package:fushi/src/media/manga/mihon/mihon_cover_cache.dart'
@@ -15,6 +18,9 @@ import 'package:fushi/src/media/manga/ocr/manga_ocr_engine.dart';
 import 'package:fushi_engine/media/torrent/anime_download_config.dart';
 import 'package:fushi_engine/media/torrent/torznab_client.dart';
 import 'package:fushi_engine/media/video/download/video_resource_prefs.dart';
+import 'package:fushi_engine/sync/interconnect_transcode_prefs.dart';
+import 'package:fushi_engine/sync/game_stream/game_stream_protocol.dart'
+    show GameStreamVideoSettings;
 import 'package:fushi/src/media/video/dandanplay_client.dart';
 import 'package:fushi_engine/media/video/download/video_download_path_mapping.dart';
 import 'package:fushi_engine/media/video/download/video_download_backend_identity.dart';
@@ -27,6 +33,8 @@ import 'package:fushi/src/reader/reader_control_layout.dart';
 import 'package:fushi/src/media/video/video_custom_action_bindings.dart';
 import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_lua_capability.dart';
+import 'package:fushi/src/media/video/video_clip_export_preferences.dart';
+import 'package:fushi/src/media/video/video_screenshot_destination.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/media/audiobook/mining_audio_clip.dart'
     show kMiningHeadPadMs, kMiningPadMaxMs, kMiningTailPadMs;
@@ -53,6 +61,8 @@ import 'package:fushi_engine/utils/misc/desktop_audio_clipper.dart'
 import 'package:fushi/src/utils/misc/error_log_service.dart';
 import 'package:fushi/src/utils/misc/update_check_cache.dart';
 import 'package:fushi/src/media/manga/manga_view_prefs.dart';
+import 'package:fushi/src/media/manga/manga_reader_preferences.dart';
+import 'package:fushi/src/media/manga/manga_reading_mode.dart';
 import 'package:fushi_engine/foundation/pref_store.dart';
 
 /// 视频画面缩放/比例模式（作用于 Flutter 层 [Video] widget 的 [BoxFit]，TODO-152 子B）。
@@ -92,6 +102,18 @@ BoxFit videoFitModeToBoxFit(VideoFitMode mode) {
       return BoxFit.fill;
   }
 }
+
+/// 「新下载任务交给哪台互联 host 执行」的偏好键（空 = 本机）。
+/// 设备本地（见 `SyncRepository.deviceLocalPrefKeys`）。
+const String kDownloadExecutionHostPrefKey = 'download_execution_host';
+
+/// 主机侧「允许已配对设备从游戏库远程启动游戏并串流」。默认关：开启即允许配对
+/// 设备在本机起进程。设备本地（见 `SyncRepository.deviceLocalPrefKeys`），不能随
+/// 备份把这扇门带到另一台电脑上。
+const String kGameStreamRemoteLaunchPrefKey = 'game_stream_remote_launch';
+
+/// 接收端的串流参数（分辨率 / 帧率 / 码率 / 编码等，JSON）。
+const String kGameStreamVideoSettingsPrefKey = 'game_stream_video_settings';
 
 class PreferencesRepository extends ChangeNotifier implements PrefStore {
   PreferencesRepository(this._db);
@@ -498,6 +520,52 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  /// 是否把 Jellyfin/Emby 条目混排进首页 / 系列 / 全部视频（B4）。默认 false：
+  /// 媒体服务器条目只在视频页「媒体服务器」分区按服务器自己的树浏览，不再一进
+  /// 视频页就整库拍平枚举；[jellyfinAutoListVideos] 只在本开关开着时才有意义。
+  bool get jellyfinShowInLibrary =>
+      getPref('jellyfin_show_in_library', defaultValue: false) as bool;
+
+  Future<void> setJellyfinShowInLibrary(bool value) async {
+    await setPref('jellyfin_show_in_library', value);
+    notifyListeners();
+  }
+
+  /// 媒体服务器（Jellyfin/Emby）串流画质档下标；-1 = 自动（服务器允许时直播放原
+  /// 文件）。选档 = 向服务器声明码率 / 宽度上限，超限由服务器转码到该档。
+  int get mediaServerQualityPresetIndex =>
+      getPref('video_media_server_quality_preset', defaultValue: -1) as int;
+
+  Future<void> setMediaServerQualityPresetIndex(int index) async {
+    await setPref('video_media_server_quality_preset', index);
+    notifyListeners();
+  }
+
+  /// 本机当 host 时是否允许为对端实时转码（弱网降码率播放）。默认开。
+  ///
+  /// 默认值与解码规则收在引擎侧的 [readInterconnectTranscodeEnabled]——无头服务端
+  /// 读的是同一张 `preferences` 表，默认值只能有一份。
+  bool get interconnectTranscodeEnabled =>
+      readInterconnectTranscodeEnabled(this);
+
+  Future<void> setInterconnectTranscodeEnabled(bool enabled) async {
+    await setPref(kInterconnectTranscodeEnabledPref, enabled);
+    notifyListeners();
+  }
+
+  /// 互联远端视频的画质档下标；-1 = 自动（局域网原画、走公网压到中档，判据在
+  /// `interconnect_video_quality.dart`）。
+  ///
+  /// 与媒体服务器那档**分开存**：两边的档位阶梯不同（互联整体更低，因为它要解决的
+  /// 就是人在外面用手机网络），共用一个下标会让同一个数字在两处指向不同画质。
+  int get interconnectQualityPresetIndex =>
+      getPref('video_interconnect_quality_preset', defaultValue: -1) as int;
+
+  Future<void> setInterconnectQualityPresetIndex(int index) async {
+    await setPref('video_interconnect_quality_preset', index);
+    notifyListeners();
+  }
+
   // ── yomitan-api server ───────────────────────────────────────────────
 
   bool get yomitanApiServerEnabled =>
@@ -625,6 +693,20 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
 
   Future<void> setGlobalContextCaptureEnabled(bool value) async {
     await setPref('lookup.global_context_capture', value);
+    notifyListeners();
+  }
+
+  /// 查词输入框希望输入法切到哪种语言（BCP-47，`ja` / `zh-Hans` / `ko`…）。
+  /// 空串 = 未设置，不碰输入法——默认不动用户的系统输入法状态。
+  ///
+  /// 这**不是**「查词的目标语言」：查词流水线语言无关（18 种变换表全量加载是有意
+  /// 设计），`AppModel.targetLanguage` 那个恒定单值的假抽象已于 2026-07-26 删除且
+  /// 有守卫钉着。本偏好只决定输入法/软键盘切到哪种语言，不进查询链路。
+  String get lookupImeLanguage =>
+      getPref('lookup.ime_language', defaultValue: '') as String;
+
+  Future<void> setLookupImeLanguage(String value) async {
+    await setPref('lookup.ime_language', value);
     notifyListeners();
   }
 
@@ -834,6 +916,55 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  // 瞬时滚动步长：一次跳被滚表面视口高度的多大比例。BUG-2284 / BUG-2415 里写死在
+  // popup.js 的 POPUP_EINK_WHEEL_VIEWPORT_FRACTION(0.5) / POPUP_EINK_TOUCH_VIEWPORT_
+  // FRACTION(0.25) 现在只是默认值；墨水屏尺寸与刷新特性差异大，用户按自己的屏调。
+  // 两条路径各一个旋钮：滚轮是离散 notch（一格跳半屏顺手），触摸是量化的 1:1 跟手
+  // （手指滑满一步才跳一步，1/4 屏更跟手）——默认值本就不同，硬合成一个会改掉其中
+  // 一边的现有行为。clamp 到 [0.1, 1.0]：popup.js 侧同样夹在 [MIN_STEP, 一屏] 内，
+  // 永不一步跳过整屏内容。下发通道与 popupInstantScroll 完全同法（in-app 注入
+  // window.__fushiPopupInstantScroll{Wheel,Touch}Step；扩展经 theme
+  // --fushi-instant-scroll-wheel-step，触摸半边扩展侧不挂所以不下发）。
+  static const double kPopupInstantScrollWheelStepDefault = 0.5;
+  static const double kPopupInstantScrollTouchStepDefault = 0.25;
+  static const double kPopupInstantScrollStepMin = 0.1;
+  static const double kPopupInstantScrollStepMax = 1.0;
+
+  static double _clampInstantScrollStep(Object? raw, double fallback) {
+    if (raw is! num) return fallback;
+    final double v = raw.toDouble();
+    if (!v.isFinite) return fallback;
+    return v.clamp(kPopupInstantScrollStepMin, kPopupInstantScrollStepMax);
+  }
+
+  double get popupInstantScrollWheelStep => _clampInstantScrollStep(
+        getPref('popup_instant_scroll_wheel_step',
+            defaultValue: kPopupInstantScrollWheelStepDefault),
+        kPopupInstantScrollWheelStepDefault,
+      );
+
+  Future<void> setPopupInstantScrollWheelStep(double value) async {
+    await setPref(
+      'popup_instant_scroll_wheel_step',
+      _clampInstantScrollStep(value, kPopupInstantScrollWheelStepDefault),
+    );
+    notifyListeners();
+  }
+
+  double get popupInstantScrollTouchStep => _clampInstantScrollStep(
+        getPref('popup_instant_scroll_touch_step',
+            defaultValue: kPopupInstantScrollTouchStepDefault),
+        kPopupInstantScrollTouchStepDefault,
+      );
+
+  Future<void> setPopupInstantScrollTouchStep(double value) async {
+    await setPref(
+      'popup_instant_scroll_touch_step',
+      _clampInstantScrollStep(value, kPopupInstantScrollTouchStepDefault),
+    );
+    notifyListeners();
+  }
+
   // BUG-1026：查词弹窗滚轮速度倍率。popup.js 的粗鼠标 notch 用 0.24 降速系数（BUG-260），
   // 部分用户觉得太慢；此倍率乘进 popup.js 的 factor（同乘粗鼠标 0.24 与触控板 1.0），
   // 作为统一「滚轮速度」旋钮。默认 1.0 与改前逐帧一致。clamp 0.5–5.0 防越界值把滚动放飞。
@@ -859,6 +990,19 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
 
   Future<void> setPopupBottomDocked(bool value) async {
     await setPref('popup_bottom_docked', value);
+    notifyListeners();
+  }
+
+  /// 用户请求（Flow Launcher 式用法）：app 外热键把主窗置顶到查词页、查完按「返回
+  /// 上一级」（默认 Esc）直接把窗口收回去，不用碰鼠标就回到之前的程序。默认 OFF——
+  /// 首页根路由上 globalBack 原本是 no-op，开了才把这一步接成「最小化主窗」；只对
+  /// 桌面有意义（移动端没有「最小化」这回事，消费端按平台早退）。
+  bool get lookupPageEscapeMinimizesWindow =>
+      getPref('lookup_page_escape_minimizes_window', defaultValue: false)
+          as bool;
+
+  Future<void> setLookupPageEscapeMinimizesWindow(bool value) async {
+    await setPref('lookup_page_escape_minimizes_window', value);
     notifyListeners();
   }
 
@@ -1132,6 +1276,22 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  /// 底部细进度条开关：控制条淡出后，在视频最下方留一条主题色细线
+  /// （B 站 / YouTube 同款）。**默认关**——控制条淡出本身就是「把画面让干净」，
+  /// 再留一条常亮的线等于把这个意图撤回一半；想要的人去设置里开。getPref 仅在
+  /// 该 key 从未写过时返回默认值，已切过的用户保留存值（首版默认开期间手动
+  /// 关掉的人不会因为这次改默认被重新打开）。
+  ///
+  /// 小窗档不受它管：那里完整进度条已被 theme 收起，细线是唯一的进度指示，
+  /// 判据统一在 `videoSlimProgressBarVisible`（video_controls_density.dart）。
+  bool get videoSlimProgressBar =>
+      getPref('video_slim_progress_bar', defaultValue: false) as bool;
+
+  Future<void> setVideoSlimProgressBar(bool value) async {
+    await setPref('video_slim_progress_bar', value);
+    notifyListeners();
+  }
+
   /// 旧本地封面补齐开关。现只控制 sidecar / 本地封面 sweep，不会发起元数据
   /// 网络请求；保留该偏好用于兼容已有设备设置。在线刮削统一由
   /// `VideoSourceScrapeCoordinator` 管理。
@@ -1281,6 +1441,67 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     Iterable<OpdsServerConfig> servers,
   ) async {
     await setPref('discovery_opds_servers', encodeOpdsServerConfigs(servers));
+    notifyListeners();
+  }
+
+  /// 用户自配的 AList / OpenList 站点清单（设备本地；含 base64 密码）。
+  /// 逐条容错同 [discoveryOpdsServers]。
+  List<AListSiteConfig> get discoveryAListSites {
+    final String raw =
+        getPref('discovery_alist_sites', defaultValue: '') as String;
+    if (raw.trim().isEmpty) return const <AListSiteConfig>[];
+    try {
+      return decodeAListSiteConfigs(raw);
+    } on Object catch (error, stack) {
+      ErrorLogService.instance.log(
+        'PreferencesRepository.discoveryAListSites.decode',
+        error,
+        stack,
+      );
+      return const <AListSiteConfig>[];
+    }
+  }
+
+  Future<void> setDiscoveryAListSites(Iterable<AListSiteConfig> sites) async {
+    await setPref('discovery_alist_sites', encodeAListSiteConfigs(sites));
+    notifyListeners();
+  }
+
+  /// 用户自配的 AI 提供商清单（设备本地；含 base64 API key）。
+  ///
+  /// 与 [discoveryOpdsServers] 同范式：逐条容错在 [decodeAiProviderConfigs] 里，
+  /// 一条记录坏掉只丢那一条，不让整份清单消失。
+  List<AiProviderConfig> get aiProviders {
+    final String raw = getPref('ai_providers', defaultValue: '') as String;
+    if (raw.trim().isEmpty) return const <AiProviderConfig>[];
+    try {
+      return decodeAiProviderConfigs(raw);
+    } on Object catch (error, stack) {
+      ErrorLogService.instance.log(
+        'PreferencesRepository.aiProviders.decode',
+        error,
+        stack,
+      );
+      return const <AiProviderConfig>[];
+    }
+  }
+
+  Future<void> setAiProviders(Iterable<AiProviderConfig> providers) async {
+    await setPref('ai_providers', encodeAiProviderConfigs(providers));
+    notifyListeners();
+  }
+
+  /// 「哪个功能用哪家 AI」的映射（设备本地）。
+  AiFeatureAssignments get aiFeatureAssignments {
+    final String raw = getPref(
+      'ai_feature_providers',
+      defaultValue: '',
+    ) as String;
+    return AiFeatureAssignments.fromJson(raw);
+  }
+
+  Future<void> setAiFeatureAssignments(AiFeatureAssignments value) async {
+    await setPref('ai_feature_providers', value.toJson());
     notifyListeners();
   }
 
@@ -1569,6 +1790,49 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  /// 截图去向：保存对话框 / 剪贴板 / 指定目录。旧库没有该 key 时落到
+  /// [VideoScreenshotDestination.ask]，即这个偏好出现之前的行为，不需要迁移。
+  VideoScreenshotDestination get videoScreenshotDestination =>
+      VideoScreenshotDestination.fromStorage(
+        getPref(
+          kVideoScreenshotDestinationPref,
+          defaultValue: VideoScreenshotDestination.ask.storageValue,
+        ) as String,
+      );
+
+  Future<void> setVideoScreenshotDestination(
+      VideoScreenshotDestination destination) async {
+    await setPref(kVideoScreenshotDestinationPref, destination.storageValue);
+    notifyListeners();
+  }
+
+  /// [VideoScreenshotDestination.directory] 的目标目录；空串 = 未设置。
+  String get videoScreenshotDirectory =>
+      getPref(kVideoScreenshotDirectoryPref, defaultValue: '') as String;
+
+  Future<void> setVideoScreenshotDirectory(String path) async {
+    await setPref(kVideoScreenshotDirectoryPref, path);
+    notifyListeners();
+  }
+
+  /// 片段导出的视频目标码率（kbps）；0 = 跟随源（默认，旧库没有该 key 时的行为，
+  /// 不需要迁移）。写入前夹到 `[0, kVideoClipExportVideoBitrateMaxKbps]`。
+  int get videoClipExportVideoBitrateKbps => getPref(
+        kVideoClipExportVideoBitrateKbpsPref,
+        defaultValue: kVideoClipExportVideoBitrateFollowSource,
+      ) as int;
+
+  Future<void> setVideoClipExportVideoBitrateKbps(int kbps) async {
+    await setPref(
+      kVideoClipExportVideoBitrateKbpsPref,
+      kbps.clamp(
+        kVideoClipExportVideoBitrateFollowSource,
+        kVideoClipExportVideoBitrateMaxKbps,
+      ),
+    );
+    notifyListeners();
+  }
+
   /// Whether the first-use Anime4K recommendation prompt has been shown.
   bool get videoAnime4kPromptShown =>
       getPref(videoAnime4kPromptShownKey, defaultValue: false) as bool;
@@ -1651,6 +1915,30 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  /// 「AI 下视频」的默认画质。三态：`''` 未设置（对话里第一次问、按「以后默认」
+  /// 勾选写回）/ `ask` 每次询问 / 固定档（`2160p` `1080p` `720p` `480p` `any`）。
+  /// 类型化读法见 `ai_video_acquisition_preferences.dart`。
+  String get aiVideoDownloadQuality =>
+      getPref('ai_video_download_quality', defaultValue: '') as String;
+
+  Future<void> setAiVideoDownloadQuality(String value) async {
+    await setPref('ai_video_download_quality', value);
+    notifyListeners();
+  }
+
+  /// 「AI 下视频」的字幕语言。取值：`''` 未设置（第一次问、按勾选写回）/ `ask`
+  /// 每次询问 / `original` 跟随作品语言 / 语言码（`ja` `zh` `en` `ko`）/
+  /// `none` 不配字幕。与 [jimakuDefaultLanguage] 分开：那是字幕面板的全局默认，
+  /// 这是 AI 对话流程自己的默认。类型化读法见 `ai_video_acquisition_preferences.dart`。
+  String get aiVideoDownloadSubtitleLanguage =>
+      getPref('ai_video_download_subtitle_language', defaultValue: '')
+          as String;
+
+  Future<void> setAiVideoDownloadSubtitleLanguage(String value) async {
+    await setPref('ai_video_download_subtitle_language', value);
+    notifyListeners();
+  }
+
   /// 刮削完成后，自动为**仍缺字幕**的视频补一条在线字幕。默认开。
   ///
   /// 为什么默认开：下载流水线的字幕阶段本来就默认 `bestEffort`（自动配字幕一直
@@ -1678,6 +1966,26 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
 
   Future<void> setVideoSubtitleAjattEnabled(bool enabled) async {
     await setPref('video_subtitle_ajatt_enabled', enabled);
+    notifyListeners();
+  }
+
+  /// SubDL（subdl.com）API key：搜索必须带 key（站点 panel 免费生成）。
+  String get videoSubtitleSubdlApiKey =>
+      getPref('video_subtitle_subdl_api_key', defaultValue: '') as String;
+
+  Future<void> setVideoSubtitleSubdlApiKey(String key) async {
+    await setPref('video_subtitle_subdl_api_key', key);
+    notifyListeners();
+  }
+
+  /// SubDL 是否参与字幕搜索。与 [videoSubtitleSubdlApiKey] 组成 `enabled && key`
+  /// 双门控（形状对齐 Jimaku）。默认 true：key 为空即不装配，默认开不产生请求，
+  /// 用户填了 key 就直接生效，不必再找一次开关。
+  bool get videoSubtitleSubdlEnabled =>
+      getPref('video_subtitle_subdl_enabled', defaultValue: true) as bool;
+
+  Future<void> setVideoSubtitleSubdlEnabled(bool enabled) async {
+    await setPref('video_subtitle_subdl_enabled', enabled);
     notifyListeners();
   }
 
@@ -1944,6 +2252,21 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
 
   void setMiningAudioTailPadMs(int ms) async {
     await setPref('mining_audio_tail_pad_ms', ms.clamp(0, kMiningPadMaxMs));
+    notifyListeners();
+  }
+
+  /// 有声书倍速制卡：句子音频是否跟随当前播放倍速（变速不变调）。默认开——用户开着
+  /// 1.5× 听书，卡片里的句子音频就是 1.5× 的，与阅读时听到的一致；关掉则一律裁原速。
+  /// 只对小说有声书制卡链生效（视频链没有「播放倍速」这个制卡语境，不读它）。
+  bool get miningAudioFollowPlaybackSpeed =>
+      getPref('mining_audio_follow_playback_speed', defaultValue: true)
+          as bool;
+
+  void toggleMiningAudioFollowPlaybackSpeed() async {
+    await setPref(
+      'mining_audio_follow_playback_speed',
+      !miningAudioFollowPlaybackSpeed,
+    );
     notifyListeners();
   }
 
@@ -2860,6 +3183,23 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  /// 0 自动；桌面可手动选择 1～4 个跨书 OCR 任务。
+  int get mangaOcrParallelTasks =>
+      (getPref('manga_ocr_parallel_tasks', defaultValue: 0) as int).clamp(0, 4);
+
+  Future<void> setMangaOcrParallelTasks(int value) async {
+    await setPref('manga_ocr_parallel_tasks', value.clamp(0, 4));
+    notifyListeners();
+  }
+
+  String get mangaOcrLocalModel =>
+      getPref('manga_ocr_local_model', defaultValue: 'manga_ocr') as String;
+
+  Future<void> setMangaOcrLocalModel(String value) async {
+    await setPref('manga_ocr_local_model', value);
+    notifyListeners();
+  }
+
   /// PC 漫画整卷 OCR 默认引擎。稳定字符串而非 enum index，避免重排枚举破坏偏好。
   /// `auto` 的解析顺序由漫画模块统一控制，且永不自动跨到 Google Lens。
   ///
@@ -3022,6 +3362,134 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  bool get mangaPanelNavigation => getPref(
+        'manga_panel_navigation',
+        defaultValue: kMangaPanelNavigationDefault,
+      ) as bool;
+
+  Future<void> setMangaPanelNavigation(bool value) async {
+    await setPref('manga_panel_navigation', value);
+    notifyListeners();
+  }
+
+  bool get mangaPanelNavigationEnabled => mangaPanelNavigation;
+
+  Future<void> setMangaPanelNavigationEnabled(bool value) =>
+      setMangaPanelNavigation(value);
+
+  /// 点击翻页的热区布局（[MangaTapZoneLayout] 的字符串键）。默认 `left_right`
+  /// = 旧行为（左右各一条 25% 竖条）。只在 [mangaTapZonePaging] 开启时有意义。
+  String get mangaTapZoneLayout =>
+      getPref(
+            'manga_tap_zone_layout',
+            defaultValue: kMangaTapZoneLayoutDefault,
+          )
+          as String;
+
+  Future<void> setMangaTapZoneLayout(String value) async {
+    await setPref('manga_tap_zone_layout', value);
+    notifyListeners();
+  }
+
+  /// 漫画阅读器底色（[MangaBackground] 的字符串键）。默认 `black` = 旧行为。
+  String get mangaBackground =>
+      getPref('manga_background', defaultValue: kMangaBackgroundDefault)
+          as String;
+
+  Future<void> setMangaBackground(String value) async {
+    await setPref('manga_background', value);
+    notifyListeners();
+  }
+
+  /// 双页模式的跨页偏移：1 = 封面独占单页后再两两配对（日漫惯例，旧行为）；
+  /// 0 = 从第一页起就配对。扫描来源不同，封面算不算「第 0 页」并不统一，选错会让
+  /// 整卷左右页全反。
+  int get mangaSpreadOffset =>
+      getPref('manga_spread_offset', defaultValue: kMangaSpreadOffsetDefault)
+          as int;
+
+  Future<void> setMangaSpreadOffset(int value) async {
+    await setPref('manga_spread_offset', value);
+    notifyListeners();
+  }
+
+  /// Existing individual keys stay authoritative for shared legacy controls.
+  /// This prevents an older settings surface from being shadowed by JSON.
+  MangaReaderPreferences get mangaReaderPreferences {
+    Map<String, Object?> values = <String, Object?>{};
+    final Object? raw = getPref('manga_reader_preferences');
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final Object? decoded = jsonDecode(raw);
+        if (decoded is Map<String, dynamic>) values = decoded;
+      } on FormatException {
+        // A malformed optional value is equivalent to absent defaults.
+      }
+    }
+    if (!values.containsKey('mode') && !values.containsKey('autoMode')) {
+      final String legacyMode = mangaSpreadPreference;
+      values = <String, Object?>{
+        ...values,
+        'autoMode': legacyMode == 'auto',
+        if (legacyMode == 'spread' || legacyMode == 'webtoon')
+          'mode': legacyMode,
+      };
+    }
+    return MangaReaderPreferences.fromJson(<String, Object?>{
+      ...values,
+      'direction': mangaReadingDirection,
+      'background': mangaBackground,
+      'zoomStart': mangaZoomPercent,
+      'animateTransitions': mangaPageAnimation != 'none',
+      'tapZones': !mangaTapZonePaging
+          ? 'disabled'
+          : mangaTapZoneLayout == 'left_right'
+          ? 'right_left'
+          : mangaTapZoneLayout,
+      'volumeKeys': mangaVolumeKeyPaging,
+    });
+  }
+
+  Future<void> setMangaReaderPreferences(MangaReaderPreferences value) async {
+    await setPref('manga_reader_preferences', jsonEncode(value.toJson()));
+    await setPref(
+      'manga_spread_preference',
+      value.autoMode ? 'auto' : value.mode.storageKey,
+    );
+    await setPref('manga_reading_direction', value.direction);
+    await setPref('manga_background', value.background);
+    await setPref('manga_zoom_percent', value.zoomStart);
+    await setPref(
+      'manga_tap_zone_paging',
+      value.tapZones != MangaTapZonePreset.disabled,
+    );
+    await setPref(
+      'manga_tap_zone_layout',
+      value.tapZones == MangaTapZonePreset.rightAndLeft
+          ? 'left_right'
+          : value.tapZones.key,
+    );
+    await setPref('manga_volume_key_paging', value.volumeKeys);
+    await setPref(
+      'manga_page_animation',
+      value.animateTransitions
+          ? (mangaPageAnimation == 'none' ? 'slide' : mangaPageAnimation)
+          : 'none',
+    );
+    notifyListeners();
+  }
+
+  /// 宽页（见开き）自动独占一屏。默认开：宽页被塞进半个槽既缩成一半宽，又会把
+  /// 它之后所有页的配对错开一位。
+  bool get mangaWidePageSolo =>
+      getPref('manga_wide_page_solo', defaultValue: kMangaWidePageSoloDefault)
+          as bool;
+
+  Future<void> setMangaWidePageSolo(bool value) async {
+    await setPref('manga_wide_page_solo', value);
+    notifyListeners();
+  }
+
   /// 漫画「在线目录」站点根 URL（O1：mokuro.moe 目录源；`MokuroMoeClient` 消费，
   /// 空串/尾斜杠由 client 侧 `normalizeMokuroMoeBaseUrl` 归一回默认站点）。
   String get mangaOnlineCatalogBaseUrl =>
@@ -3133,6 +3601,45 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
 
   Future<void> setVideoResourceDisabledSources(String value) async {
     await setPref('video_resource_disabled_sources', value);
+    notifyListeners();
+  }
+
+  /// 新下载任务默认交给哪台设备执行：空 = 本机；否则是已配对互联 host 的地址
+  /// （`FushiClientUrl.url`），任务经 `/api/downloads` 投过去、下到 host 自己的
+  /// 库里。手动添加任务 / 发现页 / 资源搜索页共用这一个默认值（各自仍可当次改）。
+  /// 设备本地键：指向的是「这台设备配的 host」，随备份到别的设备只会指错。
+  String get downloadExecutionHostUrl =>
+      (getPref(kDownloadExecutionHostPrefKey, defaultValue: '') as String)
+          .trim();
+
+  Future<void> setDownloadExecutionHostUrl(String value) async {
+    await setPref(kDownloadExecutionHostPrefKey, value.trim());
+    notifyListeners();
+  }
+
+  bool get gameStreamRemoteLaunchEnabled =>
+      getPref(kGameStreamRemoteLaunchPrefKey, defaultValue: false) as bool;
+
+  Future<void> setGameStreamRemoteLaunchEnabled(bool value) async {
+    await setPref(kGameStreamRemoteLaunchPrefKey, value);
+    notifyListeners();
+  }
+
+  GameStreamVideoSettings get gameStreamVideoSettings {
+    final String raw =
+        getPref(kGameStreamVideoSettingsPrefKey, defaultValue: '') as String;
+    if (raw.isEmpty) return const GameStreamVideoSettings();
+    try {
+      return GameStreamVideoSettings.fromJson(jsonDecode(raw));
+    } on FormatException {
+      return const GameStreamVideoSettings();
+    }
+  }
+
+  Future<void> setGameStreamVideoSettings(
+    GameStreamVideoSettings value,
+  ) async {
+    await setPref(kGameStreamVideoSettingsPrefKey, jsonEncode(value.toJson()));
     notifyListeners();
   }
 

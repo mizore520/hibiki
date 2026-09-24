@@ -37,6 +37,7 @@ import 'package:fushi/src/utils/misc/channel_constants.dart';
 import 'package:fushi/src/utils/misc/flutter_error_log.dart';
 import 'package:fushi/src/utils/misc/present_watchdog.dart';
 import 'package:fushi/src/utils/misc/shortcut_icon_sync.dart';
+import 'package:fushi/src/utils/misc/hang_watchdog_log.dart';
 import 'package:fushi/src/utils/misc/wgc_capture_log.dart';
 import 'package:fushi/src/utils/rasterized_frame_size_reporter.dart';
 import 'package:fushi/src/utils/window_caption_channel.dart';
@@ -49,6 +50,7 @@ import 'package:fushi/src/lookup/lookup_deep_link.dart';
 import 'package:fushi/src/lookup/global_lookup_controller.dart';
 import 'package:fushi/src/lookup/gal_hook_text_overlay_controller.dart';
 import 'package:fushi/src/startup/desktop_window_placement.dart';
+import 'package:fushi/src/diagnostics/video_diag_log.dart';
 import 'package:fushi/src/stats/study_diag_log.dart';
 import 'package:fushi_audio/fushi_audio.dart' show StudyClock;
 import 'package:fushi/src/settings/settings_schema.dart'
@@ -63,6 +65,7 @@ import 'package:fushi/src/startup/exit_flush_registry.dart';
 import 'package:fushi/src/startup/android_view_lifecycle.dart';
 import 'package:fushi/src/sync/book_exit_sync_scope.dart';
 import 'package:fushi/src/anki/anki_view_model.dart';
+import 'package:fushi/src/anki/ankimobile_mined_ledger.dart';
 import 'package:fushi/src/anki/ankimobile_repository.dart';
 import 'package:fushi/src/anki/card_source_router.dart';
 import 'package:fushi/src/platform/platform_services.dart';
@@ -482,6 +485,9 @@ void main([List<String> args = const <String>[]]) {
     // 并发跑；串行 await 四段小 IO 是启动到 LoadingPage 之前的纯等待。
     await Future.wait<void>(<Future<void>>[
       DebugLogService.instance.init(),
+      // 用户 2026-09-22：视频卡顿 / 查词卡的分析日志。默认关闭（开关在设置 › 诊断），
+      // init 只读一次偏好 + 解析日志文件位置，关着时后续全链路零开销。
+      VideoDiagLog.instance.init(),
       // TODO-1232 A3：读一次 native 持久化的渲染后端选择（关 Impeller 实验开关），
       // 供设置项同步渲染。非 Android 静默降级为不支持。
       RenderBackendService.instance.init(),
@@ -492,6 +498,9 @@ void main([List<String> args = const <String>[]]) {
       // BUG-772：把上次运行 present 楔死取证（首帧从未 rasterize）折进错误日志（仅
       // Windows），纳入上传链路，为 raster/present 管线死锁提供可读崩前证据。
       PresentStallLog.foldIntoErrorLog(),
+      // BUG-2588：把上次运行主线程停泵看门狗抓 hang dump 的记录折进错误日志（仅
+      // Windows），让「卡死后强杀」在日志里与 native 崩溃分开、并指向可分享的 hang-*.dmp。
+      HangWatchdogLog.foldIntoErrorLog(),
     ]);
 
     /// Initialise local file-based logging (mobile only).
@@ -838,10 +847,10 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
     }
     FushiToast.navigatorKey = ref.read(appProvider).navigatorKey;
     // BUG-1876：Aidoku 源被 Cloudflare 拦下时在 WebView 里解题再重试。
-    // 只在有 Aidoku 宿主的平台装：iOS 的宿主已按 App Store 合规移除
-    // （[StoreRestrictedCapability.onlineMangaSource]），那里装个解题器等于给一个
-    // 不存在的源留后门。`AidokuCloudflareGate` 本身仍是跨平台的——全源搜索与来源
-    // 匹配用它的 `runSuppressed` 抑制批量解题弹窗，那条路径不受本门影响。
+    // 只在有 Aidoku 宿主的构建里装（iOS 按 App Store 合规、macOS 随 Rust CLI 一并
+    // 移除后当前没有宿主）：没有源却装个解题器等于给一个不存在的源留后门。
+    // `AidokuCloudflareGate` 本身仍是跨平台的——全源搜索与来源匹配用它的
+    // `runSuppressed` 抑制批量解题弹窗，那条路径不受本门影响。
     if (AidokuRuntimeFactory.isSupported) {
       installAidokuCloudflareResolver(ref.read(appProvider).navigatorKey);
     }
@@ -1176,6 +1185,7 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
       return true;
     }
     if (normalized.startsWith(fushiAnkiSuccessCallback.toLowerCase())) {
+      await _recordAnkiMobileMinedNote(data);
       return true;
     }
     return false;
@@ -1229,6 +1239,26 @@ class _FushiReaderAppState extends ConsumerState<FushiReaderApp>
       }
     } finally {
       _sourceNavigationRunning = false;
+    }
+  }
+
+  /// AnkiMobile 加完卡回跳（`fushi://ankiSuccess?expression=…`）。
+  ///
+  /// 这是 iOS 上**唯一**能确知「这张卡真的进了 Anki」的时刻：手册对 `x-success` 的
+  /// 定义是「after the note is added」，而 `mineEntry` 那边只能确认「AnkiMobile 被
+  /// 拉起来了」。此前这条回调收到就丢，于是 [AnkiMobileMinedLedger] 无从建立、
+  /// `isDuplicate` 只能恒 `false`——iOS 用户永远看不到「已制卡」的 ✓。
+  ///
+  /// 不判后端类型：这个 scheme 只可能由我们发给 AnkiMobile 的 `x-success` 触发。
+  /// 落账失败只吞掉记日志，绝不打断回跳（用户此刻正在看着 app 从 AnkiMobile 切回来）。
+  Future<void> _recordAnkiMobileMinedNote(String data) async {
+    final Uri? uri = Uri.tryParse(data);
+    final String? expression = uri?.queryParameters['expression'];
+    if (expression == null || expression.isEmpty) return;
+    try {
+      await AnkiMobileMinedLedger.instance.record(expression);
+    } catch (e, stack) {
+      debugPrint('AnkiMobile mined ledger record failed: $e\n$stack');
     }
   }
 

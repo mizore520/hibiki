@@ -86,6 +86,12 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // → 本开关）的顺序守卫。
   'interconnect/Allow paired devices to read/write configuration':
       'test/sync/interconnect_profile_transfer_test.dart',
+  // 互联「为对端转码视频」（host 侧许可，默认开）。写 prefsRepo（changed=true），
+  // 生效点同样在 **HTTP 端点**里：host 每次处理 /streamurl 与 /api/capabilities 时
+  // 实时读它，关着就退回原文件直传、能力位报 false。harness 里没有起 server，探不到。
+  // 由专项测试咬住：能力位随开关实时翻转、关着时报了画质档也退回直传。
+  'interconnect/Transcode video for peers':
+      'test/sync/fushi_sync_server_transcode_test.dart',
   'appearance/Books': 'test/pages/home_page_tabs_test.dart',
   'appearance/Manga': 'test/pages/home_page_tabs_test.dart',
   'appearance/Video': 'test/pages/home_page_tabs_test.dart',
@@ -109,19 +115,57 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 可探的渲染输入。由 manga_overlay_html_test 逐项咬住：同一份生成器在不同参数下
   // 必须产出不同的文档（缩放上下限/灵敏度、点击翻页开关与 RTL 镜像、三种翻页动画
   // 各自的过渡声明），阅读方向另有既有的 RTL 几何用例。
+  // v112 漫画阅读器的两项全局默认（阅读模式 / 图片缩放）：写 prefsRepo
+  // （changed=true），生效点是阅读器按 MangaReaderPreferences 铺页面几何——
+  // 布局枚举决定页序与滚动方向、缩放模式决定每页的投影矩形，harness 里没有
+  // 挂漫画阅读器也就没有可探的几何。由偏好模型与几何用例逐项咬住：稀疏覆盖
+  // 的合并/序列化往返，以及六种缩放模式各自的目标矩形。
+  'manga/Reading mode':
+      'test/media/manga/manga_reader_preferences_test.dart + '
+      'test/media/manga/manga_page_geometry_test.dart',
+  'manga/Image scaling':
+      'test/media/manga/manga_reader_preferences_test.dart + '
+      'test/media/manga/manga_page_geometry_test.dart',
+  // AI 分镜逐格导航：写 appModel（changed=true），生效点全在阅读器里——开关关着
+  // 时既不建 ONNX detector 也不接管翻页，harness 里没有挂漫画阅读器。由源码守卫
+  // 咬住两个消费点确实都按这个开关收口（并且用的是四值枚举语义而不是裸比
+  // spread/webtoon），以及检测本身的预处理/释放契约。
+  'manga/AI panel navigation':
+      'test/media/manga/manga_panel_detection_offload_guard_test.dart'
+      '（两个消费点都按开关 + isWebtoon 收口）'
+      ' + packages/fushi_engine/test/panel_detection_test.dart（检测契约）',
   'manga/Reading direction': 'test/media/manga/manga_overlay_html_test.dart',
   'manga/Default zoom': 'test/media/manga/manga_overlay_html_test.dart',
   'manga/Zoom sensitivity': 'test/media/manga/manga_overlay_html_test.dart',
   'manga/Page turn animation': 'test/media/manga/manga_overlay_html_test.dart',
   'manga/Tap edges to turn pages':
       'test/media/manga/manga_overlay_html_test.dart',
+  // 跨页偏移 / 宽页独占：写 prefsRepo（changed=true），生效点是阅读器打开书时
+  // 用它们构建 spread 序列（_buildSpreadsFor），harness 里没有阅读器。配对算法
+  // 是纯函数 buildMangaSpreads，由专项测试逐场景咬死（含「每页恰好出现一次且
+  // 升序」这条丢页守卫）。
+  'manga/Spread offset':
+      'test/media/manga/manga_wide_page_spread_test.dart（跨页偏移 0/1）',
+  'manga/Wide pages alone':
+      'test/media/manga/manga_wide_page_spread_test.dart（宽页独占 + 页序重对齐）',
+  // 底色：写 prefsRepo（changed=true），生效点在阅读器——WebView 文档的
+  // html,body 背景 + 页面 Scaffold 底色两处同源，harness 里没有阅读器。由专项
+  // 测试咬住「偏好值域往返」与「注入的文档真的换了背景且不残留旧的 #000」。
+  'manga/Background':
+      'test/media/manga/manga_overlay_background_tap_zone_test.dart（底色注入）'
+      ' + test/media/manga/manga_tap_zones_test.dart（值域往返）',
+  // 点击热区布局：同上。几何与 RTL 镜像是纯函数（mangaTapZones），由
+  // manga_tap_zones_test 逐布局咬死；注入串由 overlay 专项测试咬住。
+  'manga/Tap zone layout':
+      'test/media/manga/manga_tap_zones_test.dart（四种布局几何 + RTL 镜像）'
+      ' + test/media/manga/manga_overlay_background_tap_zone_test.dart（注入表）',
   // 顶栏悬浮/固定：写 prefsRepo（changed=true），生效点是阅读器打开书时读一次
   // appModel.mangaChromeFloating 决定栏形态与正文让位——harness 里没有阅读器。
   // 由 manga_reader_chrome_test 咬住让位/绘制两条纯函数，manga_fushi_page_test
   // 「悬浮顶栏」用例咬住偏好 → 页面形态的接线。
   'manga/Floating toolbar':
       'test/media/manga/manga_reader_chrome_test.dart + '
-          'test/pages/manga_fushi_page_test.dart（悬浮顶栏）',
+      'test/pages/manga_fushi_page_test.dart（悬浮顶栏）',
   // BUG-2450：在线源封面磁盘缓存保留天数。写 prefsRepo（changed=true），生效点是
   // MihonCoverCache.maxAge（过期条目下次读取删掉重取），harness 里没有封面缓存
   // 目录可探。由专项测试咬住：过期封面重新联网、未过期命中磁盘、偏好改动即时
@@ -292,6 +336,18 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 总闸开=只补无规范身份的作品）。
   'video/Auto-fill missing series info':
       'test/media/video/metadata/video_library_scrape_sweep_test.dart',
+  // 图片保留张数（Shoko MaxAutoPosters / Backdrops / Logos）与演职员头像落地。
+  // 写 prefsRepo（changed=true），生效点在下一批刮削：配置快照读上限
+  // （anidb_hash_config_test 咬住读偏好 / 指纹）、选图端按上限保留
+  // （video_metadata_merge_test 咬住上限 / 0 不限 / 原语槽）、头像落地要联网下载。
+  'video/Covers kept per work':
+      'test/media/video/metadata/anidb_hash_config_test.dart + video_metadata_merge_test.dart',
+  'video/Backdrops kept per work':
+      'test/media/video/metadata/anidb_hash_config_test.dart + video_metadata_merge_test.dart',
+  'video/Logos kept per work':
+      'test/media/video/metadata/anidb_hash_config_test.dart + video_metadata_merge_test.dart',
+  'video/Download cast & staff photos':
+      'test/media/video/metadata/anidb_hash_config_test.dart（读偏好 / 指纹；落盘要联网）',
   // BUG-1698：刮削完成后给仍缺字幕的视频补一条在线字幕。写 prefsRepo
   // （changed=true），生效点在 AppModel._backfillSubtitlesForScrapedWork 的进场门
   // （关=刮削回调直接 return，零字幕网络请求），不是 reader CSS / 主题树，无适用
@@ -387,6 +443,12 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 层没有可观测探针；由专项测试逐环锁死注入链路（偏好 → 注入/theme 下发 → 三份
   // popup.js 读取并乘进 factor）。
   'lookup/Popup scroll speed': 'test/reader/popup_wheel_speed_asset_test.dart',
+  // 瞬时滚动步长（滚轮 / 触摸）：生效面同样在 popup.js 的 wheel / touch 监听器，由
+  // 专项守卫逐环锁死（偏好 clamp → 注入 / theme 下发 → 三份 popup.js 读取并替代常量）。
+  'lookup/Instant scroll wheel step':
+      'test/dictionary/popup_instant_scroll_step_guard_test.dart',
+  'lookup/Instant scroll touch step':
+      'test/dictionary/popup_instant_scroll_step_guard_test.dart',
   // TODO-108: 底部固定弹窗开关——生效点在纯函数 dockedPopupRect 与 base_source_page/dictionary_page_mixin 的路由分流（非 reader CSS / 主题树），
   // 无 reader/appearance 探针；由专项纯函数 + widget 测试覆盖。
   'lookup/Bottom-docked popup':
@@ -422,6 +484,10 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'test/settings/mining_audio_padding_guard_test.dart',
   'cardCreation/Audio padding after sentence':
       'test/settings/mining_audio_padding_guard_test.dart',
+  // 有声书倍速制卡：效果在 ffmpeg `-af atempo`（纯函数 buildFfmpegAtempoFilter /
+  // buildFfmpegClipArgs tempo 参数）+ 偏好写穿 + 阅读器制卡调用点源码守卫，都在专项测试里。
+  'cardCreation/Match sentence audio to playback speed':
+      'test/settings/mining_audio_follow_playback_speed_guard_test.dart + test/utils/desktop_audio_clipper_test.dart',
   // TODO-135: 默认标签区现无条件显示（hibiki/分类两开关移出 isConfigured 门控），
   // focus-driven 现能驱动到它们；但它们写的是 AnkiSettings（经 SharedPreferences，
   // 非本测试的内存 DB），故 changed=false。标签拼装行为本体由 hibiki_anki 真制卡
@@ -466,12 +532,22 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'test/widgets/swipe_dismiss_wrapper_test.dart',
   'reading/Reverse keyboard left/right page-turn direction':
       'test/reader/reader_space_pause_test.dart + test/shortcuts/global_navigation_test.dart',
+  // 悬浮球开关：生效点是阅读器页 Stack 里挂不挂 ReaderFloatingBall（纯 Flutter
+  // chrome，非 reader CSS / 主题树）；球本身的收起 / 弧形展开 / 拖动换边由专项
+  // widget 测试覆盖。
+  'reading/Floating ball': 'test/reader/reader_floating_ball_test.dart',
   // TODO-436/407②：查词弹窗"滑动关闭"开关。归「查词」分组（destId=lookup）。生效点
   // 在 DictionaryPopupLayer 的 swipe 边界（仅顶栏可滑）+ 平台默认纯函数
   // ReaderSettings.defaultSwipeToClose，由专项 widget 行为 + 纯函数真值表测试覆盖
   // （非 reader CSS / 主题树）。
   'lookup/Swipe to close popup':
       'test/pages/dictionary_popup_swipe_close_test.dart',
+  // 2026-09-23：滚动模式「继续滚动即关闭查词弹窗」开关（仅连续模式可见）。生效点是
+  // LookupDismissBarrier 的沿轴拖动通道 + 阅读器页的滚轮/拖动转发，非 reader CSS /
+  // 主题树；barrier 契约由专项 widget 测试覆盖，页面接线由源码守卫覆盖。
+  'lookup/Close popup when scrolling':
+      'test/pages/lookup_dismiss_barrier_test.dart + '
+      'test/reader/reader_popup_scroll_dismiss_wiring_test.dart',
   // TODO-861②：「扫描非日文文字」查词开关（PreferencesRepository.scanNonJapaneseText，
   // 默认 true）。焦点遍历能切到并写穿 DB（changed=true），但生效点在注入 JS 的
   // window.scanNonJapaneseText + reader_selection_scripts 的 `scanNonJapaneseText
@@ -485,6 +561,13 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   'lookup/Capture selection context':
       'test/lookup/sentence_extraction_test.dart',
   'system/Enable debug log': 'test/utils/misc/debug_log_service_test.dart',
+  // BUG-2628 视频 / 查词性能诊断日志开关：与上面的调试日志同族，落裸
+  // SharedPreferences 而不是 prefsRepo（诊断开关不进 Profile 快照，也要能在
+  // AppModel 起来前读到），故 harness 的 DB 往返探针看不到它的写入。生效点是
+  // 「此后每一条埋点记不记」——由 video_diag_log_test 的门控用例（关着时 add
+  // 一行都不进内存环、不建文件；开着时落盘并受 msg-level 过滤）直接咬住。
+  'system/Video & lookup diagnostics log':
+      'test/diagnostics/video_diag_log_test.dart',
   // BUG-1980 代理模式三态（自动/直连/手动）：写 prefsRepo（changed=true），生效点是
   // app_proxy.dart 的出口裁决与 HttpClient.findProxy / authenticateProxy 装配——
   // harness 里没有真实公网出站可探。三态语义（direct 忽略 env 与已填地址、manual
@@ -513,6 +596,12 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // wiring guards below.
   'video/Auto-play next episode':
       'test/media/video/video_episode_start_policy_test.dart + test/pages/video_playlist_auto_advance_guard_static_test.dart',
+  // 底部细进度条：纯渲染开关，生效点在 media_kit controls 子树里，而那棵树在
+  // headless 宿主渲染不出来（无 libmpv）——harness 的探针够不到，故登记 backlog。
+  // 判据是纯函数（逐条单测）、组件是纯 widget（widget 测试），页面那段接线由源码
+  // 守卫钉死，三者合起来覆盖整条链。
+  'video/Slim progress bar at the bottom':
+      'test/media/video/video_controls_density_test.dart + test/media/video/video_slim_progress_bar_test.dart + test/pages/video_slim_progress_bar_wiring_guard_test.dart',
   'video/Immersive mode':
       'test/pages/video_immersive_mode_levels_guard_test.dart + test/pages/video_statusbar_immersive_guard_test.dart',
   'video/Picture scaling':
@@ -521,6 +610,14 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'test/pages/video_double_tap_seek_guard_test.dart + test/pages/video_immersive_mode_levels_guard_test.dart',
   'video/Lock window to video aspect':
       'test/pages/video_window_aspect_lock_static_test.dart',
+  // 截图去向（对话框 / 剪贴板 / 目录）：写 prefsRepo（changed=true），生效点在
+  // `_saveScreenshot` 的三分支里，而那条路要么弹系统保存对话框、要么写系统剪贴板、
+  // 要么真落盘，harness 里一条都探不到。由枚举往返 + Profile 归属（目录不随 Profile
+  // 走）+ 执行体源码守卫（三个分支各自存在、剪贴板真调写入口、直写目录复用重名计数）
+  // 咬住。
+  'video/Screenshot destination':
+      'test/media/video/video_screenshot_destination_test.dart + '
+      'test/pages/video_screenshot_filename_test.dart',
   // 点击画面播放/暂停：生效点在 media_kit 控制条主题（桌面单击）与
   // _handleVideoPointerUp 的移动端双击 fallback，两者都是真实手势 arena，harness 里
   // 探不到。由 config round-trip（含默认 true / 旧档回落）+ 三条源码守卫（桌面主题
@@ -718,6 +815,12 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 行为测试 test/media/video/video_subtitle_hover_lookup_test.dart 覆盖。
   'lookup/Look up on hover':
       'test/media/video/video_subtitle_hover_lookup_test.dart',
+  // 悬停查词的收尾：离开字幕与浮层即自动关浮层 + 续播。change/persist/restore 经 DB 由
+  // 本测试守；运行时的判据与接线（barrier hover 的离开臂、浮层 MouseRegion、关栈汇聚点
+  // 复位）由专项测试咬住——真效果需要真播放器 + 真 WebView 浮层 + 真 OS hover，widget
+  // 层跑不到。
+  'lookup/Resume when leaving lookup':
+      'test/pages/video_hover_leave_resume_test.dart',
   'lookup/Aggregate word frequencies': 'DEVICE: popup.js frequency aggregation',
   'lookup/Auto search': 'WIDGET-TODO: HomeDictionaryPage debounce gate',
   'lookup/Remote dictionary lookup': 'INTEGRATION: remote host lookup',
@@ -944,6 +1047,16 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 显示远端条目：与 syncBackup/Show remote entries 是同一份 item 定义、同一个消费点。
   'interconnect/Show remote entries':
       'test/pages/home_video_remote_mixed_grid_test.dart + test/pages/reader_remote_mixed_grid_test.dart',
+  // 「AI 下视频」两个默认值（下拉，changed=true 写 prefsRepo）：生效点是对话流程
+  // 的 reducer——打开对话时读一次偏好快照决定「问不问 / 勾选框初值」，harness 里
+  // 没有那条对话。由窄测试咬住写穿 + 选项由代码枚举生成 + 类型化封装往返，
+  // reducer 侧的三态行为由 test/media/video/acquisition/ 的 reducer 用例咬住。
+  'ai/Default quality':
+      'test/settings/ai_video_download_settings_test.dart + '
+      'test/ai/ai_video_acquisition_preferences_test.dart',
+  'ai/Subtitle language':
+      'test/settings/ai_video_download_settings_test.dart + '
+      'test/ai/ai_video_acquisition_preferences_test.dart',
 };
 
 /// 八个媒体类型 → Profile 绑定行共用的证据（同一条 resolveProfileId /

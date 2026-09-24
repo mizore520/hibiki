@@ -1691,11 +1691,12 @@ class VideoMetadataEpisodes extends Table {
   )();
 
   /// 可选的本地分集绑定。删视频只解绑，源侧季集骨架继续保留供重链。
-  TextColumn get bookUid => text().nullable().unique().references(
-    VideoBooks,
-    #bookUid,
-    onDelete: KeyAction.setNull,
-  )();
+  /// v110 起**不再唯一**：一个文件可以绑多条分集行（AniDB FILE 的 other
+  /// episodes——`01-02` 合集文件覆盖两集；Shoko `CrossRef_File_Episode` 一文件
+  /// 多集）。播放进度仍按文件（`video_books`）记，看完一个文件两集都算完成。
+  TextColumn get bookUid => text()
+      .nullable()
+      .references(VideoBooks, #bookUid, onDelete: KeyAction.setNull)();
   IntColumn get episodeNumber => integer()();
   IntColumn get absoluteNumber => integer().nullable()();
   TextColumn get title => text().nullable()();
@@ -1705,12 +1706,37 @@ class VideoMetadataEpisodes extends Table {
   RealColumn get rating => real().nullable()();
   IntColumn get ratingCount => integer().nullable()();
   IntColumn get runtimeMinutes => integer().nullable()();
+
+  /// v109：绑到这一集的文件的 AniDB 集身份（Shoko `CrossRef_AniDB_TMDB_Episode`
+  /// 在本仓的落点）：AniDB eid、原生集号（`04` / `S1`）、与 TMDB 集对上的评级
+  /// （`dateAndTitle` … `dateKinda`；null = 没经 TMDB 链接、按文件名落的）。
+  /// AniDB 原生编号与 TMDB (季, 集) 两套并存，UI 可同时呈现。
+  IntColumn get anidbEpisodeId => integer().nullable()();
+  TextColumn get anidbEpisodeNumber => text().nullable()();
+  TextColumn get anidbMatchRating => text().nullable()();
   IntColumn get updatedAt => integer()();
 
   @override
   List<Set<Column>> get uniqueKeys => <Set<Column>>[
     <Column>{seasonId, episodeNumber},
   ];
+}
+
+// ── video_episode_binding_overrides ─────────────────────────────────
+/// v111：用户手动钉死的「文件 → 卡片 (季, 集)」绑定（Shoko
+/// `CrossRef_AniDB_TMDB_Episode.MatchRating = UserVerified`）。刮削时协调器把它
+/// 当作最高优先级的分集键：AniDB 集级链接、文件名解析都不再改这一集；分集行的
+/// `anidb_match_rating` 写 `userVerified`。删视频随 FK 一起清；清除手动指定即删行。
+@DataClassName('VideoEpisodeBindingOverrideRow')
+class VideoEpisodeBindingOverrides extends Table {
+  TextColumn get bookUid =>
+      text().references(VideoBooks, #bookUid, onDelete: KeyAction.cascade)();
+  IntColumn get seasonNumber => integer()();
+  IntColumn get episodeNumber => integer()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => <Column>{bookUid};
 }
 
 // ── video_metadata_people / characters ──────────────────────────────
@@ -2693,6 +2719,11 @@ class GalgameSessions extends Table {
   /// 冗余的按天分组键（'YYYY-MM-DD'，本地时区，取 [endMs] 的日期），
   /// 与其它统计表 dateKey 同源，避免读取端为分组反算。
   TextColumn get dateKey => text()();
+
+  /// v105：产生本次游玩时激活的 Profile（`profiles.id`；0 = 库里还没有 Profile
+  /// 时写下的行，只在纯 DB 测试里出现）。统计按 Profile 隔离的分区键，与
+  /// [StudySegments.profileId] 同律；写入时由 DAO 从 `active_profile_id` 偏好盖戳。
+  IntColumn get profileId => integer().withDefault(const Constant(0))();
 }
 
 // ── study_segments ──────────────────────────────────────────────────
@@ -2757,6 +2788,21 @@ class StudySegments extends Table {
   /// 最后写入毫秒戳：同步 v2 同 uid 取大者（LWW），墓碑仲裁用它与 deletedAt 比。
   IntColumn get updatedAt => integer()();
 
+  /// v105（统计按 Profile 隔离）：开段时激活的 Profile（`profiles.id`）。
+  ///
+  /// 分区键：读取面（`loadStatFacts` / 最近观看 / 删除 / 清空）一律只看当前激活
+  /// Profile 的行，各 Profile 之间互不可见。**只在插入时盖戳、冲突更新不改**——
+  /// 段的归属在它开始那一刻就定了，中途切 Profile 不把已开的段挪走（下一段自然
+  /// 归新 Profile）。写入方（StudyClock / galgame hook）不用知道 Profile：缺席时
+  /// DAO 从 `active_profile_id` 偏好解析（[FushiDatabase.resolveActiveProfileId]）。
+  /// 0 = 库里还没有 Profile（只在纯 DB 测试里出现；app 启动即 ensureDefaultProfile）。
+  ///
+  /// 不做 FK：删 Profile 不 cascade 删历史（同步对端可能还持有这些段，本机静默
+  /// 消失又回灌是最坏形态），行留着、对任何 Profile 都不可见即可。同步 wire 不
+  /// 传本机自增 id，传 Profile **名字**（`profileName`），对端按名字落到自己的
+  /// 同名 Profile。
+  IntColumn get profileId => integer().withDefault(const Constant(0))();
+
   @override
   Set<Column> get primaryKey => {uid};
 }
@@ -2771,14 +2817,20 @@ class StudySegments extends Table {
 /// `updatedAt > deletedAt` 则段胜」已废：同步回写会刷新 `updatedAt`，让删掉的旧段
 /// 借道复活。真实实现见 `database_statistics.part.dart` 的 `_isStudySegmentTombstoned`
 /// 与 `aggregate_merge_service.dart`。
+///
+/// 自 v105 起碑也按 Profile 分区（主键加 [profileId]，重建表）——A Profile 删某书
+/// 统计，不能把 B Profile 同一本书的历史一起压死；同步落地时只压制**同 Profile**
+/// 的段。
 @DataClassName('StudySegmentTombstoneRow')
 class StudySegmentTombstones extends Table {
+  /// 立碑时的 Profile（`profiles.id`），语义同 [StudySegments.profileId]。
+  IntColumn get profileId => integer().withDefault(const Constant(0))();
   TextColumn get mediaKind => text()();
   TextColumn get mediaKey => text()();
   IntColumn get deletedAt => integer()();
 
   @override
-  Set<Column> get primaryKey => {mediaKind, mediaKey};
+  Set<Column> get primaryKey => {profileId, mediaKind, mediaKey};
 }
 
 // （v79：galgame_tag_mappings 已并入 [TagAssignments]。与游戏**元数据标签**
@@ -2809,6 +2861,12 @@ class MangaExtensionStores extends Table {
   IntColumn get lastSyncAt => integer().nullable()();
   TextColumn get lastError => text().nullable()();
 
+  /// v107：仓库承载的扩展媒体种类，`'manga'`（Mihon 漫画扩展）| `'anime'`
+  /// （Aniyomi 视频扩展）。两个生态的索引格式同源、宿主运行时同一个，只有扩展
+  /// APK 的 manifest feature 与源接口不同，所以共用三张表按本列分片，而不是
+  /// 复制一套 `video_*` 表。存量行全部是漫画，默认值即历史事实。
+  TextColumn get mediaKind => text().withDefault(const Constant('manga'))();
+
   @override
   Set<Column> get primaryKey => {indexUrl};
 }
@@ -2831,6 +2889,11 @@ class MangaExtensions extends Table {
   BoolColumn get enabled => boolean().withDefault(const Constant(true))();
   IntColumn get installedAt => integer()();
 
+  /// v107：`'manga'` | `'anime'`，安装时由 APK manifest feature 判定
+  /// （`tachiyomi.extension` / `tachiyomi.animeextension`）；见
+  /// [MangaExtensionStores.mediaKind]。
+  TextColumn get mediaKind => text().withDefault(const Constant('manga'))();
+
   @override
   Set<Column> get primaryKey => {packageName};
 }
@@ -2849,6 +2912,10 @@ class MangaOnlineSources extends Table {
   BoolColumn get enabled => boolean().withDefault(const Constant(true))();
   BoolColumn get pinned => boolean().withDefault(const Constant(false))();
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  /// v107：`'manga'` | `'anime'`，冗余自所属扩展行，让「列出全部视频源」不必
+  /// 联表；见 [MangaExtensionStores.mediaKind]。
+  TextColumn get mediaKind => text().withDefault(const Constant('manga'))();
 
   @override
   Set<Column> get primaryKey => {extensionPackage, sourceId};
@@ -3158,4 +3225,83 @@ class CollectionBookAliases extends Table {
 
   @override
   Set<Column> get primaryKey => {localUid};
+}
+
+/// v106：AniDB 文件级身份——ED2K 哈希识别的持久结果（对齐 Shoko 的
+/// `CrossRef_File_Episode` / `StoredReleaseInfo`：键是 `(ed2k, file_size)`，
+/// 文件路径只是可变的附属）。
+///
+/// 一行 = 「这份内容在 AniDB 是哪个文件 / 哪部作品 / 哪一集」。`anidb_file_id`
+/// 为空表示 AniDB 尚未收录该哈希（FILE 回 320），`resolved_at` 记下查询时刻供
+/// 到期复查；不为空的行是花了真实 UDP 配额换来的身份，刮削时先查这张表、
+/// 命中就不再哈希也不再发 FILE。`file_path` + `file_size` + `file_modified_at`
+/// 三者相同即视为同一份内容，免重算哈希（Shoko 的 `FileNameHash`）；文件搬家
+/// 后按哈希反查仍能命中。作品/分集的 AniDB 原生标题随行保存：没有 MAL/TMDB
+/// 映射时它们是标题搜索的候选，且不必再发一次 FILE 才拿得到。
+@DataClassName('AnidbFileIdentityRow')
+class AnidbFileIdentities extends Table {
+  TextColumn get ed2k => text()();
+  IntColumn get fileSize => integer()();
+  IntColumn get anidbFileId => integer().nullable()();
+  IntColumn get anidbAnimeId => integer().nullable()();
+  IntColumn get anidbEpisodeId => integer().nullable()();
+  TextColumn get episodeNumber => text().withDefault(const Constant(''))();
+  TextColumn get romajiTitle => text().withDefault(const Constant(''))();
+  TextColumn get kanjiTitle => text().withDefault(const Constant(''))();
+  TextColumn get englishTitle => text().withDefault(const Constant(''))();
+  TextColumn get episodeTitle => text().withDefault(const Constant(''))();
+  TextColumn get episodeRomajiTitle =>
+      text().withDefault(const Constant(''))();
+  TextColumn get episodeKanjiTitle => text().withDefault(const Constant(''))();
+  TextColumn get filePath => text().nullable()();
+  IntColumn get fileModifiedAt => integer().nullable()();
+  /// v108：AniDB FILE 回 320「未收录」的连续复查次数，对齐 Shoko
+  /// `MaxAutoScanAttemptsPerFile`；识别成功时归零。
+  IntColumn get missAttempts => integer().withDefault(const Constant(0))();
+  /// v109：AniDB 集播出日（UDP `EPISODE` 的 `aired`，UTC 零点毫秒）。Shoko
+  /// `MatchAnidbToTmdbEpisodes` 第一评级 DateAndTitle 的输入；null = 尚未取到
+  /// （存量行 / EPISODE 未答），下次 sweep 补问。
+  IntColumn get episodeAiredAt => integer().nullable()();
+
+  /// v109：主集之外本文件还覆盖的 AniDB 集，JSON `[[eid, 百分比], …]`（Shoko
+  /// `CrossRef_File_Episode` 的 Percentage）；单集文件为 `''`。
+  TextColumn get otherEpisodes => text().withDefault(const Constant(''))();
+
+  /// v109：AniDB FILE `deprecated` 位——该文件已被标为过时版本。
+  BoolColumn get isDeprecated =>
+      boolean().withDefault(const Constant(false))();
+
+  /// v109：AniDB FILE `state` 位图（CRC 正误 / 文件版本 / 有无审查 / 章节）。
+  IntColumn get fileState => integer().withDefault(const Constant(0))();
+
+  /// v111：AniDB 动画类型原文（FILE amask 的 anime type：`TV Series` / `Movie` /
+  /// `OVA` / `Web` / `TV Special` / `Music Video` / `Other`）；'' = 旧行未取到。
+  /// Shoko 的作品形态（剧集 / 电影）由它决定，本仓单文件作品的 kind 跟它走。
+  TextColumn get animeType => text().withDefault(const Constant(''))();
+  IntColumn get resolvedAt => integer()();
+  IntColumn get updatedAt => integer()();
+
+  @override
+  Set<Column> get primaryKey => {ed2k, fileSize};
+
+  @override
+  List<String> get customConstraints => const <String>[
+        'CHECK (length(ed2k) = 32)',
+        'CHECK (file_size > 0)',
+        'CHECK ((anidb_file_id IS NULL) = (anidb_anime_id IS NULL) '
+            'AND (anidb_file_id IS NULL) = (anidb_episode_id IS NULL))',
+      ];
+}
+
+/// Per-series sparse reader settings. Reset is retained as an LWW tombstone.
+/// The uid is device-local; sync and backup resolve the bookKey before writing.
+@DataClassName('MangaReaderOverrideRow')
+class MangaReaderOverrides extends Table {
+  TextColumn get bookUid => text()();
+  TextColumn get overridesJson => text().withDefault(const Constant('{}'))();
+  IntColumn get updatedAt => integer()();
+  BoolColumn get deleted => boolean().withDefault(const Constant(false))();
+
+  @override
+  Set<Column> get primaryKey => {bookUid};
 }

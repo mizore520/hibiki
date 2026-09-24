@@ -347,6 +347,36 @@ bool shouldShowLookupDismissBarrier({
 }) =>
     (hasVisiblePopup || isSearching) && !hiddenByDialog;
 
+/// BUG-2633：给查词浮层里的「悬停探针」补回**命中认领**。
+///
+/// `MouseRegion(opaque: false)` 不是「只旁听、不改命中」——`RenderMouseRegion.hitTest`
+/// 是 `super.hitTest(...) && opaque`（proxy_box.dart），`opaque: false` 时它**无条件返回
+/// false**：子树里所有 opaque 吸收层（弹窗矩形的 TODO-805 吸收层、barrier 的
+/// `ColoredBox`）认领的命中一到这一层就被丢掉，父 `Stack` 继续测下一个子项、根 Overlay
+/// 的 `_RenderTheater` 继续测下面的路由——整个查词 overlay entry 对命中测试变成透明：
+/// 弹窗上滚滚轮，词典滚了、视频音量也跟着变（页面级 `_handleVideoWheelSignal` 在命中
+/// 路径上）；barrier 上的滚轮同样穿到画面。真机逐层 `hitTest` 取证：
+/// `Semantics=true → MouseRegion=false → … → Stack(overlay)=false → _Theater=true`。
+///
+/// 修法是在 `MouseRegion(opaque: false)` **外面**再包一层会认领命中的 opaque
+/// [Listener]。这层必须是探针的**祖先**——放在探针里面无济于事，探针自己就会把结果
+/// 翻成 false。视频页的两处探针（浮层内容 / barrier）都经此包装；新的探针一律照此
+/// 办理（全树守卫见 `fushi/test/pages/lookup_overlay_hit_claim_guard_test.dart`）。
+///
+/// **hover 归属确实变了，别再写成「一字不改」。** 认领之后指针落在浮层上时 barrier
+/// 不再被 hitTest，于是会收到 exit。这一路无害：MouseTracker 在同一次同步派发里先发
+/// exit 再发 enter，浮层探针的 enter 紧接着就把 barrier exit 起的表撤掉。依赖的是
+/// 派发顺序与 arm/cancel 的同步性，把任何一边改成异步都会让指针移进浮层误触发续播。
+///
+/// 另一条**没有守卫的隐含前提**：同一个 `Stack` 里 barrier 与浮层之间的兄弟层
+/// （加载占位、停在屏外的 parked realm）都不认领命中。哪天给占位层加个
+/// `GestureDetector(behavior: opaque)`，就会出现「barrier exit 起了表、却没有任何
+/// 浮层 enter 来撤」——弹窗自己把自己关掉并续播。要加先想清楚这条。
+Widget lookupOverlayHitClaim({required Widget child}) => Listener(
+      behavior: HitTestBehavior.opaque,
+      child: child,
+    );
+
 /// 把一个弹窗层 [child] 按 [pos] 摆放；隐藏层（[visible]=false，即 BUG-094 常驻热槽 /
 /// TODO-058 挂起冷层）停到屏幕右外侧 `(screen.width + 8, 0)` 继续预热。
 ///
@@ -1234,10 +1264,12 @@ class DictionaryPopupLayer extends StatelessWidget {
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
 
     final bool hasRenderableResults = _hasRenderableResults;
-    final bool isSeedWarmSlot = keepWebViewWarm &&
+    // 真实空结果（查过了、没词条）：热槽上用不透明「未找到」盖板盖住 WebView，
+    // 非热槽层直接渲染同一占位（无 WebView）。
+    final bool isRealEmptyResult = !isSearching &&
+        !hasRenderableResults &&
         result != null &&
-        result!.searchTerm.isEmpty &&
-        !hasRenderableResults;
+        result!.searchTerm.isNotEmpty;
 
     // BUG-080: mount the WebView as soon as the lookup starts (while still
     // searching, before results arrive) so popup.html + JS + CSS cold-load in
@@ -1246,14 +1278,18 @@ class DictionaryPopupLayer extends StatelessWidget {
     // defaults to `transparent` until results push theme vars, so the empty
     // preload simply shows the themed popup surface behind the spinner — no
     // flash. Real results are pushed via the WebView's didUpdateWidget when
-    // they arrive. A finished search with no results falls through to the
-    // placeholder below (no WebView kept).
+    // they arrive. A finished search with no results on a NON-warm layer falls
+    // through to the placeholder below (no WebView kept).
     //
-    // A persistent hidden warm slot still mounts the WebView while seeded with
-    // the shared empty result. Once a real empty lookup completes, it must fall
-    // through to the Flutter placeholder instead of showing the warm WebView's
-    // blank shell.
-    if (hasRenderableResults || isSearching || isSeedWarmSlot) {
+    // BUG-2588：热槽（keepWebViewWarm）的 WebView **无论结果如何都留在树上**——seed
+    // 空结果、搜索中、真实空结果三态一致。此前真实空结果会落到下面的 Flutter 占位、
+    // 把带 GlobalKey 的热槽 WebView 整个 unmount：视频页 Shift 悬停换词换到一个没
+    // 词条的字位（助词 / 单字）时，上一词还在飞的 `Runtime.evaluate` + 60 Hz WGC 泵
+    // 尚在 Tick，平台线程就同步走 `ICoreWebView2Controller::Close()` +
+    // `DestroyWindow`（fork `in_app_webview.cpp` 析构），用户报整机卡死；且热槽被
+    // 拆后下一次换词退化为冷建 WebView2，BUG-094 的预热白白丢掉。「别露出热槽空白
+    // 壳」的诉求改由下面的不透明「未找到」盖板满足，与搜索中盖板同一手法。
+    if (hasRenderableResults || isSearching || keepWebViewWarm) {
       return Stack(
         children: [
           DictionaryPopupWebView(
@@ -1307,11 +1343,27 @@ class DictionaryPopupLayer extends StatelessWidget {
                   ],
                 ),
               ),
+            )
+          // BUG-2588：热槽真实空结果——盖板而不是拆 WebView（见上）。ColoredBox 命中
+          // 行为 opaque，WebView 收不到穿透的指针事件。
+          else if (isRealEmptyResult)
+            Positioned.fill(
+              child: ColoredBox(
+                color: fillColor,
+                child: _buildNoResultsPlaceholder(context, tokens),
+              ),
             ),
         ],
       );
     }
 
+    return _buildNoResultsPlaceholder(context, tokens);
+  }
+
+  Widget _buildNoResultsPlaceholder(
+    BuildContext context,
+    FushiDesignTokens tokens,
+  ) {
     return Center(
       child: SingleChildScrollView(
         padding: EdgeInsets.all(tokens.spacing.gap),

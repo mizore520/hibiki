@@ -44,6 +44,12 @@ mixin _LocalLibraryHostBooks on _LocalLibraryHostBase, _LocalLibraryHostShared {
     // 各一趟批查；旧 client 忽略这两个 additive 字段。
     final Map<String, ({int percent, int updatedAtMs})> progressByKey =
         await _bookProgressByKey();
+    final Map<String, MangaReaderOverrideRow> readerOverridesByUid = <String,
+        MangaReaderOverrideRow>{
+      for (final MangaReaderOverrideRow row
+          in await _db.getAllMangaReaderOverrides())
+        row.bookUid: row,
+    };
     // BUG-812：srt-backed 有声书（同 bookKey 既有 EpubBooks 又有 SrtBooks 行）加入合集
     // 时以 **`srt|<uid>`** 存进成员表（本地书架把它当 SRT 卡渲染、经 srt|uid 折叠），
     // 而非 `epub|<bookKey>`。互联 client 把这类书作为 EPUB 占位卡收下，只查 `epub|bookKey`
@@ -87,6 +93,11 @@ mixin _LocalLibraryHostBooks on _LocalLibraryHostBase, _LocalLibraryHostShared {
             r.extractDir.isNotEmpty &&
             hasAnyChapterDirSync(r.extractDir),
         mangaReadingMode: r.mangaReadingMode,
+        mangaReaderOverrides: _readerOverrideMap(readerOverridesByUid[r.uid]),
+        mangaReaderOverrideUpdatedAt:
+            readerOverridesByUid[r.uid]?.updatedAt ?? 0,
+        mangaReaderOverrideDeleted:
+            readerOverridesByUid[r.uid]?.deleted ?? false,
         hasEmbeddedCover: coverPath != null,
         coverPath: coverPath,
         hasAudiobook: audiobookKeys.contains(r.bookKey),
@@ -107,6 +118,9 @@ mixin _LocalLibraryHostBooks on _LocalLibraryHostBase, _LocalLibraryHostShared {
                 : null),
         progressPercent: progressByKey[r.bookKey]?.percent ?? 0,
         progressUpdatedAtMs: progressByKey[r.bookKey]?.updatedAtMs ?? 0,
+        // client 书架排序要与本地条目同一把尺子：不下发入库时刻，对端只能给远端
+        // 占位卡造负数假戳，「导入时间」/「最近阅读」两档下远端书恒沉底。
+        importedAt: r.importedAt,
         // BUG-1119：EpubBooks 行都是可下载 EPUB，显式标 epub（srt-backed 有声书
         // 的 EPUB 卡语义仍是 epub——与本地 _bookMediaKind 按 hoshi://book/ 身份判
         // epub 一致，勿标成 srt 造成两端同书异 kind）。standalone SRT 书（身份
@@ -115,6 +129,22 @@ mixin _LocalLibraryHostBooks on _LocalLibraryHostBase, _LocalLibraryHostShared {
         kind: MediaKind.epub,
       );
     }).toList();
+  }
+
+  Map<String, Object?> _readerOverrideMap(MangaReaderOverrideRow? row) {
+    if (row == null || row.deleted || row.overridesJson.isEmpty) {
+      return const <String, Object?>{};
+    }
+    try {
+      final Object? decoded = jsonDecode(row.overridesJson);
+      if (decoded is! Map) return const <String, Object?>{};
+      return <String, Object?>{
+        for (final MapEntry<Object?, Object?> e in decoded.entries)
+          e.key.toString(): e.value,
+      };
+    } catch (_) {
+      return const <String, Object?>{};
+    }
   }
 
   /// 批查「bookKey → 用户自定义显示名」（BUG-1488）。

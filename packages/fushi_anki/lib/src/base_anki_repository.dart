@@ -290,6 +290,27 @@ abstract class BaseAnkiRepository {
   ) async =>
       const <MinedNoteRef>[];
 
+  /// 这个后端能不能回读 Anki、核对「某张卡现在到底还在不在」。
+  ///
+  /// `true`（AnkiConnect / AnkiDroid）：[isDuplicate] 每次都真问 Anki，用户在 Anki 里
+  /// 删掉的卡下一次查词就自动变回「可制卡 +」；[findMatchingNotes] 查不到就等于真的没有。
+  ///
+  /// `false`（AnkiMobile）：`anki://x-callback-url` 一个回读 collection 的入口都没有，
+  /// 「已制卡 ✓」只能建立在本机账本上（`AnkiMobileMinedLedger`），于是
+  /// [findMatchingNotes] 恒空**不代表这张卡不在 Anki 里**。在这种后端上把「查不到」
+  /// 推断成「已被删、直接重制」是错的（可能默默制出第二张重复卡），也不能把账本里的
+  /// ✓ 继续当成真值——编排层必须改成让用户裁决（`runAnkiMinedCardAction`），并用
+  /// [forgetMinedCard] 接住用户的答案。
+  bool get canVerifyExistingCards => true;
+
+  /// 用户声明「这张卡我已经在 Anki 里删了」→ 划掉本地的「已制卡」记录，让 ✓ 变回 +。
+  ///
+  /// 只有 [canVerifyExistingCards] 为 `false` 的后端需要它（也只有它们覆写）：能回读
+  /// Anki 的后端不存在「本地记录与 Anki 不一致」这件事，下一次查词就自我纠正了。
+  ///
+  /// 返回是否真的划掉了（本来就没有记录 / 后端不需要 → `false`）。
+  Future<bool> forgetMinedCard(String expression) async => false;
+
   /// TODO-1007/1008：读取一张已存在 note（[noteId]）的现有字段（字段名 → 值），供
   /// note viewer 只读展示。两后端各自覆写（AnkiConnect `notesInfo` / AnkiDroid
   /// ContentProvider getNote）。note 不存在 / 后端不支持时返回 `null`。
@@ -298,12 +319,17 @@ abstract class BaseAnkiRepository {
   /// Updating an ordinary freshly mined card can capture another locator UUID.
   /// Retain the original note's identity, because field updates never add tags.
   /// Legacy notes have no source marker/link and are not silently migrated.
+  ///
+  /// [existingFields] 已由调用方读过时直接传入（覆盖链路本来就要读一遍现有字段，
+  /// 见 [fieldsForOverwrite]），省一次 `notesInfo` 往返；为 null 时自己读。
   @protected
   Future<AnkiMiningContext> contextForExistingSourceNote(
     int noteId,
-    AnkiMiningContext context,
-  ) async {
-    final Map<String, String>? fields = await noteFields(noteId);
+    AnkiMiningContext context, {
+    Map<String, String>? existingFields,
+  }) async {
+    final Map<String, String>? fields =
+        existingFields ?? await noteFields(noteId);
     if (fields == null) throw StateError('Existing note could not be read');
     final Map<String, CardSourceLink> sources = <String, CardSourceLink>{
       for (final String field in fields.values)
@@ -329,10 +355,20 @@ abstract class BaseAnkiRepository {
   }) async =>
       throw UnsupportedError('Source note editing is unavailable');
 
-  /// Exact marker lookup must propagate backend failure instead of reporting
-  /// "not found". A word match or an unscoped numeric note ID is insufficient.
+  /// Candidate notes whose fields contain the source ID substring (see
+  /// [CardSourceLink.searchQueryForSourceId]). Must propagate backend failure
+  /// instead of reporting "not found". Candidates are not identities:
+  /// [readSourceNote] confirms each one by parsing its field hrefs.
   @protected
-  Future<List<int>> findSourceNoteIds(String markerTag) async =>
+  Future<List<int>> findSourceNoteCandidates(String sourceId) async =>
+      throw UnsupportedError('Source note lookup is unavailable');
+
+  /// Fields of one candidate note for source identity checks. Returns `null`
+  /// only when the note no longer exists; a backend/transport failure must
+  /// throw. This is deliberately not [noteFields], whose fail-soft `null`
+  /// (viewer convenience) would let a timeout masquerade as "note deleted".
+  @protected
+  Future<Map<String, String>?> sourceNoteFields(int noteId) async =>
       throw UnsupportedError('Source note lookup is unavailable');
 
   @protected
@@ -342,21 +378,34 @@ abstract class BaseAnkiRepository {
   ) async =>
       throw UnsupportedError('Source note editing is unavailable');
 
+  /// Resolve the single note carrying [sourceId] in a `fushi://source` href.
+  /// A substring candidate that parses to a different (or no) source link is
+  /// not a match; a candidate deleted between search and read is skipped.
+  /// Backend failures propagate: "could not ask" is never reported as "gone".
   Future<AnkiSourceNote?> readSourceNote(String sourceId) async {
-    final List<int> matches = await findSourceNoteIds(
-      CardSourceLink.markerForSourceId(sourceId),
-    );
-    final Set<int> ids = matches.toSet();
-    if (ids.isEmpty) return null;
-    if (ids.length != 1 || ids.single <= 0) {
-      throw StateError('Card source marker is not unique');
+    CardSourceLink.validateSourceId(sourceId);
+    final Set<int> candidates =
+        (await findSourceNoteCandidates(sourceId)).toSet();
+    final Map<int, Map<String, String>> matches = <int, Map<String, String>>{};
+    for (final int noteId in candidates) {
+      if (noteId <= 0) throw StateError('Invalid source note candidate');
+      final Map<String, String>? fields = await sourceNoteFields(noteId);
+      if (fields == null) continue;
+      final bool carriesSource = fields.values.any(
+        (String field) => CardSourceLink.fromHtml(field)
+            .any((CardSourceLink link) => link.sourceId == sourceId),
+      );
+      if (carriesSource) matches[noteId] = fields;
     }
-    final Map<String, String>? fields = await noteFields(ids.single);
-    if (fields == null) throw StateError('Source note could not be read');
+    if (matches.isEmpty) return null;
+    if (matches.length != 1) {
+      throw StateError('Card source identity is not unique');
+    }
+    final MapEntry<int, Map<String, String>> match = matches.entries.single;
     return AnkiSourceNote(
       sourceId: sourceId,
-      noteId: ids.single,
-      fields: fields,
+      noteId: match.key,
+      fields: match.value,
     );
   }
 
@@ -704,7 +753,6 @@ abstract class BaseAnkiRepository {
     String? titleTag,
     String? collectionTag,
     String? charPositionTag,
-    CardSourceLink? sourceLink,
   }) {
     final seen = <String>{};
     final result = <String>[];
@@ -712,8 +760,6 @@ abstract class BaseAnkiRepository {
       if (tag.isEmpty || !seen.add(tag)) continue;
       result.add(tag);
     }
-    final String? marker = sourceLink?.markerTag;
-    if (marker != null && seen.add(marker)) result.add(marker);
     if (includeHibiki && seen.add(fushiTag)) result.add(fushiTag);
     if (includeCategory) {
       final categoryTag = _categoryTagForSource(source);
@@ -869,6 +915,31 @@ abstract class BaseAnkiRepository {
       }
     }
     return fields;
+  }
+
+  /// BUG-2606：覆盖 = 这张卡变成「此刻新制会得到的那张」——note 现有的每个字段都要
+  /// 被写：映射到的写渲染值，**没映射到的写空串**。
+  ///
+  /// 此前只发映射字段，两后端 native 都「未给出的字段保留旧值」。用户报告的形态是
+  /// Lapis：`SentenceFurigana` 由别的工具填过，Fushi 不映射它，覆盖后 `Sentence`
+  /// 换新、`SentenceFurigana` 留旧，而模板 `{{#SentenceFurigana}}` 优先显示它——
+  /// 卡面照旧是老句子，直到用户手动清空。同理 `Hint` 等任何模板会读的字段。
+  /// 新制的卡这些字段本来就是空的，覆盖不该比新制多留一截旧内容。
+  ///
+  /// 只补 [existingFieldNames] 里有、[rendered] 里没有的名字；[rendered] 里 note
+  /// 没有的名字原样保留（服务端按名匹配自会丢弃，与 BUG-1900 同口径）。AnkiDroid
+  /// 后端在 native `updateNoteFields` 里按位置做同一件事（`clearUnspecified`），
+  /// 那边本来就握着整条 note，不必再经通道回读一次。
+  @protected
+  static Map<String, String> fieldsForOverwrite({
+    required Iterable<String> existingFieldNames,
+    required Map<String, String> rendered,
+  }) {
+    final Map<String, String> out = <String, String>{...rendered};
+    for (final String name in existingFieldNames) {
+      out.putIfAbsent(name, () => '');
+    }
+    return out;
   }
 
   /// BUG-1900：只保留**属于 [noteType] 的字段**。

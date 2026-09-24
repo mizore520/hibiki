@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fushi/src/dictionary/dictionary_media_types.dart';
+import 'package:fushi_engine/dictionary/dictionary_media_types.dart';
 import 'package:fushi/src/pages/implementations/dictionary_webview_media.dart';
 
 void main() {
@@ -18,17 +18,19 @@ void main() {
       expect(response.data, isEmpty);
     });
 
-    test('returns 404 for malformed dictmedia scheme before dictionary init',
-        () {
-      final response = dictionaryMediaWebResourceResponse(
-        Uri.parse('dictmedia://styles.css'),
-      );
+    test(
+      'returns 404 for malformed dictmedia scheme before dictionary init',
+      () {
+        final response = dictionaryMediaWebResourceResponse(
+          Uri.parse('dictmedia://styles.css'),
+        );
 
-      expect(response, isNotNull);
-      expect(response!.statusCode, 404);
-      expect(response.contentType, 'text/plain');
-      expect(response.data, isEmpty);
-    });
+        expect(response, isNotNull);
+        expect(response!.statusCode, 404);
+        expect(response.contentType, 'text/plain');
+        expect(response.data, isEmpty);
+      },
+    );
   });
 
   group('dictionaryMediaCustomSchemeResponse', () {
@@ -56,11 +58,12 @@ void main() {
   });
 
   group('dictionaryMediaNaturalSizes', () {
-    test('reads SVG viewBox and AVIF ispe dimensions with normalized paths',
-        () {
-      final Uint8List svg = Uint8List.fromList(utf8.encode(
-        '<svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg"></svg>',
-      ));
+    test('reads SVG viewBox and AVIF ispe dimensions with normalized paths', () {
+      final Uint8List svg = Uint8List.fromList(
+        utf8.encode(
+          '<svg viewBox="0 0 30 20" xmlns="http://www.w3.org/2000/svg"></svg>',
+        ),
+      );
       final Uint8List avif = Uint8List(40);
       avif.setRange(4, 8, <int>[0x66, 0x74, 0x79, 0x70]);
       final ByteData avifData = ByteData.sublistView(avif);
@@ -75,14 +78,8 @@ void main() {
       };
       final List<Map<String, Object>> sizes = dictionaryMediaNaturalSizes(
         jsonEncode(<Map<String, String>>[
-          <String, String>{
-            'dictionary': 'Dict',
-            'path': './svg\\icon.svg',
-          },
-          <String, String>{
-            'dictionary': 'Dict',
-            'path': '/images/photo.avif',
-          },
+          <String, String>{'dictionary': 'Dict', 'path': './svg\\icon.svg'},
+          <String, String>{'dictionary': 'Dict', 'path': '/images/photo.avif'},
         ]),
         mediaLoader: (String dictionary, String path) => media[path],
       );
