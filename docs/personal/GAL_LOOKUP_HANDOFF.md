@@ -7,6 +7,7 @@
 - 本工作区在原候选 `69d2d599d3288f9acbb0ce873da56186c37c2c6b` 上整合作者 `upstream/develop` 固定提交 `3d5d1608ed24c12ed74d869067e51ed24f42a578`；合并前检查点为 `codex/checkpoint/lookup-calibration-before-upstream-20260924`。只更新此候选，不改 `custom`，不推送。
 - 保留个人查词校准、Hook、漫画 OCR 和 Anki 批量查重，并接入作者的数据库 v112、视频及游戏流能力。Anki 批量查重采用作者的 `canAddNotesWithErrorDetail` 判据，只把明确重复的错误当作已制卡。
 - 已通过应用、core、Anki 的静态分析，Anki 定向 110 项；x64 / Win32 原生 IPC 契约、loopback 策略测试及 Hook 构建通过。engine 包静态分析仍有 17 条原有 lint，均非编译错误。应用数据库迁移、漫画、视频、Hook、查词校准定向 405 项通过（`.codex-test/merge-final-flutter-tests.log`）；之前 54 张样本对照是在作者更新之前完成，不当作新提交的实机验收。
+- 用户首次完整构建在 `flutter_webrtc_plugin` 编译 `window_capture.cpp` 时遇到 Windows `min/max` 宏冲突（C4003/C2220）；四处 `numeric_limits<LONG>::min/max()` 已改为括号调用。该插件的 Release 目标增量构建通过；主程序 runner 目标本来定义 `NOMINMAX`。修复后尚未重跑完整应用构建。
 - 尚未完整构建应用 EXE、未打开真实游戏，也未触碰本机数据库。旧 v104 EXE 仍不能打开 v112 数据库；新源码需完整构建后才能使用。本节记录本地候选，不表示正式线已采用。
 
 ## 基线与范围
