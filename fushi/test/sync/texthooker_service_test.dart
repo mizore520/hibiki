@@ -61,6 +61,21 @@ void main() {
     TexthookerService.instance.removeListener(listener);
   });
 
+  test('Hook HTML breaks become canonical newlines before ruby indexes', () {
+    expect(normalizeTexthookerLineBreaks('前<br>後<BR/>末<br />完'), '前\n後\n末\n完');
+    expect(normalizeTexthookerLineBreaks('前\n後 <brace>'), '前\n後 <brace>');
+
+    final TexthookerLineEntry entry = TexthookerService.instance.appendLine(
+      '前<br><rふる>震</r>後',
+      source: TexthookerLineSource.engineHook,
+      sourceSequence: 17,
+    )!;
+    expect(entry.text, '前\n震後');
+    expect(entry.rubySpans.single.start, 2);
+    expect(entry.rubySpans.single.length, 1);
+    expect(entry.sourceSequence, 17);
+  });
+
   test('blank lines are ignored', () {
     TexthookerService.instance.appendLine('   ');
     TexthookerService.instance.appendLine('');

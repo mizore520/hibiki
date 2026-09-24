@@ -2,13 +2,15 @@
 
 > [CLAUDE.md](../../CLAUDE.md) 的子文档。构建上手见 [README.md](../../README.md)；这里只补 agent 关心的增量。
 
+仅在准备依赖、构建、打包或发布时查对应章节。个人任务默认 Windows；完整应用构建与游戏操作按个人规则由用户执行，已有明确授权时代理可执行。本页列出能力和命令，不自动授权构建其他平台、推送或发布；纯文档无需初始化环境。
+
 ## 平台与 SDK
 
 5 平台均出包：Android / iOS / macOS / Windows / Linux（`auto` 下五个平台统一走 Material 3；Cupertino / macOS renderer 仅保留为隐藏内部能力；桌面 EPUB 渲染靠 fork 的 `flutter_inappwebview_windows`，Linux 阅读器能力受限）。Android：`compileSdk 36` / `minSdkVersion 24` / `targetSdk 35`。
 
 ## Melos
 
-仓库根是 Melos workspace（`fushi_workspace`）。常用：`melos run analyze` / `melos run test` / `melos run build:android`。
+仓库根是 Melos workspace（`fushi_workspace`）。各脚本用途见根配置；本地验证遵守根规则，不以 `melos run test` 间接触发全量 Flutter 测试。
 
 ## 准备 + 构建
 
@@ -263,12 +265,12 @@ galgame 一键制卡的引擎-hook 注入器（injector.exe + hook.dll + vendore
     `hajisensai/Fushi`）。这批包里**没更新过的**用户开 galgame 会撞 404「引擎组件下载失败」，
     症状同 BUG-961，唯一恢复手段是更新到新版。用户 2026-08-11 明确拍板接受此破坏。
   - 更早的一批客户端把 `hajisensai/hibiki-hook` 编进常量，**那个仓库早已不存在**，与本次删除无关。
-- **构建入口**：`native/galgame_hook/tools/build_distribution.ps1 -RunTests` 是唯一组包入口，
+- **CI/正式验证组包入口**：`native/galgame_hook/tools/build_distribution.ps1 -RunTests`；普通本地迭代按上面的缓存失效矩阵，不自动加 `-RunTests`。
   cmake 编 x64（`-A x64`）+ x86（`-A Win32`），每架构打 `voice_hook_<arch>.zip`（injector/hook/
   LunaHook/LunaHost，x86 另带 Locale Emulator）+ `.sha256` 侧车，并写入当前 helper 构建输入的
   `voice_hook_source.sha256` 指纹。`build-multiplatform.yml` 与
   `release-desktop.yml` 的 windows job 都调它（`pull_request`/`push` + paths 含 `native/**`），
-  所以**双架构编译与 ctest 是 PR 门**；`native-galgame-gate.yml` 另跑那 7 条平台无关的静态守卫。
+  所以**双架构编译与 ctest 是 CI PR 门**；`native-galgame-gate.yml` 另跑平台无关的静态守卫。
   产物由 `tools/install_into_bundle.ps1` 校验 archive SHA 与源码指纹后，在构建期解压进 bundle 的
   `voice_hook/<arch>/`，
   Inno Setup 的 `recursesubdirs` 将其纳入安装器。`check_release_policy.ps1` 守卫这条链，禁止

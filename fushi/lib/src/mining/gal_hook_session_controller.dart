@@ -1067,6 +1067,10 @@ class GalHookSessionController extends ChangeNotifier {
 
   int? get selectedNativeTextThreadId => _selectedNativeTextThreadId;
   String? get currentLaunchExecutable => _state.launchExe;
+
+  /// Captured game identity for both launched and attached sessions.
+  String? get currentCaptureExecutable =>
+      _state.launchExe ?? _attachedCaptureExecutable;
   TexthookerTextThread? get selectedTextThread {
     final String? key = selectedTextThreadKey;
     if (key == null) return null;
@@ -1110,12 +1114,22 @@ class GalHookSessionController extends ChangeNotifier {
   // BUG-1049：launch 后游戏窗口尚未出现时的重绑监视（见 [_startWindowRebindWatch]）。
   Timer? _windowRebindTimer;
   bool _windowRebindInFlight = false;
+  // A rebind completion must only release the request it started; operation
+  // generation alone does not distinguish two watches in the same session.
+  int _windowRebindGeneration = 0;
+  // Lifecycle operations can overlap because the UI intentionally fires
+  // stopCapture without awaiting it. Keep one source teardown in flight so a
+  // newer attach cannot be torn down by an older stop after an async boundary.
+  Future<void>? _stopSourcesInFlight;
   // 引擎 hook 失败后的有界重试（见 [_scheduleEngineRecovery]）。降级到 Loopback 曾是
   // 终态：一次注入竞态就让整局只剩整机混音、没有台词，用户只能重启游戏。
   Timer? _engineRetryTimer;
   int _engineRetryAttempt = 0;
   bool _engineRetryInFlight = false;
   bool _pollInFlight = false;
+  // Polls can outlive an engine restart, including when the same source object
+  // is reused, so their completion needs an owner token of its own.
+  int _pollGeneration = 0;
 
   /// 上次向 native 问「资源语音是否就绪」的时刻。文本轮询降到 80ms 后不能每 tick
   /// 都跟着做一次 IPC 往返——就绪状态是秒级变化的会话属性，与单行台词无关。
@@ -2078,6 +2092,7 @@ class GalHookSessionController extends ChangeNotifier {
   /// 只更新状态，不走 [bindWindow]——那条路径是给「用户手动改绑另一个窗口」用的，
   /// 会 [startAttachedCapture] 重启整条会话；这里 hook 已经在跑，重启只会丢台词。
   void _startWindowRebindWatch(int generation, int gamePid) {
+    final int rebindGeneration = ++_windowRebindGeneration;
     _windowRebindTimer?.cancel();
     _windowRebindTimer = Timer.periodic(_windowRebindInterval, (Timer timer) {
       if (generation != _operationGeneration ||
@@ -2091,7 +2106,9 @@ class GalHookSessionController extends ChangeNotifier {
       _windowRebindInFlight = true;
       unawaited(
         _tryRebindWindow(generation, gamePid).whenComplete(() {
-          _windowRebindInFlight = false;
+          if (rebindGeneration == _windowRebindGeneration) {
+            _windowRebindInFlight = false;
+          }
         }),
       );
     });
@@ -2135,10 +2152,13 @@ class GalHookSessionController extends ChangeNotifier {
   }
 
   Future<void> stopCapture({bool keepBinding = true}) async {
-    ++_operationGeneration;
+    final int generation = ++_operationGeneration;
     // 用户点「停止捕获」就是这一局游玩的终点（BUG-1892）：结算必须在这里发生，
     // 不能拖到游戏进程死或 App 退出——否则停了捕获、人早就不玩了，计时器还在跑。
     await _stopPlayTracker();
+    // A newer attach/launch may have started while the old tracker was
+    // settling. The old stop must not flush or reset the newer session.
+    if (generation != _operationGeneration) return;
     // 会话结束先把剩余累计落库，再复位记账并解除游戏归属（防停后串扰）。
     _flushGameActivity();
     _activityAccumulator.reset();
@@ -2164,6 +2184,10 @@ class GalHookSessionController extends ChangeNotifier {
     // 超分的关闭**不在这里手写**：它跟着下面 phase → idle 的状态跃迁自动发生
     // （见 [_syncMagpieUpscaling]）。手写调用点正是早退分支漏关的根因。
     await _stopSources();
+    // _stopSources is shared by concurrent lifecycle operations. A newer
+    // operation owns the source fields now, so this stop must leave them
+    // untouched and must not publish an idle state over the new session.
+    if (generation != _operationGeneration) return;
     _setState(
       _state.copyWith(
         phase: GalHookSessionPhase.idle,
@@ -5244,6 +5268,7 @@ class GalHookSessionController extends ChangeNotifier {
   void _startEngineTextPolling(EngineHookGalAudioSource engine) {
     _clearStartingEngine(engine);
     _engineSource = engine;
+    _pollGeneration++;
     _lastTextSeq = 0;
     _pollInFlight = false;
     _lastReadinessRefreshAt = null;
@@ -5420,6 +5445,7 @@ class GalHookSessionController extends ChangeNotifier {
     required int pid,
     required GalHookInjectorDiagnostics diagnostics,
   }) {
+    if (generation != _operationGeneration) return;
     _engineRetryTimer?.cancel();
     _engineRetryTimer = null;
     if (!_isWindows || pid <= 0) return;
@@ -5460,6 +5486,7 @@ class GalHookSessionController extends ChangeNotifier {
       },
     );
     _engineRetryTimer = Timer(delay, () {
+      if (generation != _operationGeneration) return;
       _engineRetryTimer = null;
       unawaited(_retryEngineAttach(generation, pid: pid, attempt: attempt));
     });
@@ -5481,6 +5508,7 @@ class GalHookSessionController extends ChangeNotifier {
       final String? injector = await _injectorResolver(
         is32Bit: is32Bit ?? false,
       );
+      if (generation != _operationGeneration) return;
       if (injector == null) return; // helper 缺失：重试不可能变好
       final EngineHookGalAudioSource engine = _trackStartingEngine(
         _engineSourceFactory(
@@ -5492,6 +5520,10 @@ class GalHookSessionController extends ChangeNotifier {
         ),
       );
       await _attachPersistedHookProfiles(engine);
+      if (generation != _operationGeneration) {
+        await _stopEngine(engine);
+        return;
+      }
       final PcmFormat? format = await engine.start();
       if (generation != _operationGeneration) {
         await _stopEngine(engine);
@@ -5509,6 +5541,7 @@ class GalHookSessionController extends ChangeNotifier {
       }
       final GalHookInjectorDiagnostics diagnostics = engine.lastFailure;
       await _stopEngine(engine);
+      if (generation != _operationGeneration) return;
       _record(
         GalHookEventSeverity.warning,
         'inject',
@@ -5521,7 +5554,9 @@ class GalHookSessionController extends ChangeNotifier {
       );
       _scheduleEngineRecovery(generation, pid: pid, diagnostics: diagnostics);
     } finally {
-      _engineRetryInFlight = false;
+      if (generation == _operationGeneration) {
+        _engineRetryInFlight = false;
+      }
     }
   }
 
@@ -5575,7 +5610,31 @@ class GalHookSessionController extends ChangeNotifier {
     await _activateTextWithLoopback(generation, engine, gamePid: gamePid);
   }
 
-  Future<void> _stopSources() async {
+  Future<void> _stopSources() {
+    final Future<void>? inFlight = _stopSourcesInFlight;
+    if (inFlight != null) return inFlight;
+    final Future<void> stopping = _stopSourcesInternal();
+    _stopSourcesInFlight = stopping;
+    // Do not let the cleanup bookkeeping turn a source-stop failure into an
+    // unhandled future; callers still receive the original future/error.
+    unawaited(
+      stopping.then<void>(
+        (_) {
+          if (identical(_stopSourcesInFlight, stopping)) {
+            _stopSourcesInFlight = null;
+          }
+        },
+        onError: (Object _, StackTrace __) {
+          if (identical(_stopSourcesInFlight, stopping)) {
+            _stopSourcesInFlight = null;
+          }
+        },
+      ),
+    );
+    return stopping;
+  }
+
+  Future<void> _stopSourcesInternal() async {
     // 补录窗口挂在会话音源上，会话停就必须先收束（丢弃取音）：否则临时 loopback
     // 源泄漏，超时回调还会往已结束的会话行里写状态。
     await finishLineRecapture(discard: true);
@@ -5585,10 +5644,12 @@ class GalHookSessionController extends ChangeNotifier {
     _trackRefreshTimer = null;
     _windowRebindTimer?.cancel();
     _windowRebindTimer = null;
+    _windowRebindGeneration++;
     _engineRetryTimer?.cancel();
     _engineRetryTimer = null;
     _engineRetryAttempt = 0;
     _engineRetryInFlight = false;
+    _pollGeneration++;
     _windowRebindInFlight = false;
     _pollInFlight = false;
     _lastReadinessRefreshAt = null;
@@ -5624,10 +5685,13 @@ class GalHookSessionController extends ChangeNotifier {
   /// 预览是**全量快照**，没有游标，漏一次不会丢数据；因此这里失败静默返回即可，不需要
   /// 补偿逻辑。native 不支持（旧 helper）返回 null，此时选择器退回旧行为（只有已发布
   /// 线程有内容）——不崩，只是选不动，与升级 helper 前的现状一致。
-  Future<void> _pollThreadPreviews(EngineHookGalAudioSource engine) async {
+  Future<void> _pollThreadPreviews(
+    EngineHookGalAudioSource engine, {
+    required int pollGeneration,
+  }) async {
     final List<GalTextThreadPreview>? previews = await engine
         .pollThreadPreviews();
-    if (previews == null || engine != _engineSource) return;
+    if (previews == null || !_isCurrentPoll(engine, pollGeneration)) return;
     _textService.applyTextThreadPreviews(<TexthookerThreadPreview>[
       for (final GalTextThreadPreview preview in previews)
         TexthookerThreadPreview(
@@ -5638,6 +5702,7 @@ class GalHookSessionController extends ChangeNotifier {
           isArtifact: preview.isArtifact,
         ),
     ]);
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     // 预览带来了新的观测行数，跨会话记忆的消歧条件可能刚刚成立。
     _maybeRestoreTextThread();
   }
@@ -5770,26 +5835,32 @@ class GalHookSessionController extends ChangeNotifier {
     return true;
   }
 
+  bool _isCurrentPoll(EngineHookGalAudioSource engine, int pollGeneration) =>
+      pollGeneration == _pollGeneration && identical(engine, _engineSource);
+
   Future<void> _pollHookedText() async {
     if (_pollInFlight) return;
     final EngineHookGalAudioSource? engine = _engineSource;
     if (engine == null) return;
+    final int pollGeneration = _pollGeneration;
     _pollInFlight = true;
     try {
-      await _refreshReadinessThrottled(engine);
-      if (engine != _engineSource) return;
+      await _refreshReadinessThrottled(engine, pollGeneration: pollGeneration);
+      if (!_isCurrentPoll(engine, pollGeneration)) return;
       _reportTextLanePressure(engine);
+      if (!_isCurrentPoll(engine, pollGeneration)) return;
       // v12：预览区与文本环是两份独立数据，必须各poll各的。文本环在用户选定线程之前
       // 恒空，只轮询它会让选择器永远是一列空壳——那正是本次要修的症状。
-      await _pollThreadPreviews(engine);
-      if (engine != _engineSource) return;
+      await _pollThreadPreviews(engine, pollGeneration: pollGeneration);
+      if (!_isCurrentPoll(engine, pollGeneration)) return;
       final GalTextPoll? poll = await engine.pollText(_lastTextSeq);
-      if (poll == null || engine != _engineSource) return;
+      if (poll == null || !_isCurrentPoll(engine, pollGeneration)) return;
       final List<GalHookedLine> ordered = List<GalHookedLine>.from(poll.lines)
         ..sort((a, b) => a.seq.compareTo(b.seq));
       int cursor = _lastTextSeq;
       bool receivedTextLine = false;
       for (final GalHookedLine line in ordered) {
+        if (!_isCurrentPoll(engine, pollGeneration)) return;
         if (line.seq <= cursor) {
           _setState(
             _state.copyWith(textDuplicateCount: _state.textDuplicateCount + 1),
@@ -5859,7 +5930,9 @@ class GalHookSessionController extends ChangeNotifier {
         }
         cursor = line.seq;
       }
+      if (!_isCurrentPoll(engine, pollGeneration)) return;
       _refreshPendingResourceMatches(engine);
+      if (!_isCurrentPoll(engine, pollGeneration)) return;
       // 只推进到实际看见并处理完成的最大 seq；不能盲用 native header count 跳过未提交槽。
       if (cursor > _lastTextSeq) _lastTextSeq = cursor;
       // BUG-1094：新台词到达 = 玩家已经翻过这句，补录窗口没有继续开着的理由。
@@ -5869,6 +5942,7 @@ class GalHookSessionController extends ChangeNotifier {
         unawaited(finishLineRecapture());
       }
       if (receivedTextLine) {
+        if (!_isCurrentPoll(engine, pollGeneration)) return;
         _setState(
           _state.copyWith(
             phase: _state.fallbackReason == null
@@ -5877,11 +5951,14 @@ class GalHookSessionController extends ChangeNotifier {
             textSignalReceived: true,
           ),
         );
+        if (!_isCurrentPoll(engine, pollGeneration)) return;
         // 行数变了才值得重评：恢复要求候选线程已出够行数（见 [_maybeRestoreTextThread]）。
         _maybeRestoreTextThread();
       }
     } finally {
-      _pollInFlight = false;
+      if (pollGeneration == _pollGeneration) {
+        _pollInFlight = false;
+      }
     }
   }
 
@@ -5889,8 +5966,10 @@ class GalHookSessionController extends ChangeNotifier {
   /// [_readinessRefreshInterval] 做一次。首次调用（会话刚起）不节流；晚到的资源
   /// hook 仍在这里升格为主音源（[_promoteLateResourceAudio]），只是最迟晚半秒。
   Future<void> _refreshReadinessThrottled(
-    EngineHookGalAudioSource engine,
-  ) async {
+    EngineHookGalAudioSource engine, {
+    required int pollGeneration,
+  }) async {
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     final DateTime now = _now();
     final DateTime? last = _lastReadinessRefreshAt;
     if (last != null && now.difference(last) < _readinessRefreshInterval) {
@@ -5899,9 +5978,9 @@ class GalHookSessionController extends ChangeNotifier {
     _lastReadinessRefreshAt = now;
     final bool hadResourceAudio = engine.rawVoiceReady;
     await engine.refreshReadiness();
-    if (engine != _engineSource) return;
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     if (!hadResourceAudio && engine.rawVoiceReady) {
-      _promoteLateResourceAudio(engine);
+      _promoteLateResourceAudio(engine, pollGeneration: pollGeneration);
       return;
     }
     // BUG-1100：引擎 PCM 与资源语音是两条各自会「晚到」的能力，升格必须对称。
@@ -5909,7 +5988,11 @@ class GalHookSessionController extends ChangeNotifier {
     // 第一个 poll tick 判死后，整局再也回不到引擎 PCM。
     final PcmFormat? readyFormat = engine.readyPcmFormat;
     if (readyFormat != null && !engine.rawVoiceReady) {
-      await _promoteLateEnginePcm(engine, readyFormat);
+      await _promoteLateEnginePcm(
+        engine,
+        readyFormat,
+        pollGeneration: pollGeneration,
+      );
     }
   }
 
@@ -5926,9 +6009,13 @@ class GalHookSessionController extends ChangeNotifier {
   /// 那会让整段历史台词重放一遍。
   Future<void> _promoteLateEnginePcm(
     EngineHookGalAudioSource engine,
-    PcmFormat format,
-  ) async {
-    if (engine != _engineSource || identical(_audioSource, engine)) return;
+    PcmFormat format, {
+    required int pollGeneration,
+  }) async {
+    if (!_isCurrentPoll(engine, pollGeneration) ||
+        identical(_audioSource, engine)) {
+      return;
+    }
     if (_state.audioBackend != GalHookAudioBackend.systemLoopback &&
         _state.audioBackend != GalHookAudioBackend.none) {
       return;
@@ -5937,11 +6024,11 @@ class GalHookSessionController extends ChangeNotifier {
     if (_recapturingLineId != null) return;
     // 还在等窗口的行属于旧音源，先按真实已等待时长冻结，别把它们的声音丢掉。
     await _flushAllLoopbackFreezes();
-    if (engine != _engineSource) return;
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     final GalAudioSource? previous = _audioSource;
     _audioSource = engine;
     await previous?.stop();
-    if (engine != _engineSource) return;
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     _setState(
       _state.copyWith(
         phase: _state.textSignalReceived
@@ -5953,6 +6040,7 @@ class GalHookSessionController extends ChangeNotifier {
         clearLastError: true,
       ),
     );
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     _record(
       GalHookEventSeverity.success,
       'audio',
@@ -5964,6 +6052,7 @@ class GalHookSessionController extends ChangeNotifier {
         'channels': format.channels,
       },
     );
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     _syncTrackAutoRefresh();
   }
 
@@ -6428,9 +6517,14 @@ class GalHookSessionController extends ChangeNotifier {
     return kGalCleanSourceSuppressedReason;
   }
 
-  void _promoteLateResourceAudio(EngineHookGalAudioSource engine) {
+  void _promoteLateResourceAudio(
+    EngineHookGalAudioSource engine, {
+    required int pollGeneration,
+  }) {
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     if (_state.audioBackend == GalHookAudioBackend.gameResource) return;
     for (final MapEntry<String, int> line in _lineTimestampCache.entries) {
+      if (!_isCurrentPoll(engine, pollGeneration)) return;
       final int? textEventId = _lineTextEventIdCache[line.key];
       if (textEventId == null) continue;
       // 用户已经为这行裁决过音频（补录 / 选轨），晚到的资源不得改回去。
@@ -6460,6 +6554,7 @@ class GalHookSessionController extends ChangeNotifier {
       );
     }
     _trimCache(_pendingResourceMatches);
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     _setState(
       _state.copyWith(
         phase: _state.textSignalReceived
@@ -6471,6 +6566,7 @@ class GalHookSessionController extends ChangeNotifier {
         clearLastError: true,
       ),
     );
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     _record(
       GalHookEventSeverity.success,
       'audio',
@@ -6478,9 +6574,11 @@ class GalHookSessionController extends ChangeNotifier {
       'Late game resource hook is ready and is now the primary audio source',
       details: <String, Object?>{'pid': _state.gamePid},
     );
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     _refreshPendingResourceMatches(engine);
     // audioBackend 已切到 gameResource：立即重刷一次音轨快照并停掉 PCM 低频定时器
     //（BUG-1027，资源模式不进 PCM 环，快照保持一致的空/残留态即可）。
+    if (!_isCurrentPoll(engine, pollGeneration)) return;
     _syncTrackAutoRefresh();
   }
 

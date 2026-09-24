@@ -1,16 +1,16 @@
 # 集成测试与设备验证
 
-> [CLAUDE.md](../../CLAUDE.md) 的子文档。执行前先读 CLAUDE.md 的「基本规则」「验证」。
+> [CLAUDE.md](../../CLAUDE.md) 的子文档，仅在实际设备/应用验证时读取相关章节。已加载的根规则不必重读；运行授权和执行者按个人规则。
 
-集成测试只跑在**模拟器**上：`ci/integration-test.sh` 忽略物理真机，只用 `emulator-<port>` 序列号。无模拟器在线时会自动从 AVD 启一台。
+Android 编排只跑在**模拟器**上：`ci/integration-test.sh` 忽略物理真机，只用 `emulator-<port>` 序列号。Windows 使用下文的离屏 runner。个人任务默认 Windows，不因查阅本页启动其他平台。
 
 ## 测试三层架构（禁止手动 adb / 手动点击）
 
-所有测试通过脚本完成，不允许手工执行 `adb` 命令或手动在模拟器上点击。
+测试主体通过脚本和焦点驱动完成，不用临时 adb 点击代替测试断言。AnkiDroid 首次启动的 Get started 由用户按下文 provision 提示处理，属于夹具准备例外，不算场景通过。
 
 | 层级 | 工具 | 职责 | 适用场景 |
 |------|------|------|----------|
-| **编排（推荐）** | `ci/integration-test.sh` | 选/启模拟器 + 构建 + provision + 跑全部目标 + 汇总 | 一键全自动跑集成测试 |
+| **Android 编排** | `ci/integration-test.sh --only=<目标>` | 选/启模拟器 + 构建 + provision + 跑指定目标 + 汇总 | 已授权 Android 定向集成测试 |
 | **文件操作** | `ci/emulator-test.sh` | 推送素材、授权限、触发 MediaScanner | 仅需准备素材时 |
 | **状态验证** | `run-as app.fushi.reader sqlite3 files/fushi.db` | 直查 `fushi.db` | 导入结果、配置持久化、cue 数量、Profile |
 | **UI 交互** | `flutter drive` 集成测试 | CJK 搜索、阅读器翻页、划词查词 | 单独跑某个目标 |
@@ -71,13 +71,13 @@ flutter test integration_test/<t>_test.dart -d emulator-<port>     # 或 ci/inte
 
 ## 一键运行（全自动，仅模拟器）
 
-集成测试的唯一入口是 `ci/integration-test.sh`：自动选/启一台模拟器（物理真机会被忽略），构建一次 debug APK，自动 provision 所有前置（AnkiDroid 安装+建 collection+授权、字典 zip 推 `/sdcard`），再遍历全部 `integration_test/*_test.dart` 目标逐个 `flutter drive`，最后打印分类 PASS/SKIP/FAIL 汇总（任一失败退出非零）。
+Android 批量编排入口是 `ci/integration-test.sh`：自动选择/启动模拟器、准备构建与夹具，再运行选定目标并汇总（任一失败退出非零）。本地使用 `--only` 指定实际受影响场景；无筛选的完整回归留给 CI 或明确授权的发布回归，普通候选不触发。单场景和 Windows 验证使用上文对应入口。
 
 ```bash
-bash ci/integration-test.sh                      # 起/选模拟器，构建，provision，跑全部目标
-bash ci/integration-test.sh --skip-build         # 复用已构建的 app-debug.apk
 bash ci/integration-test.sh --only=app_smoke,reader_pagination
-bash ci/integration-test.sh --avd=fushi_gpu_test
+bash ci/integration-test.sh --only=reader_pagination --skip-build  # 构建输入未变时复用 APK
+bash ci/integration-test.sh --only=app_smoke --avd=fushi_gpu_test
+# CI 或明确授权的完整发布回归才使用无 --only 的调用
 ```
 
 每个目标的日志落在 `.codex-test/itest-logs/<target>.log`。

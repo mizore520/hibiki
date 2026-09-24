@@ -43,6 +43,37 @@ import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'package:hotkey_manager/hotkey_manager.dart';
 import 'package:path/path.dart' as p;
 
+/// Per-lookup placement facts supplied by a native hit surface.
+///
+/// Both rectangles are screen physical pixels. Keeping them in one immutable
+/// value makes a lookup self-contained: an attached desktop lookup cannot
+/// observe a stale global physical cap from a previous galCard
+/// session, and the native anchor is never reinterpreted with the main
+/// Flutter view's DPR.
+@immutable
+class GlobalLookupPhysicalPlacement {
+  const GlobalLookupPhysicalPlacement({
+    required this.anchorScreenRect,
+    this.destinationViewportScreenRect,
+  });
+
+  /// The hit glyph rectangle in screen physical pixels.
+  final Rect anchorScreenRect;
+
+  /// The presentation client viewport in screen physical pixels.
+  final Rect? destinationViewportScreenRect;
+
+  bool get isValid {
+    final Rect? viewport = destinationViewportScreenRect;
+    return anchorScreenRect.isFinite &&
+        !anchorScreenRect.isEmpty &&
+        (viewport == null ||
+            (viewport.isFinite &&
+                !viewport.isEmpty &&
+                viewport.intersect(anchorScreenRect) == anchorScreenRect));
+  }
+}
+
 /// Single global overlay per process.
 class GlobalLookupController {
   GlobalLookupController._();
@@ -698,6 +729,7 @@ class GlobalLookupController {
       await _lookupExternal(
         text,
         sentence: sentence,
+        physicalPlacement: null,
         autoRead: true,
         miningHandler: null,
       );
@@ -781,7 +813,13 @@ class GlobalLookupController {
       _effectiveLookupSizeForCurrentRoute(model);
 
   LookupSize _clampToPhysicalCap(LookupSize size, AppModel model, double dpr) {
-    final ({int w, int h})? cap = _physicalCap;
+    // setPhysicalCap belongs to the galCard route. Desktop lookups, including
+    // attached hits, must not inherit a cap left behind by a previous game
+    // card session.
+    final ({int w, int h})? cap =
+        GlobalLookupChannel.currentRoute.source == 'galCard'
+        ? _physicalCap
+        : null;
     if (cap == null) return size;
     final double factor = model.appUiScale * dpr;
     if (factor <= 0) return size;
@@ -800,6 +838,7 @@ class GlobalLookupController {
     String text, {
     String sentence = '',
     Rect? anchorScreenRect,
+    GlobalLookupPhysicalPlacement? physicalPlacement,
     bool autoRead = true,
     OverlayMiningHandler? miningHandler,
     int? consumeOutsideClicksOwnerHwnd,
@@ -814,6 +853,7 @@ class GlobalLookupController {
         text,
         sentence: sentence,
         anchorScreenRect: anchorScreenRect,
+        physicalPlacement: physicalPlacement,
         autoRead: autoRead,
         miningHandler: miningHandler,
         consumeOutsideClicksOwnerHwnd: consumeOutsideClicksOwnerHwnd,
@@ -825,6 +865,7 @@ class GlobalLookupController {
     String text, {
     required String sentence,
     required Rect? anchorScreenRect,
+    required GlobalLookupPhysicalPlacement? physicalPlacement,
     required bool autoRead,
     required OverlayMiningHandler? miningHandler,
     int? consumeOutsideClicksOwnerHwnd,
@@ -833,6 +874,7 @@ class GlobalLookupController {
     if (!isSupported || !_started || _appModel == null || term.isEmpty) {
       return false;
     }
+    if (physicalPlacement != null && !physicalPlacement.isValid) return false;
     _activateRoute(GlobalLookupChannel.currentRoute);
     glog('lookupText: "$term"');
     // TODO-1268 / BUG — mirror _onHotKey's TODO-1079(D) preamble on the
@@ -853,6 +895,7 @@ class GlobalLookupController {
       term,
       sentence: sentence,
       anchorScreenRect: anchorScreenRect,
+      physicalPlacement: physicalPlacement,
       autoRead: autoRead,
       miningHandler: miningHandler,
       consumeOutsideClicksOwnerHwnd: consumeOutsideClicksOwnerHwnd,
@@ -906,10 +949,13 @@ class GlobalLookupController {
   /// null = 原 atCursor 语义（热键/悬浮字幕路径零变化）。native
   /// showAt 在 atCursor:false 时直接用传入点并以该点算工作区偏移，级联种子
   /// （cursorWorkX/Y）自动对齐锚点，无需 native 改动。
+  /// [physicalPlacement] supplies attached hits in physical screen pixels;
+  /// its root anchor uses the existing above/below placement in the viewport.
   Future<bool> _lookupExternal(
     String text, {
     required String sentence,
     Rect? anchorScreenRect,
+    required GlobalLookupPhysicalPlacement? physicalPlacement,
     required bool autoRead,
     OverlayMiningHandler? miningHandler,
     int? consumeOutsideClicksOwnerHwnd,
@@ -994,7 +1040,7 @@ class GlobalLookupController {
       // cascade LAYOUT BOUNDS (window-local CSS px) so a nested child card has
       // room to cascade beside the root during measurement; D2's union bbox
       // (overlaySize) then reveals/resizes the window down to the real extent.
-      // The root card itself stays anchorless (its anchor is null) and lands at
+      // Legacy roots stay anchorless (their anchor is null) and land at
       // the window-local origin clamped into the work area (TODO-1231
       // computeRootShellOffset), so a single-frame lookup still reveals exactly
       // at the card size after the bbox trims the bounds — no regression.
@@ -1009,16 +1055,45 @@ class GlobalLookupController {
       _layoutBoundsH = cardH * kGlobalLookupLayoutBoundsHeightFactor;
       final int w0 = (_layoutBoundsW * dpr).round();
       final int h0 = (_layoutBoundsH * dpr).round();
-      // 真机第 5 轮 — 有文字锚点时窗口放在被点文字左下（物理 px），native 以
-      // 该点所在显示器算工作区/偏移；无锚点保持 atCursor（+8,+8 光标偏移）。
+      // Legacy logical anchors seed the window below the word. Attached hits
+      // seed it at the physical word origin; the root frame handles avoidance.
+      // Native chooses the monitor from this point; anchorless calls use cursor.
       // 布局工作区上限：游戏内查词时可用空间是**游戏视口**，不是显示器工作区。
       // 不传就会按 2560x1440 排版、排完再被裁（runner 超尺寸是裁不是缩）。
-      final ({int w, int h, int x, int y})? workArea = _physicalLayoutWorkArea;
-      final int capW = workArea?.w ?? 0;
-      final int capH = workArea?.h ?? 0;
-      final int capX = workArea?.x ?? 0;
-      final int capY = workArea?.y ?? 0;
-      final GlobalLookupShowResult shown = anchorScreenRect == null
+      final bool usePhysicalAnchor = physicalPlacement != null;
+      final Rect? effectiveAnchor =
+          physicalPlacement?.anchorScreenRect ?? anchorScreenRect;
+      final Rect? destinationViewport =
+          physicalPlacement?.destinationViewportScreenRect;
+      final int showX = effectiveAnchor == null
+          ? 0
+          : usePhysicalAnchor
+          ? effectiveAnchor.left.round()
+          : (effectiveAnchor.left * dpr).round();
+      final int showY = effectiveAnchor == null
+          ? 0
+          : usePhysicalAnchor
+          ? effectiveAnchor.top.round()
+          : ((effectiveAnchor.bottom + 4) * dpr).round();
+      // A galCard lookup keeps using its session-owned layout viewport. An
+      // attached desktop lookup gets a viewport from the same native hit event;
+      // all other desktop lookups must use the monitor work area reported by
+      // showAt rather than a stale galCard value.
+      final ({int w, int h, int x, int y})? galWorkArea =
+          GlobalLookupChannel.currentRoute.source == 'galCard'
+          ? _physicalLayoutWorkArea
+          : null;
+      final int capW =
+          destinationViewport?.width.round() ?? galWorkArea?.w ?? 0;
+      final int capH =
+          destinationViewport?.height.round() ?? galWorkArea?.h ?? 0;
+      final int capX = destinationViewport == null
+          ? galWorkArea?.x ?? 0
+          : showX - destinationViewport.left.round();
+      final int capY = destinationViewport == null
+          ? galWorkArea?.y ?? 0
+          : showY - destinationViewport.top.round();
+      final GlobalLookupShowResult shown = effectiveAnchor == null
           ? await GlobalLookupChannel.showAt(
               x: 0,
               y: 0,
@@ -1031,8 +1106,8 @@ class GlobalLookupController {
               capOriginY: capY,
             )
           : await GlobalLookupChannel.showAt(
-              x: (anchorScreenRect.left * dpr).round(),
-              y: ((anchorScreenRect.bottom + 4) * dpr).round(),
+              x: showX,
+              y: showY,
               width: w0,
               height: h0,
               atCursor: false,
@@ -1042,16 +1117,16 @@ class GlobalLookupController {
               capOriginY: capY,
             );
       // BUG-2372 诊断线 —— 「弹窗没锚在被点的词上」这类报告，光看截图量不出
-      // 锚点到卡片的真实偏移。把锚点（逻辑 px）、dpr、真正投给 native 的物理
+      // 锚点到卡片的真实偏移。把锚点坐标域、dpr、真正投给 native 的物理
       // 坐标、以及 native 回报的工作区/原点一次记全；配合随后的 reveal(box)
       // 就能把卡片的最终屏幕位置反算到像素，不必再让用户反复截图。
       glog(
-        'lookup: anchor=${anchorScreenRect == null ? 'null(atCursor)' : '('
-                  '${anchorScreenRect.left},${anchorScreenRect.top},'
-                  '${anchorScreenRect.width}x${anchorScreenRect.height})'} '
+        'lookup: anchor=${effectiveAnchor == null ? 'null(atCursor)' : '('
+                  '${effectiveAnchor.left},${effectiveAnchor.top},'
+                  '${effectiveAnchor.width}x${effectiveAnchor.height})'} '
+        'anchorSpace=${usePhysicalAnchor ? 'physical' : 'logical'} '
         'dpr=$dpr appUiScale=${model.appUiScale} '
-        'showAt=(${anchorScreenRect == null ? 'cursor' : '${(anchorScreenRect.left * dpr).round()},'
-                  '${((anchorScreenRect.bottom + 4) * dpr).round()}'}) '
+        'showAt=(${effectiveAnchor == null ? 'cursor' : '$showX,$showY'}) '
         'cardCss=${overlaySize.width}x${overlaySize.height} '
         'cap=(${capW}x$capH @$capX,$capY) '
         'reply=(work=${shown.workWidth}x${shown.workHeight} '
@@ -1074,6 +1149,18 @@ class GlobalLookupController {
       // reserve-to-edge clamp invariant). Fall back to the main dpr when the
       // native monitor query failed (monitorDpr 0).
       final double workDpr = shown.monitorDpr > 0 ? shown.monitorDpr : dpr;
+      if (physicalPlacement != null && _stack.frames.isNotEmpty) {
+        // The existing root-frame layout chooses above/below the hit and fits
+        // the card to that side. Its anchor is window-local CSS pixels; the
+        // viewport origin offset below lifts it into the common layout space.
+        final Rect hit = physicalPlacement.anchorScreenRect;
+        _frameAnchors[_stack.frames.first.id] = Rect.fromLTWH(
+          (hit.left - showX) / workDpr,
+          (hit.top - showY) / workDpr,
+          hit.width / workDpr,
+          hit.height / workDpr,
+        );
+      }
       _screenWorkW = shown.workWidth > 0 ? shown.workWidth / workDpr : 0;
       _screenWorkH = shown.workHeight > 0 ? shown.workHeight / workDpr : 0;
       // TODO-893 v2 (symptom 3) — same dpr boundary: the native cursor/work

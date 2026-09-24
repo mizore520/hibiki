@@ -1,5 +1,3 @@
-# hibiki-hook Agent Rules
+# Galgame Hook 规则入口
 
-本仓库的 agent 长期执行规则以 [`CLAUDE.md`](./CLAUDE.md) 为唯一真相源。
-
-开始分析、修改、测试、审查或提交前，必须先完整阅读 `CLAUDE.md`。
+进入本模块任务时读取 [CLAUDE.md](CLAUDE.md)。已读且未变化无需在分析、修改、测试、提交各阶段重复加载；切换目标引擎时补读该引擎的契约与支持证据。

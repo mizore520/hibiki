@@ -15,6 +15,7 @@
 #include "hdr_video_host_window.h"
 #include "ime_association_guard.h"
 #include "win32_window.h"
+#include "window_capture_reply_queue.h"
 
 // A window that does nothing but host a Flutter view.
 class FlutterWindow : public Win32Window {
@@ -126,6 +127,7 @@ class FlutterWindow : public Win32Window {
   // frame (PNG) off a worker thread. See window_capture.cpp / .h.
   std::unique_ptr<flutter::MethodChannel<flutter::EncodableValue>>
       window_capture_channel_;
+  std::unique_ptr<fushi::WindowCaptureReplyQueue> window_capture_replies_;
   void RegisterWindowCaptureChannel();
 
   // Windows HDR passthrough (docs/plans/2026-08-30-video-hdr-passthrough.md):

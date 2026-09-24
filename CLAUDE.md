@@ -1,63 +1,21 @@
-# Hibiki Agent Rules
+# Fushi 技术规则
 
-本文件是 Claude/Codex 进入 Hibiki 仓库后长期执行规则的**唯一真相源**，不是项目宣传页。
-只保留会影响分析、修改、验证、审查、提交的规则；详细操作流程拆到 `docs/agent/`，项目介绍/构建上手见 [README.md](README.md)。
-`AGENTS.md` 只是指向本文件的薄指针。
+本文件维护技术、数据与平台约束；协作、验证范围和正式采用授权见 [个人工作规则](docs/personal/PERSONAL_FORK_RULES.md)。根入口和本文件不要求每次操作重读，专项文档按任务触发。
 
 ## 基本规则
 
-- 始终用中文回复。
-- 开始分析、修改、测试、提交或 PR 前，先读最近层级的 `AGENTS.md` / `CLAUDE.md`；子目录里有更近的就按更近层级执行。
-- 修改代码、文档、配置或测试时必须使用独立 Git worktree，不得直接在原工作区编辑；在 worktree 中完成修改、验证和提交。非大型修改（单一目标、短周期）完成后，默认将工作分支合并回原目标分支；大型、长周期或需分阶段审查的修改保留独立分支/worktree，待审查确认后再合并。合并不得覆盖原工作区已有的未提交改动。
-- 新建 worktree 后（无论 `EnterWorktree`、手动 `git worktree add` 还是其它工具创建），第一件事在该 worktree 里跑 `pwsh -File tool/setup_worktree.ps1`（Windows 用 `powershell -ExecutionPolicy Bypass -File tool/setup_worktree.ps1`）：它从主 checkout 把本地真值密钥（`google_oauth_secret.dart` / `log_upload_secret.dart` 等**所有 skip-worktree 文件**，清单动态读取无需硬编码）搬进来并在本 worktree 续上 `skip-worktree`（真值不显示 dirty、绝不会误提交），再调 `tool/bootstrap.ps1`（pub get + 打补丁）。**别再手动 cp 密钥桩或逐个配置**。只跑 `flutter analyze` / `flutter test` 时入库的占位/空值已够编译；真值仅在 worktree 里真机验证 Google Drive 登录 / 日志上传时才需要。只搬密钥不跑 bootstrap 用 `-SkipBootstrap`。
-- 多 agent 并发时必须先登记本机 ownership：
-  - 在主 checkout 的 `.worktrees/coordination/claims/` 复制 `_template.json` 新建自己的 claim；若当前位于 `.worktrees/<task>` worktree，则使用同级的 `../coordination/claims/`。
-  - claim 写清任务、agent、分支、worktree、base SHA、预计修改文件和高冲突文件；普通任务 agent 只编辑自己的 claim，不在 tracked 文件里记录协调状态。
-  - 普通任务 agent 不主动 rebase/merge `develop`；integration owner 统一读取 claims、决定合并顺序、更新 `develop`、跑 broad verification，并将完成/阻塞的 claim 移到 `done/` / `blocked/`。
-- 多使用子代理：遇到 2 个以上可独立推进的分析、审查、文件定位、测试诊断或实现子任务时，优先派发子代理并行处理；主代理负责整合结论、控制范围、复核关键证据和最终提交。不要把需要共享同一脏文件或强顺序依赖的步骤硬拆给多个子代理。子代理后台派发、主代理不空等，绝不让两个代理重复做同一子任务；难度分级、标准并行时间线和空等禁止清单见 [docs/agent/fast-workflow.md](docs/agent/fast-workflow.md)。
-- 根因修复：遇到功能异常、测试失败、运行时报错或用户要求修复，先复现或沿真实代码路径定位，再修数据结构、状态同步、生命周期、平台边界或依赖契约。不允许用延迟、重试、吞异常、硬编码、特例分支掩盖症状；只有外部系统或平台限制不可控时才允许临时兼容层，并说明影响范围和清理条件。
-- 函数和新增 Dart helper 要有明确类型签名。
-- 不从零重写现有功能；在当前实现上删减、合并、修正。
-- 发现问题直接说，不要为了顺滑把风险说轻。
-- **合并 PR 要看作者**：只有 `hajisensai`（仓库所有者）与 `W1ght` 的 PR 可以在常规审查后直接合并；**其他任何人的 PR 一律先问用户拿许可再合**，哪怕用户说过「全部合并」——那句话不覆盖后来新出现的第三方 PR。许可的可追溯形态是给 PR 打 `merge-approved` 标签。CI 侧有一条会变红的门 `.github/workflows/pr-merge-gate.yml`（白名单被守卫测试 `fushi/test/tools/pr_merge_gate_allowlist_guard_test.dart` 钉死）；它默认是建议性的——本仓刻意不设分支保护，因为日常大量直推 develop，加 required check 会把直推一起挡掉。要改白名单必须用户点头。
-- 用户报 bug：按 [docs/BUGS.md](docs/BUGS.md)（文件头有完整流程）——先沿真实代码路径**验真伪**。**一 bug 一文件**：真 bug 用 `dart run tool/bug.dart new <slug> [标题...]` 新建独立文件 `docs/bugs/BUG-NNN[-slug].md`（自动取下一个空号、生成骨架、重建索引；**禁止手动往 `docs/BUGS.md` 加正文**——它只是头部约定 + 自动索引表），在该文件里记根因 `file:line`，再 **① 根因修复**、**② 在最强可落地层加自动化测试**（widget 行为 / CSS 生成器 / 源码扫描守卫），两步各把 `[ ]` 勾成 `[x]` 并记提交哈希/测试文件，改完跑 `dart run tool/bug.dart reindex` 重建索引；**撞号别手改**——跑 `dart run tool/bug.dart renumber <old> <new>`（文件名/正文 H2/代码引用/测试名四处一起改 + reindex + 自校验零残留；只改文件名不改正文 H2 会让守卫测试 CI 红）。取号扫「全部本地+远端分支的 commit 树 **+ 本机每个 git 工作区磁盘上还没提交的 `docs/bugs/*.md`**」（后者是并发撞号的大头：`new` 写文件到 commit 之间隔着几十分钟到几小时，BUG-1429），但那不是分布式锁，开 PR 前和每次 rebase 后仍要重跑 `check`——`check` 现在会跨分支/工作区复核并报出「我新引入的号还被谁占着、在哪个 ref/工作区」，想当硬门用 `check --strict`（默认只让本地不变式决定退出码）；非真 bug/无法复现也建一条标「未复现」。这套 per-file 结构消除并发 agent 撞号 + 顶部插入的 git 冲突（守卫 `fushi/test/tools/bugs_per_file_guard_test.dart`）。与本地不入库的 `docs/REGRESSION_BUGS.md` 区分。
+- 所有修改在独立 worktree 中完成，不覆盖用户或其他任务的改动。已授权的实现、定向验证和本地提交持续完成；合并/推送边界遵守个人规则。
+- 需要应用依赖时运行 `tool/bootstrap.ps1`（pub get + 依赖补丁）；需要主 checkout 的本机真值时使用 `tool/setup_worktree.ps1`，仅同步真值可加 `-SkipBootstrap`。占位值足够普通分析/测试，不为文档任务复制密钥或下载依赖，不手工搬密钥桩。
+- 并发 ownership、委派与模型选择统一见个人规则，不按疑点数量或固定时间线强制派发。
+- 沿真实代码路径定位根因，修复状态、生命周期与契约；不得靠延迟、盲重试、吞异常或特例掩盖问题。不可控外部限制确需兼容时说明范围和清理条件。复用现有功能，新增 Dart 函数/helper 使用明确类型签名。
+- 合并 PR 的作者门保留：`hajisensai`、`W1ght` 可在常规审查后进入合并流程，其他作者须有用户许可及可追溯的 `merge-approved` 标签；“全部合并”不覆盖后来出现的第三方 PR。修改白名单需用户授权。此门不替代 `custom` 的采用许可，也不代表远端已设置分支保护。
+- Bug 登记按 [docs/BUGS.md](docs/BUGS.md) 文件头执行：一 bug 一文件，使用 `tool/bug.dart` 的 `new` / `reindex` / `renumber`，不手改自动索引或仅改文件名。记录真实根因和有效回归证据，未复现如实标注；新编号在开 PR 和 rebase 后用 `check` 复核跨分支/工作区冲突。用户集中体验期间先按个人规则统一收集。
 
 ## 仓库地图
 
-- 仓库根：`D:\APP\vs_claude_code\hibiki`（Melos workspace，名 `fushi_workspace`）。Flutter app：`fushi/`；Android 工程：`fushi/android/`。
-- **无头引擎与服务端（2026-09-08 起）**：`packages/fushi_engine/`（纯 Dart，app 与服务端共用的互联 host / OCR / ASR 任务 / 下载管线 / 库服务；**禁 import `package:flutter`、`dart:ui`、任何插件、`package:fushi`**，守卫 `fushi/test/build/fushi_engine_purity_guard_test.dart`；平台边界全走全局装配点 `engineLog` / `enginePaths` / `PrefStore` / `ffmpegPlatformBackendProvider` / `ocrSessionFactoryBuilder` 等，app 在 `fushi/lib/src/engine_bindings.dart` 的 `installEngineHostBindings()` 一次接线）；`packages/fushi_server/`（CLI `fushi_server`：互联 host + WebUI/admin API + 分块上传 + 内置 torrent/qBittorrent 代下载 + ASR/OCR 任务；`dart build cli` 出 bundle，**`dart compile exe` 缺 sqlite3 native asset 会运行时崩**；随包原生库按 `bin/../lib/<裸名>` 定位；Linux 的内置 torrent 引擎是 `native/fushi_torrent/build_linux_so.sh` 静态链出的 `.so`；发布走独立仓 `hajisensai/fushi-server` 的 `release.yml`，它 `workflow_call` 回调本仓 `release-server.yml`（Release 落那边、本仓禁发，版本取该包 pubspec；见 docs/agent/build.md）；用法见 [packages/fushi_server/README.md](packages/fushi_server/README.md)，设计见 `docs/specs/2026-09-08-fushi-server-headless-design.md`）。**引擎文件不放 `src/`**（`implementation_imports` 在 CI 致命），import 形如 `package:fushi_engine/sync/fushi_sync_server.dart`。互联 host 的实现只有引擎这一份，app 侧 `FushiSyncServerController` 只是装配。
-- 阅读器页面：`fushi/lib/src/pages/implementations/reader_fushi_page.dart`（`ReaderFushiPage`，3242 行主体 + `reader_fushi/` 下 8 个域 part 共 9583 行：WebView 拦截 + JS 分页 + 有声书同步）。
-- 视频页面：`fushi/lib/src/pages/implementations/video_fushi_page.dart`（6358 行主体 + `video_fushi/` 下 18 个 part 共 6966 行）；视频首页 `home_video_page.dart`（3080 行）。
-- 书架页面：`fushi/lib/src/pages/implementations/reader_fushi_history_page.dart`；首页 dashboard：`pages/implementations/home_dashboard_page.dart`。
-- reader source：`fushi/lib/src/media/sources/reader_fushi_source.dart`（`ReaderFushiSource`）。
-- 阅读器 JS/CSS：`fushi/lib/src/reader/`（17 个 JS/CSS 注入封装，`reader_pagination_scripts.dart` 等）；JS 桥接全局是 `window.fushiReader`（2026-08 终局清算已改名；`hoshiCaret`/`__hoshi*` 等其余 hoshi 前缀运行时符号待后续批次）。
-- 全局状态：`fushi/lib/src/models/app_model.dart`（`AppModel`，~5150 行，初始化流程 + 子系统委托核心，改前先理解）。
-- Drift 数据库：`packages/fushi_core/lib/src/database/database.dart` 和 `tables.dart`（schema v104，86 张表，WAL）。
-- 词典：Dart 封装 `packages/fushi_dictionary/lib/src/engine/fushidicts.dart` + FFI 绑定 `lib/src/ffi/fushidicts_ffi_bindings.dart`；C++ 引擎源码全在 `native/fushidicts/`（包内已无 C++），`fushidicts_external/` 是 vendored 第三方，上游同步基线见 `native/fushidicts/UPSTREAM.md`。
-- 有声书：`packages/fushi_audio/` + `fushi/lib/src/media/audiobook/`（导入入口 `book_import_dialog.dart` / `audiobook_import_dialog.dart`）。设备端语音转录生成字幕的**算法层已抽成独立仓库** [`hajisensai/fushi-subtitles`](https://github.com/hajisensai/fushi-subtitles)（GPL-3.0，纯 Dart，包 `fushi_asr_core` / `fushi_asr_align` / `fushi_asr_subtitles` / `fushi_asr_onnx_ffi`）。**六处 git 依赖钉同一个 sha**：`fushi/pubspec.yaml` 两条（`fushi_asr_core` / `fushi_asr_subtitles`）、`packages/fushi_engine/pubspec.yaml` 一条、`packages/fushi_server/pubspec.yaml` 两条（多一个 `fushi_asr_onnx_ffi`）、根 `pubspec.yaml` 的 `dependency_overrides` 一条；**任一处不一致同一份算法会被解析成两个副本**。app 侧 ONNX 走 Flutter 插件后端，只有无头服务端用纯 Dart 的 `fushi_asr_onnx_ffi`——它把 `archive` 钉成 `^4.0.0` 而本仓钉 `^3.6.1`（升 4 实测要动 76 个文件，`archive_io` 在 4.x 已移除），所以根 `pubspec.yaml` 一条 `archive` override 钉回本仓版本，外加 `ci/patches/git/fushi-subtitles-<sha>/` 一行兼容补丁把上游唯一的 4.x 专有调用 `entry.readBytes()` 换成 `entry.content`——**两者是一套，缺一个就编译不过**；上游放宽约束后一起删。本仓只留三样：Flutter 插件后端 `fushi/lib/src/onnx/onnx_inference_ort.dart`（method channel → `flutter_onnxruntime`）、装配层 `fushi/lib/src/asr_host/asr_host.dart`、UI （`media/audiobook/asr_transcribe_sheet.dart` 等）。**改 ASR 算法一律去那个仓库改，本仓只改装配与 UI。**
-  - 装配点（都在 `asr_host.dart`，两个生产实例化点共用 `createAsrTranscriptionService()`）：数据根 `asrSupportRootResolver`、出站 `asrHttpClientFactory`（必须经 `createAppHttpClient`，否则模型下载绕过全应用代理装配）、日志 `asrLogSink`、ffmpeg `FushiAsrFfmpegBackend`（**五端一律注入本仓后端**，包自带的裸 CLI 后端会丢掉子进程登记表、`FUSHI_FFMPEG` 覆盖与捆绑损坏回退；移动端更没有 ffmpeg CLI），以及后台 isolate 的 `AsrIsolateBackend`（顶层函数 `buildFushiOnnxFactory` + `BackgroundIsolateBinaryMessenger` 引导——**根 isolate 的全局装配点一个都带不过 isolate 边界**，那边只认这条）。
-  - `installAsrHostBindings()` 在 `main()` 里调一次，**不放 `AppModel.initialise()`**：弹窗词典与悬浮词典是另外两个 entry point，不经 `initialise()`。
-  - 转录产物是单时间轴 SRT 喂既有匹配链路，旁边同序写逐 token 时间 sidecar `transcript.tokens.jsonl`；`attachAsrCueTokenTiming`（`audiobook_alignment_service.dart`）把它挂到 `AudioCue.tokenTiming` 上，**行数与 cue 数不符时一条都不挂**（行号错位比没有更糟，下游照样跑完、照样落库，只是跳播全偏）。
-  - OCR 也经 `fushi/lib/src/ocr/ocr_inference.dart` 复用同一套 ONNX 抽象（那层的 re-export 是**窄的 show 清单**，整份 re-export 会和本仓同名符号撞成 ambiguous import）。
-- 互联/同步：`fushi/lib/src/sync/`（`interconnect_*.dart`、`aggregate_sync_service.dart`、`backup_*`）。
-- galgame 制卡：Flutter 侧 `fushi/lib/src/lookup/`（overlay 浮窗）+ `fushi/lib/src/mining/galgame_*`；C++ hook（injector + hook DLL + vendored LunaHook）在本仓 `native/galgame_hook/`。`tools/build_distribution.ps1` 单独构建两架构 helper zip，再由 `tools/install_into_bundle.ps1` 在**构建期**解压进 `fushi.exe` 同级 `voice_hook/<arch>/`（BUG-1449），与本体同一次构建产出、同一个安装包落地，运行期不下载任何组件。helper **不链接进 `fushi.exe`**，运行时仍是隔离子进程/DLL。
-- 浏览器扩展：`tools/browser-extension/`（注意是根级 `tools/`，与 `tool/` 不同目录）。
-- 动画刮削上游参考：`references/ShokoServer/`（官方 ShokoServer git submodule，只作只读架构参考，不参与本仓构建/运行）。
-- 工具脚本归属：根 `tool/` = `setup_worktree.ps1` / `bootstrap.ps1` / `bug.dart` / `check_release_policy.ps1`；`fushi/tool/` = `i18n_sync.dart` / `run_windows_itest.ps1` / `comprehensive_test_runner.dart`。
-- 审查报告：`docs/reviews/YYYY-MM-DD-project-review.md`；已复现回归：`docs/REGRESSION_BUGS.md`（本地，不入库）；测试证据：`.codex-test/`（不入库）。
-
-## 当前技术事实
-
-- Flutter 版本分两处：本地钉 `.fvmrc` = `3.41.6`（pubspec `flutter: "^3.41.6"`），CI workflows 用 `3.44.0`；Dart SDK 约束 `>=3.5.0 <4.0.0`。最低 Android API 24，`compileSdk 36` / `targetSdk 35`。
-- 状态管理 Riverpod；音频 just_audio（桌面经 just_audio_media_kit）；录音 record 6.0.0；视频播放走 **media_kit**（third_party vendored 全套）+ youtube_explode_dart。
-- torrent 走内部包 `packages/fushi_torrent`（libtorrent 2.x C ABI FFI，native 在 `native/fushi_torrent/`；Windows 预编译 DLL / Android arm64 `.so` 随包，缺失时回退外接 qBittorrent；iOS 无内置引擎）。
-- 主存储是 Drift SQLite（`FushiDatabase`，schema v104），偏好落 Drift `preferences` 表 + `profile_settings` 每 Profile 快照。**已无 Isar/Hive 依赖**；旧注释里的 Isar/Hive 不代表当前事实，先查代码再判断。
-- EPUB 阅读器走 reader_fushi 实现（见仓库地图）。`reader_ttu` key、`setTtu*` 方法、`ttu_*` i18n 只是旧数据兼容残留，不代表还有 TTU 阅读器；没有迁移方案别随手改这些持久化 key。（旧文档提过的 `ttuBookId` 列在当前 schema 已不存在，只活在迁移阶梯里。）
-- 旧 TTU 迁移代码已移除（develop `90c37b472`：`TtuMigrationServer` / `TtuIdbReader` / `assets/ttu-ebook-reader` 均已删除）；只剩上述命名残留作旧数据兼容。阅读器渲染/交互问题按 reader_fushi 路径修，不要去上游 ttu fork 仓库改。
-- 词典导入/查询核心走 `hoshidicts` C++ FFI；格式 UI 或旧 Dart format 类不一定是真实导入路径。
-- 国际化用 Slang，源文件 `fushi/lib/i18n/*.i18n.json`（17 种语言），生成文件 `strings.g.dart`。
-- 5 平台均出包（Android/iOS/macOS/Windows/Linux）：`auto` 下五个平台统一走 Material Design 3；Cupertino / macOS renderer 仅保留为隐藏内部能力。桌面端依赖 fork 的 `flutter_inappwebview_windows` 渲染 EPUB。
-- **iOS 版按 App Store 合规少三类能力**，其余四平台不受影响：① 内置外部发现源与书/漫画/视频三个库页的「发现」视图（含用户自配 OPDS、视频域资源索引器与在线发现 provider）；② 在线漫画源宿主（Aidoku 仓库 / Mihon 扩展 / mokuro.moe 卷下载）；③ 下载中心（torrent / 磁力 / 直链队列，含外接 qBittorrent）。理由都不是「iOS 做不到」而是审核指南不允许，所以判据**只在 `fushi/lib/src/models/store_compliance.dart` 的 `StoreRestrictedCapability` 写一次**，`ModuleId.downloads` 的 `availableOn` 委托到它，消费端一律问这两处、不各自写 `Platform.isIOS`。Aidoku 的 iOS 宿主（内嵌 Rust 静态库 + Swift 桥 + Xcode build phase + CI rust target）已整条移除，**macOS 宿主不受影响**；漫画/视频/书的本地库与阅读播放能力一概保留。守卫 `fushi/test/build/ios_store_compliance_guard_test.dart`——这条边界失效是静默的（本地与 CI 全绿、上架才被拒），改动这三块前先读它。
+- 应用 `fushi/`；共享包 `packages/`；词典与 Hook 原生实现 `native/`；构建维护脚本 `tool/`；浏览器扩展在 `tools/browser-extension/`。
+- 需要定位模块时查 [仓库地图](docs/agent/repository-map.md)，不按旧文档中的固定行数或他人绝对路径定位。
+- 修改共享引擎/服务端、ASR/OCR、存储迁移或平台装配前，读取地图中的对应技术边界与模块文档；共享引擎保持纯 Dart，持久化标识的改名必须有迁移方案。
 
 ## 命名术语表（2026-07 定案，新代码遵守）
 
@@ -87,8 +45,8 @@
 ## Galgame Hook 硬规则
 
 - Galgame 文本/语音 Hook、LunaHook、helper、adapter、引擎适配和制卡 E2E 默认**只做 Windows 端**。允许范围是 Windows Hibiki、Windows x86/x64 注入器/helper/hook，以及 Windows 链路必需的共享代码和平台无关测试；禁止修改、构建、运行、打包、发布或宣称支持 Android、iOS、macOS、Linux 的 galgame 实现。只有用户明确变更平台范围时才能越过此边界，通用的多平台构建或集成测试说明不得自动扩大 galgame 任务范围。
-- 任何 galgame 文本/语音 Hook、LunaHook、helper、adapter、引擎适配或支持声明，开工前必须完整阅读 [docs/agent/galgame-hooking.md](docs/agent/galgame-hooking.md)；一引擎一任务、一独立 worktree。native 与消费端现在同仓，IPC 契约变更必须在同一个 PR 内同步两侧。
-- 写代码前必须在用户原始安装与启动路径建立身份/时序台账：启动器与真实游戏 PID/父子关系、架构、exe/module/helper/DLL 实际路径与 SHA-256、注入/附着策略，以及进程出现、模块加载、首次资源访问和首次音频的时间。imports、模块名、DLL 已加载或 Hook installed 只算候选证据。
+- 任何 galgame 文本/语音 Hook、LunaHook、helper、adapter、引擎适配或支持声明，先读取 [Hook 流程](docs/agent/galgame-hooking.md) 中相关能力的契约；实现/支持升级须覆盖该能力全部适用门槛，已读未变不重读；一引擎一任务、一独立 worktree。native 与消费端现在同仓，IPC 契约变更必须在同一个 PR 内同步两侧。
+- 运行时诊断或支持验收前，按用户原始安装与启动路径建立身份/时序台账；静态调查、离线修复和文档改动可先推进，未验证能力保持 `implemented_unverified`。台账包括：启动器与真实游戏 PID/父子关系、架构、exe/module/helper/DLL 实际路径与 SHA-256、注入/附着策略，以及进程出现、模块加载、首次资源访问和首次音频的时间。imports、模块名、DLL 已加载或 Hook installed 只算候选证据。
 - 能力阶段必须分开记录：`process_found → helper_ready → ipc_ready → text_ready → resource/pcm_ready → paired → e2e_verified`；不得用前一阶段推断后一阶段，也不得把 ready、捕获、纯人声分类、哈希一致和端到端混成一个“成功”。
 - 每轮只修原始路径上第一个未通过边界。引擎/保护壳/加载时序特例必须收进 profile/adapter；共享中间件不得仅凭 DLL 名启用，且须有跨引擎负向测试。
 - Loopback 只是显式降级，不能证明引擎 Hook、逐句配对或纯人声已验证；任何必需测试、双架构构建、replay 或真机门被跳过/阻塞，只能标 `implemented_unverified`，不得宣称“已支持/已修好”。
@@ -106,36 +64,32 @@
 
 ## i18n 纪律
 
-- 新增/删除 i18n key **禁止手动逐文件编辑**，必须用 `fushi/tool/i18n_sync.dart`（Slang 要求 17 个文件 key 完整，缺 key 报错）：`--add <key> <en> <zh>` / `--remove <key>` / `--rename <old> <new>` / `--sort` / 无参补全缺失 / `--dry-run` 预览。四个操作 flag **可重复、可混用**，按给出顺序执行、每个文件只读写一次（`--remove a --remove b --add c en zh`）；任何没被 flag 消费的参数一律报 usage error 退出，不会像旧实现那样把多出来的 key 静默吞掉（契约测试 `fushi/test/tools/i18n_sync_ops_test.dart`）。
-- 批量删 key 后**必须按精确键名复核**（`grep '"<key>"'` 带引号）：裸子串会被同前缀的 key 假阳性命中（如 `..._favorites` 命中 `..._favorites_empty`）。
-- `--remove` + `--add` **不等于**改名：它会把 16 种语言的既有翻译降级成英文值并把 key 挪到文件末尾。改名只能用 `--rename`（逐语言保留原翻译、原位替换）。
-- 改完 key 跑 `dart run slang` 重新生成 `strings.g.dart`，再 `dart format` 生成文件；不要手改生成文件。
+- 增删/改名 key 使用 `fushi/tool/i18n_sync.dart` 的 `--add` / `--remove` / `--rename`，不可逐语言手改。改名不能用 remove + add，否则会丢既有翻译。
+- 批量删 key 按带引号的精确键名核对，避免同前缀子串假命中。
+- 变更后 `dart run slang` 并格式化生成文件，不手改 `strings.g.dart`。
 
 ## 验证
 
-- 文档改动：至少 `git diff --cached --check`，不必跑 Flutter 测试。
-- Dart/Flutter 改动（在 `fushi/` 下）：`dart format` 改动文件 + push 前全量 `flutter analyze`（含 test 目录，CI 把 warning 当致命）+ **按爆炸半径分级的测试**——分支上跑改动覆盖 + 相邻功能的定向 `flutter test <目标> --no-pub`，全量套件由 PR CI 兜底（真单测门是 Build Release APK 的 Run unit tests）；**本地不跑全量测试门**（用户 2026-09-06 拍板：合入 `develop` 前**不再**本地跑 `dart run tool/flutter_test_failures.dart --no-pub` 或裸 `flutter test` 全量，太慢；以后任何任务都不要主动跑，也不要拿它当合并前置条件），本地只跑定向测试。定向跑也**判绿只认退出码 + 实际执行数**：裸 `flutter test ... | tail -N` 的退出码是 `tail` 的、恒为 0，构建失败时零测试执行会被伪装成通过（BUG-1157）。分级判据见 [docs/agent/fast-workflow.md](docs/agent/fast-workflow.md)。**测试红了不等于代码坏了**：本机 5~10 个 agent 并发，实测有三类并发伪红（互抢 `sqlite3.dll` / 宿主 IPC 崩溃致 suite 装载失败 / 结果文件被抢致零输出），**遇红先分型再动手**，且**不许拿「可能是伪红」当借口跳过真红**、**零测试执行的红也不算红**——症状、定性办法和三条判别纪律见 [docs/agent/fast-workflow.md](docs/agent/fast-workflow.md) 的「并发伪红判别」。（工具链钉定：本地 `.fvmrc` 3.41.6，CI 3.44.0；本机 flutter 不在 PATH 就把完整路径写进 `CLAUDE.local.md`。）
-- **每条 PR 合入 `develop` 后固定加跑「目录枚举型守卫」整批**（51 条，一条命令 ~62 秒）——这批守卫用 `listSync(recursive: true)` 扫 `lib/` / `test/` / `integration_test/` 全树，**新 PR 的新文件自动落进它们的扫描面，而定向测试按功能域挑，结构上永远挑不到它们**。实测代价：不跑就是「刚合的 PR 把红带进 develop」，一天翻车四次、其中一条在 develop 上躺了一整天跨 5 条 PR；跑了之后累计 30 条合并零红。完整清单、单条命令、以及「清单过期了怎么按行为反向枚举重新推导」见 [docs/agent/fast-workflow.md](docs/agent/fast-workflow.md) 的「合并后必跑：目录枚举型守卫清单」。
-- Android 资源/manifest/Gradle/权限/通知/前台服务/打包改动：再加 `gradlew :app:assembleRelease`（在 `fushi/android/`；Windows 用 `.\gradlew.bat`）。
-- 阅读器/导入/播放/布局问题，声明「修好了」前必须用真实模拟器或用户指定设备复测原始失败路径并留证据（见 [docs/agent/integration-testing.md](docs/agent/integration-testing.md)）。
-- 集成测试操作真 app **一律焦点驱动（`FocusDriver` / `tester.sendKeyEvent`，禁止 `tester.tap` 或坐标点击）**：`Tab` 遍历→检测控件类型→Switch/按钮确认用 `Enter`（**不要用空格**——App 已把裸空格中和为 `DoNothingIntent`，焦点确认统一走 Enter / 手柄 A，见 `fushi/lib/src/shortcuts/global_navigation.dart`）、Slider/Stepper/Segmented 用方向键→断言真写穿 DB/真生效→还原。同一份测试两端可跑（模拟器 `-d emulator-<port>` / Windows 离屏 `fushi/tool/run_windows_itest.ps1`），完整流程见 [docs/agent/integration-testing.md](docs/agent/integration-testing.md) 的「焦点驱动操作」。
+- 选择范围、复用结果与停止条件见个人规则第 5 节；测试选择和故障诊断按需查 [验证流程](docs/agent/fast-workflow.md)。
+- Dart 改动格式化所改文件并做定向分析/测试；代码分支 push 前完成含 test 的全量 `flutter analyze`。本地不跑裸 `flutter test` 或无目标的 `flutter_test_failures.dart`；全量套件由 CI 兜底。
+- 合入 `develop` 且改动落入源码/测试扫描面时，integration owner 执行 [合并守卫](docs/agent/merge-guards.md)；纯文档不触发。这不授予合并权限。
+- 已授权的 Android 资源、manifest、Gradle、权限、通知或打包变更，在交付该平台产物前加 `gradlew :app:assembleRelease`；通用说明不扩大 Windows 个人任务范围。
+- 阅读器/导入/播放/布局修复，声明用户路径已修好前需设备复测；尚无证据时交付待验候选。完整应用构建与游戏操作按个人规则交接，不因此阻塞已授权的源码与定向验证。
+- 操作真 app 的集成测试使用 `FocusDriver` / `tester.sendKeyEvent`，禁止 `tester.tap` 或坐标点击；按钮/开关用 Enter，数值控件用方向键，验证真实写入并还原。详情仅在运行场景时查 [集成测试](docs/agent/integration-testing.md)。
 
-## 提交
+## 提交与发布
 
-- 完成代码/文档/测试/审查改动后默认提交本轮。
-- push 前按 [docs/agent/build.md](docs/agent/build.md) 的版本号规则判断是否 bump `fushi/pubspec.yaml`：**`+build` 每次发布单调 +1**（可读发布序号，与语义版本无关，多数发布只 +build）；**语义版本 `X.Y.Z` 按里程碑升**——一批功能/大改升 minor 重置 patch、一批修复升 patch，不是每个 commit 都升；Android `versionCode` 由 CI `git rev-list --count HEAD` 自动，不靠 `+build`。
-- 发布通道硬规则：默认 `main` / `develop` push 只能进入 debug / prerelease / non-Latest 通道；测试版和正式版只能通过手动 `workflow_dispatch` 或手动发布 GitHub Release 触发；push 不得创建或更新 Latest/正式 release。
-- Android / Windows debug/beta 发布必须按 [docs/agent/build.md](docs/agent/build.md) 使用跨 workflow 统一 release 序列；同一 commit/语义版本不得用各自 workflow run number 拆成两个同版本预发布入口，发布 workflow 会先跑 `tool/check_release_policy.ps1` 守卫。
-- 提交前 `git status --short`，**只 stage 本轮相关文件**（禁止 `git add -A`——本工作区可能有并发 agent 的无关改动）；再 `git diff --cached --check`。
-- 提交信息简洁说明真实改动（如 `docs: rewrite agent rules` / `fix(reader): preserve restore position`）。
-- 提交后再 `git status --short`，回复中给出提交哈希和仍存在的无关未提交改动。
+- 本地提交、正式采用、推送与交付说明统一见个人规则第 7 节。
+- 准备发布时按 [构建规则](docs/agent/build.md) 判断版本：每次发布 `+build` 单调增加，语义版本按里程碑调整，不随每个提交递增。
+- `main` / `develop` push 只能进入 debug / prerelease / non-Latest；测试版和正式版通过手动 `workflow_dispatch` 或手动发布 GitHub Release，push 不得更新 Latest/正式 release。
+- Android/Windows debug/beta 发布使用跨 workflow 统一 release 序列，通过 `tool/check_release_policy.ps1`；同一 commit/语义版本不得被各自 run number 拆成多个预发布入口。
 
 ## 详细操作流程（docs/agent/）
 
 | 要做的事 | 看这里 |
 |---|---|
-| 加功能/修 bug/合并的分级快车道：难度分级、子代理分工、并行时间线、验证分级、**并发伪红判别**、**合并后必跑的目录枚举型守卫清单**、**输出可信 ≠ 结论可信** | [docs/agent/fast-workflow.md](docs/agent/fast-workflow.md) |
-| 5 平台构建 / Melos / bootstrap + 依赖补丁机制 / 发布通道与版本号规则 / galgame helper Windows 随包与在线更新 | [docs/agent/build.md](docs/agent/build.md) |
+| 选择定向测试、诊断测试失败、修改共享测试原语或核对集成结果 | [docs/agent/fast-workflow.md](docs/agent/fast-workflow.md) |
+| 5 平台构建 / Melos / bootstrap + 依赖补丁机制 / 发布通道与版本号规则 / galgame helper Windows 离线随包 | [docs/agent/build.md](docs/agent/build.md) |
 | Apple 签名：iOS TestFlight / macOS Developer ID 公证 / 仓库 secrets 清单 / 证书轮换 / 签名排障 | [docs/agent/apple-signing.md](docs/agent/apple-signing.md) |
 | 模拟器集成测试三层架构 / 焦点驱动（禁坐标点击）/ AnkiDroid provisioning / ADB 降级 / DB 查询 / 测试素材 | [docs/agent/integration-testing.md](docs/agent/integration-testing.md) |
 | 持续审查模式 / docs/reviews 报告格式 / 回归记录 | [docs/agent/review-process.md](docs/agent/review-process.md) |
@@ -146,32 +100,3 @@
 | 全量快捷键 / 手柄 / 鼠标绑定盘点快照（2026-06-11） | [docs/agent/shortcuts-inventory.md](docs/agent/shortcuts-inventory.md) |
 | 学习统计域（v90）：唯一事实表 `study_segments` / `StudyClock` / `loadStatFacts` / `StatWindow` / 同步 wire v2 / legacy 冻结规则 | [docs/agent/statistics.md](docs/agent/statistics.md) |
 | Galgame 用户报告 / 脱敏 probe / adapter 骨架 / 离线 replay / 双架构验证 / 真机证据 | [docs/agent/galgame-hooking.md](docs/agent/galgame-hooking.md) |
-
-## 模块索引
-
-| 模块 | 语言 | 职责 / 接入方式 | 文档 |
-|---|---|---|---|
-| `fushi/` | Dart | Flutter 主应用：UI/阅读器/视频/导入/设置 | [fushi/CLAUDE.md](fushi/CLAUDE.md) |
-| `packages/fushi_core/` | Dart | DB schema（50 表）/偏好/语言配置 | [CLAUDE.md](packages/fushi_core/CLAUDE.md) |
-| `packages/fushi_dictionary/` | Dart | 词典引擎 Dart 侧/FFI 绑定/多格式导入（C++ 在 `native/fushidicts/`） | [CLAUDE.md](packages/fushi_dictionary/CLAUDE.md) |
-| `packages/fushi_anki/` | Dart | Anki 集成（AnkiDroid + AnkiConnect） | [CLAUDE.md](packages/fushi_anki/CLAUDE.md) |
-| `packages/fushi_audio/` | Dart | 字幕解析/有声书播放/音频匹配 | [CLAUDE.md](packages/fushi_audio/CLAUDE.md) |
-| `packages/fushi_platform/` | Dart | TTS/平台集成/存储路径抽象 | [CLAUDE.md](packages/fushi_platform/CLAUDE.md) |
-| `packages/flutter_inappwebview_windows/` | Dart+C++ | inappwebview Windows fork | [CLAUDE.md](packages/flutter_inappwebview_windows/CLAUDE.md) |
-| `packages/fushi_torrent/` | Dart | 内置 torrent 引擎 FFI 绑定 + `EmbeddedTorrentEngine`（path 依赖） | — |
-| `packages/fushi_engine/` | Dart | 无 Flutter 的共享引擎：互联 host / 库服务 / OCR / ASR 任务 / 下载管线 / EPUB 导入 / 视频元数据（app 与服务端共用；纯度守卫在 fushi/test/build） | 设计 `docs/specs/2026-09-08-fushi-server-headless-design.md` |
-| `packages/fushi_server/` | Dart | 无头服务端 CLI + WebUI（Linux/Windows/macOS）；`dart build cli` 出 bundle，CI linux job 随包 torrent bridge `.so` + onnxruntime | [README.md](packages/fushi_server/README.md) |
-| `packages/gamepads_windows/` | Dart+C++ | gamepads Windows vendored fork（BUG-116 崩溃修复，path override） | — |
-| `packages/gamepads_android_stub/` | Dart | `gamepads_android` no-op stub（防启动 ClassCastException，path override） | — |
-| `native/fushidicts/` | C++ | 词典查询/导入引擎（上游深度 fork；`fushidicts_external/` 为 vendored 第三方）；FFI/JNI 编入 app | [UPSTREAM.md](native/fushidicts/UPSTREAM.md) |
-| `native/fushi_torrent/` | C++ | libtorrent 2.x C ABI bridge；FFI，Windows 预编译 DLL / Android arm64 `.so` 随包 | [README.md](native/fushi_torrent/README.md) |
-| `services/log-backend/log-collector/` | Go | 报错日志接收端（自有服务器 + EdgeOne 版）；独立部署（原 `server/`，改名消与同步层 `fushi_sync_server.dart`/`SyncBackendType.hibikiServer` 的三义撞词） | [README.md](services/log-backend/log-collector/README.md) |
-| `services/log-backend/cf-worker/` | JS | 报错日志接收端（Cloudflare Worker + D1 版，与 Go 版择一）；独立部署 | [README.md](services/log-backend/cf-worker/README.md) |
-| `tools/browser-extension/` | JS | 浏览器查词扩展（根级 `tools/`，非 `tool/`） | — |
-| `third_party/` | — | 11 个 path-override vendored 补丁包 + 1 个 CI 自编二进制（ffmpeg-min，Windows 最小化 ffmpeg.exe）：carousel_slider、desktop_drop、fading_edge_scrollview、ffmpeg_kit_flutter、flutter_inappwebview_android、media_kit_libs_{android,ios,macos,windows}_video、media_kit_video、network_to_file_image；vendor 原因见 `fushi/pubspec.yaml` dependency_overrides 逐包注释。另有 `m_extension_server/`（**不是** pub 包）：Mihon 桌面 sidecar 的 Kotlin 源码，上游 GitHub 仓库已删除，按 MPL-2.0 整树 vendored 在 `upstream_src/`（pristine）+ `overlay/`（Hibiki 安全边界）+ `server-build.gradle.patch`，构建走 `tool/mihon/build_desktop_runtime.{sh,ps1}`，规则见该目录 `UPSTREAM` | — |
-| `references/ReinaManager` | — | git submodule：galgame 库信息架构参考（AGPL-3.0，不参与构建） | — |
-| `references/ShokoServer` | C# | git submodule：动画识别/刮削长期参考；AniDB 核心身份 + TMDB 补充（MIT，不参与构建） | [上游 README](references/ShokoServer/README.md) |
-
-> 完整架构、技术栈、构建命令、致谢见 [README.md](README.md)。`file_picker` 用 pub.dev 版（**不是** fork）。依赖补丁机制（vendored vs apply-patches）见 [docs/agent/build.md](docs/agent/build.md)。
-
-## 始终用中文回复

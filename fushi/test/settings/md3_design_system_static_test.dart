@@ -797,6 +797,10 @@ void main() {
           'TextStyle — this controller renders no widgets at all. Same '
           'reviewed exception class as the allowlisted AppModel '
           'FloatingLyricStyle payload.',
+      'lib/src/pages/implementations/gal_lookup_samples_dialog.dart':
+          'The fontSize: argument updates the user-calibrated game text '
+          'layout sent to DirectWrite. It does not set page typography; '
+          'dialog controls use the shared theme.',
       'lib/src/media/video/video_subtitle_overlay.dart':
           'Video subtitle overlay renders caption content (fixed '
           'white-on-black caption radius/size), not ordinary page chrome.',
@@ -1157,6 +1161,9 @@ void main() {
       'lib/src/anki/anki_mined_card_action_sheet.dart': <String>{'ListTile('},
       'lib/src/creator/fields/image_field.dart': <String>{'fontSize:'},
       'lib/src/lookup/gal_hook_text_overlay_controller.dart': <String>{
+        'fontSize:',
+      },
+      'lib/src/pages/implementations/gal_lookup_samples_dialog.dart': <String>{
         'fontSize:',
       },
       'lib/src/media/audiobook/audiobook_bridge.dart': <String>{'fontSize:'},

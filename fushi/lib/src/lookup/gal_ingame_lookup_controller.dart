@@ -202,6 +202,7 @@ class GalIngameLookupController {
   /// epoch。两者共同构成不可复用的 [GlobalLookupRoute]，使旧 Future / Timer / JS
   /// bridge 即便迟到也只能落回自己的离屏卡片代数，不能串到下一次点击或桌面浮窗。
   int _sessionRouteEpoch = 0;
+  String? _lastGeometryDiagnostic;
   int _lookupRouteEpoch = 0;
   GlobalLookupRoute? _activeRoute;
 
@@ -294,18 +295,16 @@ class GalIngameLookupController {
   }
 
   void recordDiagnosticReason(String reason) {
-    final String normalized =
-        reason.startsWith('LB_') && reason.length <= 64
-            ? reason
-            : 'LB_DIAGNOSTIC_OTHER';
+    final String normalized = reason.startsWith('LB_') && reason.length <= 64
+        ? reason
+        : 'LB_DIAGNOSTIC_OTHER';
     if (!_diagnosticCounts.containsKey(normalized) &&
         _diagnosticCounts.length >= 96) {
       _diagnosticCounts['LB_DIAGNOSTIC_OTHER'] =
           (_diagnosticCounts['LB_DIAGNOSTIC_OTHER'] ?? 0) + 1;
       return;
     }
-    _diagnosticCounts[normalized] =
-        (_diagnosticCounts[normalized] ?? 0) + 1;
+    _diagnosticCounts[normalized] = (_diagnosticCounts[normalized] ?? 0) + 1;
   }
 
   @visibleForTesting
@@ -339,6 +338,7 @@ class GalIngameLookupController {
     // replacement mapping.
     if (_sessionActive) {
       _sessionRouteEpoch++;
+      _lastGeometryDiagnostic = null;
       _lookupRouteEpoch = 0;
     }
     _providerAdmission = false;
@@ -508,6 +508,7 @@ class GalIngameLookupController {
     _admission.value = GalLookupAdmission.unknown;
     if (active) {
       _sessionRouteEpoch++;
+      _lastGeometryDiagnostic = null;
       _lookupRouteEpoch = 0;
     }
     _sessionActive = active;
@@ -680,12 +681,18 @@ class GalIngameLookupController {
       _geometryAttachedReady = attachedReady;
       _geometryNativeInputAllowed = nativeInputAllowed;
     }
-    glog(
-      'gal-ingame: geometryAdmission=${mode.name} '
-      'attachedReady=$attachedReady nativeInputAllowed=$nativeInputAllowed '
-      'request=${result.requestSeq} '
-      'applied=${result.appliedSeq} -> ${result.error ?? "ok"}',
-    );
+    final String diagnosticState =
+        '${mode.name}:$attachedReady:$nativeInputAllowed:${result.ok}:'
+        '${result.error}:${result.requestSeq == result.appliedSeq}';
+    final String diagnostic =
+        'gal-ingame: geometryAdmission=${mode.name} '
+        'attachedReady=$attachedReady nativeInputAllowed=$nativeInputAllowed '
+        'request=${result.requestSeq} '
+        'applied=${result.appliedSeq} -> ${result.error ?? "ok"}';
+    if (_lastGeometryDiagnostic != diagnosticState) {
+      _lastGeometryDiagnostic = diagnosticState;
+      glog(diagnostic);
+    }
     return result;
   }
 
@@ -1212,14 +1219,8 @@ class GalIngameLookupController {
     // 查词立刻跟上，不存在读到上一次 present 旧值的窗口。量不到（0）时退回画布口径。
     final int clientW = hit.clientW > 0 ? hit.clientW : hit.viewW;
     final int clientH = hit.clientH > 0 ? hit.clientH : hit.viewH;
-    double w = math.min(
-      clientW * _kCardViewportFraction,
-      hit.viewW.toDouble(),
-    );
-    double h = math.min(
-      clientH * _kCardViewportFraction,
-      hit.viewH.toDouble(),
-    );
+    double w = math.min(clientW * _kCardViewportFraction, hit.viewW.toDouble());
+    double h = math.min(clientH * _kCardViewportFraction, hit.viewH.toDouble());
     const int budgetPixels = _kCardBitmapBytes ~/ 4;
     final double area = w * h;
     if (area > budgetPixels) {
@@ -1275,11 +1276,7 @@ class GalIngameLookupController {
   /// `[0, viewH - capH]`），而 cap 高度又常常远超锚侧空间：卡片明明放在下方，夹子
   /// 却把 top 拽到 `viewH - capH` 之上，反推出来就是「above」，edgeY 随之变成视口
   /// 底边——与字形完全脱钩，正是 BUG-2082 要消灭的那段空隙的镜像形态。
-  GalRootPlacement _resolveRootPlacement(
-    GalLookupHit hit,
-    int capW,
-    int capH,
-  ) {
+  GalRootPlacement _resolveRootPlacement(GalLookupHit hit, int capW, int capH) {
     final ({({int x, int y}) anchor, bool showBelow}) solution = _solveAnchor(
       hit,
       capW,

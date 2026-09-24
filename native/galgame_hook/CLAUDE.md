@@ -3,13 +3,15 @@
 ## 开工前
 
 - 一次任务只处理一个游戏引擎；不同引擎必须拆成独立任务、worktree 和提交。
-- 在分析或修改前读取本文件、目标目录最近层级的规则、`engine-support.yaml`，以及 Hibiki
-  主仓的 `docs/agent/galgame-hooking.md`。找不到主仓 SOP 时停止实现并明确报告。
+- 首次进入本模块读取本文件与更近层级规则；实现引擎能力时读取 `engine-support.yaml` 的目标条目及
+  主仓 `docs/agent/galgame-hooking.md` 的相关契约。缺失必要契约时继续可完成的调查并报告缺口，不猜测实现。
 - 先声明 worktree、目标引擎和所有权；不得在其他 agent 正在使用的 worktree 中修改。
 
 ## 证据门
 
-- 先在用户原始启动路径复现，固定真实目标 PID、父子进程、架构、开始时间，以及 exe、目标
+- 本节在运行时诊断、验收或支持状态升级时适用；静态调查、离线修复与文档工作可先完成，
+  没有运行证据不升级支持状态。游戏操作与完整构建按个人规则交接，已有适用证据可复用。
+- 在用户原始启动路径复现，固定真实目标 PID、父子进程、架构、开始时间，以及 exe、目标
   module、实际 injector/helper EXE、注入 hook DLL 各自的规范路径和 SHA-256。
 - 记录相对时间线：进程启动、attach/injection、helper 加载、Hook 安装、helper ready、
   IPC ready、目标 module 加载、首次文本、首次 resource/预取、首次 PCM。
@@ -35,8 +37,10 @@
 ## 验证与支持状态
 
 - 阶段严格为 `observed → implemented → offline → runtime → e2e → release`，不得跨级。
-- 离线阶段至少执行 manifest/profile 生成检查、结构与 workflow 测试、生产状态机 replay、
-  x86/x64 构建与 CTest。未运行、跳过、崩溃或环境阻塞均不算通过。
+- 日常候选按变更面执行 manifest/profile 检查、相关结构/状态机 replay 与定向测试；native
+  adapter/hook 变更按构建规则验证 x86/x64。纯文档不触发构建，纯消费端不自动重编未变的 helper。
+  声明完整 offline 阶段或升级支持状态前，仍须具备 manifest/profile、结构/workflow、生产
+  replay、双架构构建与 CTest 的全部适用证据。未运行、跳过、崩溃或环境阻塞均不算通过。
 - 没有真实游戏运行证据时只能标记 `implemented_unverified`；只有 Loopback 时只能称“降级可用”。
 - 只有同一真实会话中“显示文本 → 对应引擎 resource/PCM → 配对 → 截图 → 真卡写入”的证据
   齐全后，才允许升级 `engine-support.yaml` 并宣称引擎支持。
@@ -50,7 +54,7 @@
   证据不能替代该语义的运行时证明。
   生成器拒绝未接证据、跨引擎、哈希漂移、错层或仅 Loopback 的升级。历史状态与支持语义
   仅由代码中的精确 hash allowlist 兼容，不得刷新 hash 来绕过新证据。
-- 交接固定为 `Proved / Not proved / Next gate`；`Next gate` 只能列当前第一个未通过边界和最小动作。
+- 能力交接说明已证明、未证明和下一个证据门；运行诊断聚焦当前第一个未通过边界及最小动作。
 
 ## Git
 
