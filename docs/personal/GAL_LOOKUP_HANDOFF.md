@@ -2,6 +2,10 @@
 
 更新：2026-09-24，作者源码已整合进原候选；用户报告修复后完整编译及测试未见问题，并授权合入、推送 `custom`。完整历史见 [样本记录](LOOKUP_CALIBRATION_SAMPLES.md)。
 
+## 2026-09-25 优化轮（进行中）
+
+新候选在 `.worktrees/gal-lookup-optimize-20260925`，分支 `codex/gal-lookup-optimize-20260925`，基于 `custom@47396e2a2c`。修改了校准界面，去掉「只用「」内台词」开关，修复关闭查词窗口后点击迟钝（BUG-2674/2675）和 Hook 自带换行的长句错位（BUG-2676）。目标是更新到草稿 PR hajisensai/Fushi#1625。当前等待用户编译复测；未合入、未推送。问题、提交、证据和复测清单见 [本轮清单](GAL_LOOKUP_FEEDBACK_20260925.md)。下面各节是 2026-09-24 已采用候选的记录。
+
 ## 2026-09-24 作者更新与正式采用
 
 - 本工作区在原候选 `69d2d599d3288f9acbb0ce873da56186c37c2c6b` 上整合作者 `upstream/develop` 固定提交 `3d5d1608ed24c12ed74d869067e51ed24f42a578`；合并前检查点为 `codex/checkpoint/lookup-calibration-before-upstream-20260924`。此前只更新此候选；原校准提交 `69d2d599d3` 已单独合入本地 `custom`，本次采用候选为 `d5ff54ede4`。
