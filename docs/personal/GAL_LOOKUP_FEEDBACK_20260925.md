@@ -1,6 +1,6 @@
 # 游戏内查词优化：本轮问题清单与交接
 
-更新：2026-09-25。当前阶段：第三轮修改（第 12 条）完成并通过定向验证，第三个候选等待用户编译复测；第 13 条按用户决定暂缓。未合入 `custom`，未推送。
+更新：2026-09-25。当前阶段：查词改动已推送到 hajisensai/Fushi#1625 并改为可审查（见文末「PR #1625 更新结果」）；本分支另有审查后的修复提交，**未合入 `custom`**（需用户单独同意）。第 13 条（BUG-2680）暂缓。
 
 ## 基线
 
@@ -79,3 +79,14 @@ bug 记录提交 `e219c18dad`、`d3b8592472`、`3c927113f4` 是否随 PR 提交�
 **PR 描述要点**：说明每项改动的原因和证据（BUG-2674～2679）；已知未解决 BUG-2680（校准后制卡截图租约被拒，用户决定暂缓）；实机验收状态如实写「用户在 custom 候选上复测，未在 PR 分支上实机验证」。PR 描述结尾按会话要求加署名行。
 
 **遗留**：`.worktrees/_tmp-pr-dryrun` 是试搬留下的空文件夹，已从 git worktree 注销；本会话结束后可以直接删除。
+
+## PR #1625 更新结果（2026-09-25）
+
+- 已推送 `origin/codex/attached-lookup-author-pr-20260923` = `2049f5a922`（用户同意 rebase 后 force-push），PR 已由草稿改为可审查，描述已更新。基线 `upstream/develop` `3d5d1608ed`，共 21 个提交。工作区 `.worktrees/gal-lookup-pr1625`。
+- 搬运方式：i18n 逐提交按 key 重放（`i18n_sync` 增删 + 逐语言值复制），不 `--sort`，生成文件格式化——上游 json 不按字母排序、`strings.g.dart` 是格式化过的单文件，交接单原先的"--sort / 不格式化"做法在上游会产生几十万行无关差异。试搬漏掉的 `game_lookup_samples_hint`、`game_lookup_samples_auto_align` 已补。本批 608 个（语言, key）值与本分支一致。
+- 独立审查两轮（opus）。第一轮确认 2 个代码问题并已修：等确认时保持查词层要核对 LL 事务仍存活（且先读 LL、再读共享内存）；实时校准蹭到相邻字时记按下的字。本分支对应 `f8bad47844`、`2f9e056587`，文档 `294cf7f7f0`、`ade2ed734d`。其余建议写进 PR 描述"已知边界"（Hook 换行判定偏宽、旧「」设置被静默清除、自动模式开放校准、旧版本不能读新档案字段）。
+- PR 独有提交：更新首批提交后没同步的两条守卫测试（`ce04f2f2e5`）；bug 记录改用 PR 分支提交号并删个人流程用语（`3bc0299fa0`）。
+- 验证：全量 `flutter analyze`；定向测试 1863 项（2 项守卫已修）；native 13 测试 + 4 个 TU `/W4 /WX`；helper 双架构 ctest 113/117；用户在 PR 分支 Release 本地包上试用"没啥问题"。
+- 本地 Release 构建要点（仅本机，未提交）：`gen_snapshot` 在上游单文件 `strings.g.dart` 上栈溢出，需临时在 `fushi/slang.yaml` 加 `output_format: multiple_files` / `flat_map: false` 后 `dart run slang` 再编，编完还原；cmake 用 VS 自带路径；需 `tools/build_magpie_slim.ps1`、`native/galgame_hook/tools/build_distribution.ps1 -RunTests`，并从主 checkout 复制 `native/fushi_torrent/prebuilt/windows-x64`；ffmpeg/ffprobe/VC++ CRT 从 custom 包复制。
+- 用户数据备份：`date/backup-before-pr1625-20260925`（fushi.db、42 个校准文件、shared_preferences.json）。
+- 待用户决定：本分支 4 个新提交是否合入 `custom`；清理 `.worktrees/gal-lookup-pr1625`（含构建产物）、空文件夹 `.worktrees/attached-lookup-author-pr-20260923`、上述备份。
