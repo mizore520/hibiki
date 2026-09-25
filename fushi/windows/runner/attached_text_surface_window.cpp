@@ -3081,15 +3081,22 @@ void AttachedTextSurfaceWindow::TickHoverLookup() {
   EmitLookupEvent(cluster, true);
 }
 
-void AttachedTextSurfaceWindow::LogDroppedClick(const char *reason) const {
+void AttachedTextSurfaceWindow::LogDroppedClick(
+    const char *reason) const noexcept {
   // One line per swallowed glyph click that will not produce a lookup, so a
   // "clicked but nothing opened" report names its gate (SOP: a consumed click
   // without a published lookup must carry a reason).
-  std::ostringstream line;
-  line << "gal-click: dropped reason=" << reason << " state=" << state_ << '/'
-       << status_ << " visible=" << surface_visible_
-       << " gen=" << text_generation_;
-  NativeGlog(line.str());
+  // CancelPointerGesture reaches this from DestroySurfaceWindow and so from
+  // the destructor: a diagnostic line is best-effort and must never let an
+  // allocation failure escape into teardown.
+  try {
+    std::ostringstream line;
+    line << "gal-click: dropped reason=" << reason << " state=" << state_
+         << '/' << status_ << " visible=" << surface_visible_
+         << " gen=" << text_generation_;
+    NativeGlog(line.str());
+  } catch (...) {
+  }
 }
 
 void AttachedTextSurfaceWindow::CancelPointerGesture() {

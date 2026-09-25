@@ -77,5 +77,12 @@ void main() {
       'void AttachedTextSurfaceWindow::CancelPointerGesture()',
     );
     expect(cancel, contains('LogDroppedClick("gesture_cancelled")'));
+    // CancelPointerGesture runs from DestroySurfaceWindow and so from the
+    // destructor; the diagnostic line must not let an exception escape.
+    final String log = functionBody(
+      'void AttachedTextSurfaceWindow::LogDroppedClick(',
+    );
+    expect(log, contains('const char *reason) const noexcept'));
+    expect(log, contains('catch (...)'));
   });
 }
