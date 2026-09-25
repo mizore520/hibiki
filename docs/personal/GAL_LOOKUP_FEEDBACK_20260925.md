@@ -55,3 +55,27 @@
 6. 文案：浏览校准窗口里的提示，看是否好懂。
 7. 自带换行的游戏（如超时空恋人）：用两行、靠 Hook 换行的截图重新校准，看长句和三行以上的台词能否对上。
 8. 遇到问题记个大概时间。日志 `%TEMP%\hibiki_glookup.log` 里的 `gal-click: dropped` 行会写明每次点击被丢弃的原因，`gal-shield:` 行会写明握手等了多久。
+
+## 交给新会话：更新草稿 PR hajisensai/Fushi#1625
+
+用户 2026-09-25 表示候选 `8df25a14c2` 可以了，要在新会话里把查词改动提交到草稿 PR。推送 PR 分支、把 PR 从草稿改为可审查、合入 `custom`，都属于第 6 节需要逐项确认的动作；新会话动手前先向用户确认这三件事分别要不要做。
+
+**要搬的查词提交**（按顺序；都来自本分支，均不含个人文档）：
+`5c24144040` 握手等待按帧检查 → `fb69c2588b` Hook 换行档案 → `c6499c08b3` projection 小重构 → `c4f030386a` 去掉「」开关 → `71e6ddcd72` 校准界面 → `662a27d4f2` 点击在确认期不被取消 → `8bea7d01a0` 制卡截图过渡状态 → `39aad348ea` 自动模式可校准 → `69b73ceba2` 格宽滑条 → `4265b9fa64` 文案 → `3b43205060` 引擎位置时的备用校准。
+bug 记录提交 `e219c18dad`、`d3b8592472`、`3c927113f4` 是否随 PR 提交由用户决定；带上的话，先在 PR 分支上跑 `dart run tool/bug.dart check`，检查与上游是否撞号。
+
+**已做的试搬**（2026-09-25，临时工作区，未推送，已删除）：从 `origin/codex/attached-lookup-author-pr-20260923` 依次 cherry-pick。前 3 个直接成功；从 `c4f030386a` 起，只有 `fushi/lib/i18n/` 下的语言 json 和生成的 `.g.dart` 冲突，其余代码文件全部干净应用。多语言冲突不要逐行合并，按下面的操作在 PR 分支上重做：
+1. 代码部分照常 cherry-pick；遇到多语言冲突时，把 `fushi/lib/i18n` 恢复为 PR 分支的版本再继续。
+2. 在 PR 分支上执行等价的 key 操作：`dart tool/i18n_sync.dart --remove game_lookup_samples_quoted_text_only --remove game_lookup_samples_quoted_text_only_hint --remove game_lookup_samples_current`；然后 `--add` 新增 `game_lookup_samples_capture_surface_not_ready`、`game_lookup_samples_grid_advance_decrease`、`game_lookup_samples_grid_advance_increase`、`game_lookup_samples_native_fallback_hint`（英文和中文文本取本分支 `strings.i18n.json` / `strings_zh-CN.i18n.json` 的值），最后 `--sort`。
+3. 文案改写：运行 `.codex-test/gal-lookup-feedback-20260925/copy_update.dart <fushi/lib/i18n 目录>`，再对繁体文件运行 `copy_hk.dart`，并把 `native_fallback_hint` 的繁体手动补上（与本分支 `strings_zh-HK.i18n.json` 一致）；把「黄框 / yellow frame」改成「橙框 / orange frame」，把「Align from this screenshot」改成「Align current screenshot」（见 `4265b9fa64`、`71e6ddcd72`）。
+4. `dart run slang`。生成文件不要跑 `dart format`：仓库里的生成文件本来就没格式化，格式化会产生几十万行无关差异。完成后对比本分支，确认这些 key 的值一致。
+
+**推送前的验证**（第 5 节「合并、推送」档）：
+- `upstream/develop` 已比 PR 基线 `bc11e91117` 新 6 个提交；由用户决定是否先 rebase。
+- 含测试的全量 `flutter analyze`；本表列出的定向测试（lookup、ocr、校准窗口、工作台、texthooker、Hook 会话、i18n、`bugs_per_file_guard`），以及 native 的 `attached_text_layout_test` 和源码守卫测试。在 `custom` 上有 3 项既有失败（`gal_attached_popup_placement_test`、`global_lookup_hotkey_guard_test` 整句横幅、`texthooker_char_level_lookup_guard_test`），在 PR 分支上要分别核对：它们是 PR 分支本来就有的，还是 custom 特有的。
+- 用户最好在 PR 分支上完整编译一次再推送；本分支的实机复测只覆盖 `custom` 候选。
+- 第 7 节要求的独立审查三轮都没做（用户此前要求不用子代理）；推送前让用户决定是否补。
+
+**PR 描述要点**：说明每项改动的原因和证据（BUG-2674～2679）；已知未解决 BUG-2680（校准后制卡截图租约被拒，用户决定暂缓）；实机验收状态如实写「用户在 custom 候选上复测，未在 PR 分支上实机验证」。PR 描述结尾按会话要求加署名行。
+
+**遗留**：`.worktrees/_tmp-pr-dryrun` 是试搬留下的空文件夹，已从 git worktree 注销；本会话结束后可以直接删除。
