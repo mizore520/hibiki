@@ -2602,6 +2602,7 @@ class EngineHookGalAudioSource implements GalAudioSource {
     }
     final String lower = resourceId.toLowerCase();
     if (!lower.endsWith('.ogg') &&
+        !lower.endsWith('.opus') &&
         !lower.endsWith('.wav') &&
         !lower.endsWith('.xwma')) {
       return null;
