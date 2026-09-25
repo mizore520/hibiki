@@ -4,7 +4,7 @@
 
 ## 2026-09-25 优化轮（进行中）
 
-新候选在 `.worktrees/gal-lookup-optimize-20260925`，分支 `codex/gal-lookup-optimize-20260925`，基于 `custom@47396e2a2c`。修改了校准界面，去掉「只用「」内台词」开关，修复关闭查词窗口后点击迟钝（BUG-2674/2675）和 Hook 自带换行的长句错位（BUG-2676）。目标是更新到草稿 PR hajisensai/Fushi#1625。当前等待用户编译复测；未合入、未推送。问题、提交、证据和复测清单见 [本轮清单](GAL_LOOKUP_FEEDBACK_20260925.md)。下面各节是 2026-09-24 已采用候选的记录。
+新候选在 `.worktrees/gal-lookup-optimize-20260925`，分支 `codex/gal-lookup-optimize-20260925`，基于 `custom@47396e2a2c`。修改了校准界面，去掉「只用「」内台词」开关，修复关闭查词窗口后点击迟钝（BUG-2674/2675）和 Hook 自带换行的长句错位（BUG-2676）。目标是更新到草稿 PR hajisensai/Fushi#1625。第二轮修复后等待用户编译复测；未合入、未推送。问题、提交、证据和复测清单见 [本轮清单](GAL_LOOKUP_FEEDBACK_20260925.md)。下面各节是 2026-09-24 已采用候选的记录。
 
 ## 2026-09-24 作者更新与正式采用
 
