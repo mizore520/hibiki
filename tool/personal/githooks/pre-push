@@ -10,9 +10,10 @@
 remote_name=$1
 remote_url=$2
 
-. "$(git rev-parse --git-common-dir)/hooks/fushi-lib.sh"
+hook_dir=$(dirname "$0")
+. "$hook_dir/fushi-lib.sh"
 
-personal_paths_file="$(git rev-parse --git-common-dir)/hooks/fushi-personal-paths.txt"
+personal_paths_file="$hook_dir/fushi-personal-paths.txt"
 pr_max_commits=100
 
 case "$remote_name $remote_url" in

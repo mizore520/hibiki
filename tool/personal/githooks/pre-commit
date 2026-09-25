@@ -6,7 +6,8 @@
 # 合并提交只检查“与两个父提交都不同”的路径，作者更新里原有的文件不受影响。
 # 确需提交大文件或素材时，用户同意后加 FUSHI_APPROVE=asset。
 
-. "$(git rev-parse --git-common-dir)/hooks/fushi-lib.sh"
+hook_dir=$(dirname "$0")
+. "$hook_dir/fushi-lib.sh"
 
 max_bytes=10485760
 empty_tree=$(git hash-object -t tree /dev/null)

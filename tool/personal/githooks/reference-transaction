@@ -12,7 +12,8 @@ if [ "$1" != "prepared" ]; then
   exit 0
 fi
 
-. "$(git rev-parse --git-common-dir)/hooks/fushi-lib.sh"
+hook_dir=$(dirname "$0")
+. "$hook_dir/fushi-lib.sh"
 
 check_custom() {
   new=$1
