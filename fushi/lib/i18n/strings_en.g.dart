@@ -2094,8 +2094,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
 	String get game_lookup_samples_point_remove => 'Remove selected point';
 	String get game_lookup_samples_point_selected => 'Selected character';
 	String get game_lookup_samples_points_hint => 'Mark 3–5 spread-out characters in each of several training samples. Avoid punctuation. Points need not be perfect: select, drag, or nudge them later. Two points provide only a rough estimate.';
-	String get game_lookup_samples_quoted_text_only => 'Use text inside 「」 only';
-	String get game_lookup_samples_quoted_text_only_hint => 'Filter speaker names and other characters outside 「…」.';
 	String get game_lookup_samples_reference => 'Calibration sample';
 	String get game_lookup_samples_region_hint => 'Drag inside the orange outline to move it; drag its handles to resize. Width and height control wrapping space, not character size.';
 	String get game_lookup_samples_region_mode => 'Move/resize area';

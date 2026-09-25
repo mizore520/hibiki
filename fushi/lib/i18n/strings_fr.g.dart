@@ -2095,8 +2095,6 @@ class _StringsFr extends _StringsEn {
 	@override String get game_lookup_samples_point_remove => 'Remove selected point';
 	@override String get game_lookup_samples_point_selected => 'Selected character';
 	@override String get game_lookup_samples_points_hint => 'Mark 3–5 spread-out characters in each of several training samples. Avoid punctuation. Points need not be perfect: select, drag, or nudge them later. Two points provide only a rough estimate.';
-	@override String get game_lookup_samples_quoted_text_only => 'Use text inside 「」 only';
-	@override String get game_lookup_samples_quoted_text_only_hint => 'Filter speaker names and other characters outside 「…」.';
 	@override String get game_lookup_samples_reference => 'Calibration sample';
 	@override String get game_lookup_samples_region_hint => 'Drag inside the orange outline to move it; drag its handles to resize. Width and height control wrapping space, not character size.';
 	@override String get game_lookup_samples_region_mode => 'Move/resize area';

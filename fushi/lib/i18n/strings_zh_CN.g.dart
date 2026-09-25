@@ -2095,8 +2095,6 @@ class _StringsZhCn extends _StringsEn {
 	@override String get game_lookup_samples_point_remove => '删除该标记';
 	@override String get game_lookup_samples_point_selected => '当前选择';
 	@override String get game_lookup_samples_points_hint => '在几句校准样本中各标3～5个分散的字，尽量避开标点。不必一次点准，选中后可拖动或微调；两个点只能粗调。';
-	@override String get game_lookup_samples_quoted_text_only => '只用「」内台词';
-	@override String get game_lookup_samples_quoted_text_only_hint => '过滤掉「…」以外的人名等字符。';
 	@override String get game_lookup_samples_reference => '用于校准';
 	@override String get game_lookup_samples_region_hint => '拖动橙色外框内部可移动，拖动边角可缩放。宽高控制排版空间和换行，不改变单个字框大小。';
 	@override String get game_lookup_samples_region_mode => '拖动外框';
