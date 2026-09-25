@@ -53,11 +53,27 @@
 
 ## 6. 分支、提交与采用
 
-- `upstream/develop` 只读；`custom` 是个人正式线（远端 `origin/custom`）；候选分支用 `codex/<任务名>`。不向 upstream 推送，不改写 `custom` 历史，不 force-push。
+- `upstream/develop` 只读；`custom` 是个人正式线（远端 `origin/custom`）；候选分支用 `codex/<任务名>`；给作者的 PR 分支用 `pr/<主题>`，从 `upstream/develop` 新建。不向 upstream 推送，不改写 `custom` 历史，`custom` 永不 force-push；`pr/*` 在 rebase 后可经推送同意强推。
 - 每个任务一个 worktree；并发时在 `.worktrees/coordination/claims/` 登记并只改自己的 claim。本地提交只暂存本轮文件，不用 `git add -A`。
 - **合入 `custom` 需要用户明确同意；推送、正式构建、发布、向上游贡献各自单独授权。**“继续改”“测试绿了”都不算同意。请求批准前先准备好可审阅的实际差异。
 - 清理 worktree：候选合入或用户宣布作废后，列出待清理项并注明是否已合入、有无未提交改动或本机证据（`.codex-test/`、校准样本）；用户确认后再删，claim 移到 `done/`。有未合入内容的只报告不删；`_candidate-build` 是编译缓存，不在清理范围。
 - 回复用中文，先讲结果、用户下一步和重要限制；简单任务几句话。没有必须由用户决定的事就把活做完，不以“要不要我继续”收尾。
+
+### 护栏
+
+git 钩子（源码 `tool/personal/githooks/`，用 `tool/personal/flow.ps1 install-hooks` 安装到所有 worktree 共用的 `.git/hooks`）把上面的边界落成硬检查：
+
+| 操作 | 用户同意后的标记 | 带标记也拒绝 |
+| --- | --- | --- |
+| 在 `custom` 上产生新提交（合入、回滚、解冲突） | `FUSHI_APPROVE=adopt` | 改写历史（reset / rebase / amend / 强推）、删除 `custom` |
+| 推送到 `origin` 的任意分支 | `FUSHI_APPROVE=push` | 推到作者仓库；强推或删除远端 `custom` |
+| 删除既未合入 `custom`、也不在任何远端的 `codex/*`、`pr/*` 分支 | `FUSHI_APPROVE=cleanup` | — |
+| `pr/*` 含 [个人专属路径](../../tool/personal/githooks/personal-paths.txt) | `FUSHI_APPROVE=push,pr-personal` | `pr/*` 比 `upstream/develop` 多 100 个以上提交（说明是从 `custom` 拉出） |
+| 提交超过 10MB 的文件、音频或游戏封包 | `FUSHI_APPROVE=asset` | `.codex-test/`、`.worktrees/`、`*.local.md`、skip-worktree 密钥 |
+
+- 同意只来自用户在聊天里的明确表态；一次同意只用于一次操作，标记只加在那条命令上。
+- 被拦时照提示处理；被拦的 merge / cherry-pick / revert 先 `--abort`。禁止用 `--no-verify`、`-c core.hooksPath=`、修改或删除钩子绕过。
+- 改钩子源码后重新 `install-hooks`；`flow.ps1 check-hooks` 检查是否已安装且与源码一致，`tool/personal/tests/githooks.tests.ps1` 在临时仓库里自测。
 
 ## 7. 保护已有成果
 

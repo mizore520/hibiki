@@ -1,0 +1,37 @@
+# 给作者的 PR（pr/* 分支）里不得出现的个人专属路径，由 pre-push 钩子（G4）检查。
+# 以 / 结尾表示目录前缀，其余为精确路径（相对仓库根）。
+# 确需把其中某项提给作者时，先取得用户明确同意，再用 FUSHI_APPROVE=push,pr-personal 推送。
+# 修改本文件后运行 tool/personal/flow.ps1 install-hooks 才会生效。
+
+# 个人规则、流程与本机状态
+docs/personal/
+tool/personal/
+.worktrees/
+.codex-test/
+AGENTS.override.md
+CLAUDE.local.md
+
+# 个人版改写过的规则入口与拆分出的规则文档
+CLAUDE.md
+AGENTS.md
+docs/agent/merge-guards.md
+docs/agent/naming.md
+docs/agent/repository-map.md
+docs/agent/video-scrape.md
+
+# 个人启动器与 Windows 候选构建脚本
+启动Hibiki最新版.bat
+tool/build_windows_candidate.ps1
+tool/check_windows_runtime_unlocked.ps1
+tool/get_windows_build_state.ps1
+tool/get_windows_flutter_cache_state.ps1
+tool/invoke_windows_build_step.ps1
+tool/package_windows_runtime.ps1
+tool/prepare_windows_gal_helper.ps1
+tool/prepare_windows_onnxruntime.ps1
+tool/prepare_windows_sqlite3.ps1
+tool/prepare_windows_torrent_runtime.ps1
+tool/promote_windows_candidate_build.ps1
+tool/resolve_windows_build_root.ps1
+tool/verify_windows_candidate.ps1
+tool/windows_build_inputs.ps1

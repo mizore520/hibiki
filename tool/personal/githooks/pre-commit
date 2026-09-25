@@ -1,0 +1,67 @@
+#!/bin/sh
+# Fushi 个人护栏 G5（pre-commit）：暂存区不能带进本机证据、本地文件、
+# skip-worktree 密钥、超大文件和游戏素材类文件。
+# 由 tool/personal/flow.ps1 install-hooks 安装；源码在 tool/personal/githooks/。
+#
+# 合并提交只检查“与两个父提交都不同”的路径，作者更新里原有的文件不受影响。
+# 确需提交大文件或素材时，用户同意后加 FUSHI_APPROVE=asset。
+
+. "$(git rev-parse --git-common-dir)/hooks/fushi-lib.sh"
+
+max_bytes=10485760
+empty_tree=$(git hash-object -t tree /dev/null)
+base=$(git rev-parse -q --verify HEAD 2>/dev/null) || base=$empty_tree
+
+tmp_dir=$(mktemp -d)
+trap 'rm -rf "$tmp_dir"' EXIT
+raw="$tmp_dir/raw"
+paths="$tmp_dir/paths"
+
+git -c core.quotepath=false diff --cached --raw --no-renames --abbrev=40 \
+  --diff-filter=ACMR "$base" >"$raw"
+cut -f2- "$raw" >"$paths"
+
+if git rev-parse -q --verify MERGE_HEAD >/dev/null 2>&1; then
+  git -c core.quotepath=false diff --cached --name-only --no-renames \
+    --diff-filter=ACMR MERGE_HEAD >"$tmp_dir/vs_merge"
+  grep -Fxf "$tmp_dir/vs_merge" "$paths" >"$tmp_dir/new_in_merge"
+  mv "$tmp_dir/new_in_merge" "$paths"
+fi
+
+[ -s "$paths" ] || exit 0
+
+problems=""
+add_problem() {
+  problems="$problems
+$1"
+}
+
+local_files=$(grep -E '^(\.codex-test/|\.worktrees/)|(^|/)[^/]*\.local\.md$' "$paths")
+[ -n "$local_files" ] && add_problem "本机证据或本地文件（.codex-test/、.worktrees/、*.local.md）：
+$local_files"
+
+git -c core.quotepath=false ls-files -v | sed -n 's/^S //p' >"$tmp_dir/skip"
+secret_files=$(grep -Fxf "$tmp_dir/skip" "$paths")
+[ -n "$secret_files" ] && add_problem "skip-worktree 的本机真值/密钥文件：
+$secret_files"
+
+if ! fushi_approved asset; then
+  asset_files=$(grep -iE '\.(ogg|opus|wav|flac|mp3|m4a|xp3|pak|ypf|pck|arc)$' "$paths")
+  [ -n "$asset_files" ] && add_problem "音频或游戏封包类文件（用户同意后加 FUSHI_APPROVE=asset）：
+$asset_files"
+  # raw 行格式：":<旧模式> <新模式> <旧oid> <新oid> <状态>\t<路径>"
+  large_files=$(awk -F'\t' '{ split($1, f, " "); print f[4] " " $2 }' "$raw" |
+    git cat-file --batch-check='%(objectsize) %(rest)' |
+    awk -v max="$max_bytes" '$1 > max { sub(/^[0-9]+ /, ""); print }' |
+    grep -Fxf "$paths")
+  [ -n "$large_files" ] && add_problem "超过 10MB 的文件（用户同意后加 FUSHI_APPROVE=asset）：
+$large_files"
+fi
+
+if [ -n "$problems" ]; then
+  fushi_block "staged files include local evidence, secrets, large files or game assets." \
+    "暂存区里有不该提交的文件：$problems" \
+    "用 git restore --staged <路径> 移出暂存区；只暂存本轮真正修改的文件，不要用 git add -A。"
+fi
+
+exit 0

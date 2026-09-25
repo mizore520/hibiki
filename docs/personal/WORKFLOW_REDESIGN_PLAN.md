@@ -88,8 +88,10 @@
 | `adopt` | 在 `custom` 上产生新提交（合入候选、回滚、解决采用冲突） |
 | `push` | 向 `origin` 推送任何分支 |
 | `cleanup` | 删除尚未合入 `custom`、也没有推送到远端的本地分支 |
+| `pr-personal` | 与 `push` 组合使用（`push,pr-personal`），允许 `pr/*` 带个人专属路径（P1 实施时新增） |
+| `asset` | 提交超过 10MB 的文件、音频或游戏封包（P1 实施时新增） |
 
-每次同意只对应一次操作，下一次要重新问。钩子拦下操作时会输出中文提示，说明被拦的原因、应该先问用户什么、同意后怎么带标记重新执行。**不管哪个 agent 读到这段提示，都能照着做对。**
+多个标记可以用逗号组合。每次同意只对应一次操作，下一次要重新问。钩子拦下操作时会输出中文提示，说明被拦的原因、应该先问用户什么、同意后怎么带标记重新执行。**不管哪个 agent 读到这段提示，都能照着做对。**
 
 限制（你已接受）：同意标记是 AI 自己加的，它能防住误操作和理解错，防不住故意乱来的 AI。第 4.4 节的措施用来补这个缺口。
 
@@ -105,7 +107,9 @@
 | G4 | `pre-push` | 推 `pr/*` 分支时：(a) `upstream/develop..分支` 超过 100 个提交就拒绝（说明是从 `custom` 拉出来的）；(b) 改动里出现个人路径就拒绝。`pr/*` 允许强推（带 `push` 标记） | 能（见 4.4） |
 | G5 | `pre-commit` | 暂存区不能包含：`.codex-test/`、`*.local.md`、skip-worktree 的密钥文件、超过 10MB 的文件、游戏素材类扩展名（校准样本目录除外，白名单在钩子里维护） | 能 |
 
-G4 的个人路径清单：`docs/personal/`、`tool/personal/`、`AGENTS.override.md`、启动 BAT、`tool/*windows_candidate*`、`.worktrees/`。清单在安装时从 `PATCHES.md` 的“个人专属路径”一节生成。
+G4 的个人路径清单：`docs/personal/`、`tool/personal/`、`AGENTS.override.md`、启动 BAT、`tool/*windows_candidate*`、`.worktrees/`。
+
+P1 实施调整：清单的唯一来源改为 `tool/personal/githooks/personal-paths.txt`（`PATCHES.md` 链接它，不再从 `PATCHES.md` 生成），另外加入个人改写过的 `CLAUDE.md`、`AGENTS.md` 和拆分出的 `docs/agent/*` 规则文档。被拦的 merge、cherry-pick、revert 会停在进行中状态，拦截提示会要求先 `--abort`。
 
 说明：
 
@@ -126,6 +130,11 @@ G4 的个人路径清单：`docs/personal/`、`tool/personal/`、`AGENTS.overrid
 | Claude 禁止规则 | `.claude/settings.local.json`（已被 git 忽略，不会和作者冲突）的 `deny` 加入 `git push --no-verify`、`git commit --no-verify`、`git push --force`（到 `custom`）、`git config core.hooksPath` 等 | 我来做；`settings*.json` 被项目 deny 规则保护，AI 改不了，需要你手动粘贴一段 |
 | Codex 禁止规则 | 在 `~/.codex/rules/` 加对应的 `forbidden` 规则（该目录已存在；具体语法实施时对照 Codex 当前文档核实） | 我来写，你确认 |
 | GitHub 分支保护（**可选，推荐**） | 给 `origin` 的 `custom` 设置“禁止强推、禁止删除”。这是服务器端规则，任何 agent 都绕不过；普通推送不受影响 | 修改 GitHub 设置需要你单独同意 |
+
+P1 实施调整：
+
+- **Claude 禁止规则放到用户级 `~/.claude/settings.json`。** `.claude/settings.local.json` 不会进 git，新建的 worktree 里没有这个文件，而 worktree 里的会话读不到主 checkout 的本地设置。
+- **Codex 不加规则。** Codex 的 `prefix_rule` 只能按命令开头匹配，而 Codex 通常用 `pwsh -Command "..."` 包一层来执行命令，这种规则基本匹配不上，加了反而给人“有保护”的错觉。Codex 这边依靠三点：`--no-verify` 跳不过的 G1、G2，GitHub 分支保护，以及入口文件里的禁止条款。剩下的缺口是：Codex 如果用 `--no-verify` 推送，可以跳过“推送需同意”和“PR 个人内容检查”；强推和删除远端 `custom` 仍会被服务器拒绝。
 
 ## 5. 第 2 层：场景手册（`WORKFLOWS.md` 的目录）
 
