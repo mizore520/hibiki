@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2487 条。点号进各自文件。
+> 共 2488 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2681](bugs/BUG-2681-ousama-opus-voice.md) | ✅ | ✅ | 王様恋愛导出的 Opus 语音未进入资源索引 |
 | [BUG-2673](bugs/BUG-2673-gal-calibration-alignment-uncertain.md) | 🚧 | 🚧 | 多行台词可见但校准框无法可靠对齐字形 |
 | [BUG-2672](bugs/BUG-2672-gal-calibration-unmeasurable-glyph.md) | 🚧 | 🚧 | 特殊字符宽度无法自动验证而被要求手动排版 |
 | [BUG-2671](bugs/BUG-2671-gal-cross-game-calibration-unrecognized.md) | 🚧 | 🚧 | 换游戏后截图校准找不到正文行，无底色兼容性待验证 |
