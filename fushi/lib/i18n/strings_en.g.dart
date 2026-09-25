@@ -2024,11 +2024,11 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
 	String get game_lookup_samples_auto_line_spacing_missing => 'Reliable line spacing could not be measured. Try a complete two- or three-line sample.';
 	String get game_lookup_samples_auto_line_wrap_inconsistent => 'The measured character widths cannot reproduce the sample\'s line wrapping.';
 	String get game_lookup_samples_auto_multiline => 'Select or capture one complete sample with two or more lines; a short line cannot determine the wrap position.';
-	String get game_lookup_samples_auto_pending => 'Not automatically aligned yet. Let the yellow frame contain each line of dialogue, then select “Align from screenshot”. You do not need to adjust font size, character spacing, or click character centres first.';
+	String get game_lookup_samples_auto_pending => 'Not automatically aligned yet. Let the orange frame contain each line of dialogue, then select “Align from screenshot”. You do not need to adjust font size, character spacing, or click character centres first.';
 	String get game_lookup_samples_auto_preview_failed => 'The automatic measurement did not pass the complete-dialogue check, so this result was not applied.';
 	String get game_lookup_samples_auto_preview_text_overflow => 'The fitted text exceeds the calibrated body region.';
 	String get game_lookup_samples_auto_preview_unavailable => 'The native layout preview was unavailable.';
-	String get game_lookup_samples_auto_rows_missing => 'No clear dialogue lines were found. Check that the yellow frame contains the complete dialogue but not the speaker name or interface buttons.';
+	String get game_lookup_samples_auto_rows_missing => 'No clear dialogue lines were found. Check that the orange frame contains the complete dialogue but not the speaker name or interface buttons.';
 	String game_lookup_samples_auto_sample_failed({required Object sample, required Object reason}) => 'Sample ${sample}: ${reason}';
 	String get game_lookup_samples_auto_success => 'Grid measured. Check that each box contains its character and that subsequent lines match before applying.';
 	String get game_lookup_samples_auto_text_alignment_failed => 'The detected text does not match the hooked text closely enough.';
@@ -2053,7 +2053,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
 	String get game_lookup_samples_continuation_normal => 'Plain-text continuation';
 	String get game_lookup_samples_continuation_quoted => 'Quoted-text continuation';
 	String get game_lookup_samples_continuation_title => 'Continuation line start';
-	String game_lookup_samples_current({required Object sample, required Object total}) => 'Current sample: ${sample} of ${total}';
 	String game_lookup_samples_diagnostic({required Object reason, required Object detail}) => 'Diagnostic: ${reason}${detail}';
 	String get game_lookup_samples_dialogue => 'Dialogue calibration';
 	String get game_lookup_samples_empty => 'No samples yet';

@@ -2025,11 +2025,11 @@ class _StringsZhCn extends _StringsEn {
 	@override String get game_lookup_samples_auto_line_spacing_missing => '未能测出可靠行距，请换一张完整的两行或三行台词图。';
 	@override String get game_lookup_samples_auto_line_wrap_inconsistent => '按测得字宽无法复现样本换行。';
 	@override String get game_lookup_samples_auto_multiline => '请选择或采集一张完整的两行或三行台词；短句无法确定换行位置。';
-	@override String get game_lookup_samples_auto_pending => '尚未自动对齐。黄框只需包含各行正文，点击“自动对齐”；无需先调字号、字距或逐字点中心。';
+	@override String get game_lookup_samples_auto_pending => '尚未自动对齐。橙框只需包含各行正文，点击“自动对齐”；无需先调字号、字距或逐字点中心。';
 	@override String get game_lookup_samples_auto_preview_failed => '自动测量结果未能通过完整台词校验，未应用此次结果。';
 	@override String get game_lookup_samples_auto_preview_text_overflow => '拟合文字超出校准正文区。';
 	@override String get game_lookup_samples_auto_preview_unavailable => '原生排版预览不可用。';
-	@override String get game_lookup_samples_auto_rows_missing => '未找到清晰的正文行。请检查黄框是否包含完整正文，且未包含姓名或界面按钮。';
+	@override String get game_lookup_samples_auto_rows_missing => '未找到清晰的正文行。请检查橙框是否包含完整正文，且未包含姓名或界面按钮。';
 	@override String game_lookup_samples_auto_sample_failed({required Object sample, required Object reason}) => '样本 ${sample}：${reason}';
 	@override String get game_lookup_samples_auto_success => '已测出字格。确认每个框都包含对应文字、后续各行也对应，再应用即可。';
 	@override String get game_lookup_samples_auto_text_alignment_failed => '检测到的文字与 Hook 正文对应不足。';
@@ -2054,7 +2054,6 @@ class _StringsZhCn extends _StringsEn {
 	@override String get game_lookup_samples_continuation_normal => '普通文本续行';
 	@override String get game_lookup_samples_continuation_quoted => '引号开头文本续行';
 	@override String get game_lookup_samples_continuation_title => '续行起点';
-	@override String game_lookup_samples_current({required Object sample, required Object total}) => '当前样本：第 ${sample} / ${total} 张';
 	@override String game_lookup_samples_diagnostic({required Object reason, required Object detail}) => '诊断：${reason}${detail}';
 	@override String get game_lookup_samples_dialogue => '对话校准';
 	@override String get game_lookup_samples_empty => '还没有样本';
