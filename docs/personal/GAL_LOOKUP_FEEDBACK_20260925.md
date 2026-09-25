@@ -19,6 +19,13 @@
 | 4 | 快速翻页后新台词暂时没有查词（[BUG-2675](../bugs/BUG-2675-gal-lookup-hidden-after-fast-advance.md)） | 日志里有一次没有弹窗、同样卡在握手上的 2 秒等待，很可能与第 3 条同源，同一处修改覆盖；根因未完全确认 | `5c24144040` | 待复测确认 |
 | 5 | 自带换行的游戏，长句超出校准宽度后对不上（[BUG-2676](../bugs/BUG-2676-gal-lookup-hook-linebreak-width.md)） | 校准时如果证明游戏的换行都来自 Hook 文本，就在档案里记下；运行时所有句子只按 Hook 换行，行宽和行数放宽到游戏画面边缘。旧档案行为不变，需要重新校准一次 | `fb69c2588b`、`c6499c08b3` | 已写代码，native 与 Dart 定向测试通过；未实机验证 |
 
+## 候选 `254c741d7b` 复测反馈（收集中）
+
+| # | 现象 | 已核实 | 状态 |
+| --- | --- | --- | --- |
+| 6 | 游戏已附着、台词正常获取，但在对话校准里采集样本报「当前没有可采集的台词」（截图 `.codex-test/gal-lookup-feedback-20260925/4.webp`） | 既有问题，不是本轮引入。日志显示档案模式是 `auto`；采集前提 `canCaptureCalibrationSample` 和 `_calibrationCaptureSnapshot` 都要求 `calibrationManuallyEnabled`（只有「仅校准层」模式才成立，`gal_attached_text_controller.dart:363`、`:387`），而工作台在 `auto` 模式下也显示校准入口（`gal_attached_lookup_workbench.dart` 注释写明自动模式也要能准备样本）。两处规则互相矛盾；被拒绝时统一显示成 sourceNotReady 的文案，把真正原因藏住了。另需一起查：Fushi 在前台时，如果状态停在 `shieldHandshakePending`，而不是 `targetBackground`，也会被同一条件拒绝 | 已定位，待统一修改；临时绕过：模式切到「仅校准层」再采集 |
+| 附 | 复测日志新线索 | `gal-shield:` 记录显示握手等待中 `ack_wait` 稳定在约 219 ms，`neutral_wait` 为 281～953 ms。native 在 12:14:16.5 左右已恢复 `visible`，但 Dart 端直到 12:14:18.09 才记为 `activeAttached`，两边相差约 1.5 秒，这可能是第 3/4 条剩下的另一段延迟，需在统一修改时核对 Dart 何时收到 native 状态 | 待查 |
+
 ## 验证证据
 
 - native（MSVC /W4 /WX）：`attached_text_surface_window.cpp`、`global_lookup_window.cpp`、`flutter_window.cpp` 编译通过；`attached_text_layout_test` 40 cases、glyph latch、bitmap bounds、mouse hook / overlayability / shield policy 源码守卫全部通过。
