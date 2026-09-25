@@ -24,6 +24,7 @@
 | # | 现象 | 已核实 | 状态 |
 | --- | --- | --- | --- |
 | 6 | 游戏已附着、台词正常获取，但在对话校准里采集样本报「当前没有可采集的台词」（截图 `.codex-test/gal-lookup-feedback-20260925/4.webp`） | 既有问题，不是本轮引入。日志显示档案模式是 `auto`；采集前提 `canCaptureCalibrationSample` 和 `_calibrationCaptureSnapshot` 都要求 `calibrationManuallyEnabled`（只有「仅校准层」模式才成立，`gal_attached_text_controller.dart:363`、`:387`），而工作台在 `auto` 模式下也显示校准入口（`gal_attached_lookup_workbench.dart` 注释写明自动模式也要能准备样本）。两处规则互相矛盾；被拒绝时统一显示成 sourceNotReady 的文案，把真正原因藏住了。另需一起查：Fushi 在前台时，如果状态停在 `shieldHandshakePending`，而不是 `targetBackground`，也会被同一条件拒绝 | 已定位，待统一修改；临时绕过：模式切到「仅校准层」再采集 |
+| 7 | 手动排版里的「调整格宽」滑条太灵敏，稍微一动数值就变很多；希望可调范围小一点、调得更精细（截图 `5.png`） | 滑条两端是 15%～200%（`GalLookupCharacterAdvanceV1.minAdvanceRatio` / `maxAdvanceRatio`，`gal_lookup_samples_dialog.dart` `_gridAdvanceControl`）。内部步长虽然是 0.05%，但约 185% 的范围摊在三百来像素宽的滑条上，鼠标移动一像素就差零点几个百分点；界面又只显示整数百分比，看不出细调的结果。修改方向：滑条范围收窄到当前值附近，显示一位小数，另加可逐步微调的加减按钮或方向键 | 待统一修改 |
 | 附 | 复测日志新线索 | `gal-shield:` 记录显示握手等待中 `ack_wait` 稳定在约 219 ms，`neutral_wait` 为 281～953 ms。native 在 12:14:16.5 左右已恢复 `visible`，但 Dart 端直到 12:14:18.09 才记为 `activeAttached`，两边相差约 1.5 秒，这可能是第 3/4 条剩下的另一段延迟，需在统一修改时核对 Dart 何时收到 native 状态 | 待查 |
 
 ## 验证证据
