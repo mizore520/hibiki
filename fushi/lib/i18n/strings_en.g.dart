@@ -2084,6 +2084,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
 	String get game_lookup_samples_measured => 'Measured samples';
 	String get game_lookup_samples_narration => 'Narration calibration';
 	String get game_lookup_samples_narration_hint => 'If narration looks the same as dialogue, calibrating dialogue is enough; calibrate narration separately only when its layout differs.';
+	String get game_lookup_samples_native_fallback_hint => 'This game currently provides character positions from the engine, so lookup works without calibration. A calibration made here is kept as a fallback for when the engine positions are unavailable.';
 	String get game_lookup_samples_native_hint => 'The boxes show the areas used to select characters. Adjust the layout until they cover the original text.';
 	String get game_lookup_samples_nudge_down => 'Move down by one screenshot pixel';
 	String get game_lookup_samples_nudge_left => 'Move left by one screenshot pixel';

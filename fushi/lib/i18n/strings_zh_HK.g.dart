@@ -2085,6 +2085,7 @@ class _StringsZhHk extends _StringsEn {
 	@override String get game_lookup_samples_measured => 'Measured samples';
 	@override String get game_lookup_samples_narration => 'Narration calibration';
 	@override String get game_lookup_samples_narration_hint => '旁白和對話排版一樣時，只校準對話就夠了；不一樣時再單獨校準旁白。';
+	@override String get game_lookup_samples_native_fallback_hint => '這款遊戲現在由引擎直接提供字的位置，查詞不需要校準。這裡做的校準會作為備用，只在引擎位置不可用時使用。';
 	@override String get game_lookup_samples_native_hint => 'The boxes show the areas used to select characters. Adjust the layout until they cover the original text.';
 	@override String get game_lookup_samples_nudge_down => 'Move down by one screenshot pixel';
 	@override String get game_lookup_samples_nudge_left => 'Move left by one screenshot pixel';

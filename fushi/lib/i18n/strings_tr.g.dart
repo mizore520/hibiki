@@ -2085,6 +2085,7 @@ class _StringsTr extends _StringsEn {
 	@override String get game_lookup_samples_measured => 'Measured samples';
 	@override String get game_lookup_samples_narration => 'Narration calibration';
 	@override String get game_lookup_samples_narration_hint => 'If narration looks the same as dialogue, calibrating dialogue is enough; calibrate narration separately only when its layout differs.';
+	@override String get game_lookup_samples_native_fallback_hint => 'This game currently provides character positions from the engine, so lookup works without calibration. A calibration made here is kept as a fallback for when the engine positions are unavailable.';
 	@override String get game_lookup_samples_native_hint => 'The boxes show the areas used to select characters. Adjust the layout until they cover the original text.';
 	@override String get game_lookup_samples_nudge_down => 'Move down by one screenshot pixel';
 	@override String get game_lookup_samples_nudge_left => 'Move left by one screenshot pixel';

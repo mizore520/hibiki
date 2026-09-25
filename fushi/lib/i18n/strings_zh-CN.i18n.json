@@ -2063,6 +2063,7 @@
   "game_lookup_samples_measured": "已标记样本",
   "game_lookup_samples_narration": "旁白校准",
   "game_lookup_samples_narration_hint": "旁白和对话排版一样时，只校准对话就够了；不一样时再单独校准旁白。",
+  "game_lookup_samples_native_fallback_hint": "这款游戏现在由引擎直接提供字的位置，查词不需要校准。这里做的校准会作为备用，只在引擎位置不可用时使用。",
   "game_lookup_samples_native_hint": "方框表示实际用于选字的区域。调整排版，让它们覆盖原文对应的字。",
   "game_lookup_samples_nudge_down": "向下微调1个截图像素",
   "game_lookup_samples_nudge_left": "向左微调1个截图像素",
