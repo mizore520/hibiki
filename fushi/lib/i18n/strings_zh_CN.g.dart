@@ -2066,6 +2066,8 @@ class _StringsZhCn extends _StringsEn {
 	@override String get game_lookup_samples_fit_insufficient => '请在校准样本的同一行上至少标记两个字。';
 	@override String get game_lookup_samples_font_hint => '字体留空时使用Yu Gothic。字体或字号不匹配时，可能无法让所有句子同时对齐。';
 	@override String get game_lookup_samples_grid_advance => '调整格宽';
+	@override String get game_lookup_samples_grid_advance_decrease => '格宽减小 0.1%';
+	@override String get game_lookup_samples_grid_advance_increase => '格宽增大 0.1%';
 	@override String get game_lookup_samples_grid_columns => '每行格数';
 	@override String get game_lookup_samples_grid_edit_hint => '拖动蓝框内部移动或四角缩放；拖动小格右边缘调整格宽。普通格会同步变化，蓝框从右侧终点同步扩展；特殊字符格保持独立宽度。';
 	@override String get game_lookup_samples_grid_end => '修正字格终点';

@@ -2065,6 +2065,8 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
 	String get game_lookup_samples_fit_insufficient => 'Mark at least two characters on the same line in a calibration sample.';
 	String get game_lookup_samples_font_hint => 'An empty font uses Yu Gothic. A font or size mismatch may prevent all sentences from aligning.';
 	String get game_lookup_samples_grid_advance => 'Adjust cell width';
+	String get game_lookup_samples_grid_advance_decrease => 'Narrow cells by 0.1%';
+	String get game_lookup_samples_grid_advance_increase => 'Widen cells by 0.1%';
 	String get game_lookup_samples_grid_columns => 'Cells per line';
 	String get game_lookup_samples_grid_edit_hint => 'Drag the blue frame to move or resize it; drag the right edge of a cell to adjust its width. Normal cells stay synchronized and the frame expands from the right edge; special-character cells keep their own width.';
 	String get game_lookup_samples_grid_end => 'Correct grid end';

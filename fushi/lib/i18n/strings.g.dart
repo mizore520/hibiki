@@ -1,9 +1,9 @@
 /// Generated file. Do not edit.
 ///
 /// Locales: 17
-/// Strings: 96050 (5650 per locale)
+/// Strings: 96084 (5652 per locale)
 ///
-/// Built on 2026-09-25 at 05:24 UTC
+/// Built on 2026-09-25 at 05:30 UTC
 
 // coverage:ignore-file
 // ignore_for_file: type=lint
