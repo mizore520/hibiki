@@ -188,10 +188,13 @@ P1 实施调整：
 | `cleanup [--apply <编号>]` | 列出：已合入且干净的 worktree、已合并 PR 的分支、过期 claim、空目录。每一项注明“是否已合入 / 有无未提交改动 / 有无本机证据”。`--apply` 需要 `cleanup` 标记，未合入的内容只报告不删；远端分支删除另需 `push` 标记 | 需要标记 |
 | `install-hooks` | 安装或更新钩子 | 写 `.git/hooks` |
 
-需要实施时核实的点：
+P2 实施结果（2026-09-26）：
 
-- 当前版本实际使用哪个数据目录。目前找到 `Roaming\Hibiki\<用户>\support\hibiki.db`（0.4MB），同时还有 `Roaming\Fushi`、`Local\Fushi` 等目录，要以源码中的路径逻辑为准；
-- 词典资源（约 350MB）不备份，因为可以重新导入。
+- **数据位置**：`backup` 按 `fushi/lib/src/storage/app_paths.dart` 的逻辑定位。先读 `%APPDATA%\Fushi\Fushi\shared_preferences.json` 中的 `flutter.data_root`，有值时数据库在 `<data_root>\support`，否则在默认支持目录。本机的 `data_root` 是仓库根下的 `date\`（已由 `.git/info/exclude` 忽略），当前数据库 `fushi.db` 约 128MB。原方案按旧版 Hibiki 数据库估算的“几 MB”是错的：实际每份备份是一个 zip，只保留 2 份。
+- **备份范围**：只备份数据库（含 `-wal`、`-shm`）和 SharedPreferences。`local_audio_*.db`（约 7GB）、OCR 模型、校准样本等都不受 schema 迁移影响且体积大，不在备份范围内。Fushi 运行时拒绝备份。
+- `date\` 里另有前几轮手动做的备份（`backup-before-pr1625-20260925`、`backup-schema-v112-20260924`，以及 `support\hibiki-db-backup-20260806-003605`），它们属于用户数据，只在 P4 报告，不自动删除。
+- **实现方式**：`flow.ps1` 只负责接收参数和分发，功能放在 `tool/personal/lib/{Common,Hooks,Status,Tasks,Backup}.ps1`；自测放在 `tool/personal/tests/flow.tests.ps1`。
+- **状态判断**：`status`、`cleanup` 只对“比作者多 100 个以内提交”的分支做 `git cherry` 补丁比对，基于 `custom` 的分支比作者多上万个提交，跳过比对以免拖慢。作者仓库的 PR 通过 `gh repo view` 解析仓库现在的正式名后再查询（作者仓库已从 hibiki 改名为 Fushi，用旧名查询 PR 返回空）。
 
 ## 7. 第 4 层：状态与个人补丁清单
 
