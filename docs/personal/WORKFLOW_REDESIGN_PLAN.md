@@ -194,7 +194,15 @@ P2 实施结果（2026-09-26）：
 - **备份范围**：只备份数据库（含 `-wal`、`-shm`）和 SharedPreferences。`local_audio_*.db`（约 7GB）、OCR 模型、校准样本等都不受 schema 迁移影响且体积大，不在备份范围内。Fushi 运行时拒绝备份。
 - `date\` 里另有前几轮手动做的备份（`backup-before-pr1625-20260925`、`backup-schema-v112-20260924`，以及 `support\hibiki-db-backup-20260806-003605`），它们属于用户数据，只在 P4 报告，不自动删除。
 - **实现方式**：`flow.ps1` 只负责接收参数和分发，功能放在 `tool/personal/lib/{Common,Hooks,Status,Tasks,Backup}.ps1`；自测放在 `tool/personal/tests/flow.tests.ps1`。
-- **状态判断**：`status`、`cleanup` 只对“比作者多 100 个以内提交”的分支做 `git cherry` 补丁比对，基于 `custom` 的分支比作者多上万个提交，跳过比对以免拖慢。作者仓库的 PR 通过 `gh repo view` 解析仓库现在的正式名后再查询（作者仓库已从 hibiki 改名为 Fushi，用旧名查询 PR 返回空）。
+- **状态判断**：`status` 和 `cleanup` 只拿“比作者多 100 个以内提交”的分支去和作者仓库比；基于 `custom` 的分支比作者多上万个提交，只和 `custom` 比。
+- **独立审查后的修正**：
+  - 判断“内容是否已落地”改为合并预演的树比对，不再用 `git cherry`。“PR 已合并”只作为提示，不能单独让一项变成可清理（原来会把带未落地提交的分支标成可清理）。
+  - 进行中 claim 的 worktree 只报告；没有自己提交的分支，只有在没有 claim 时才算可清理。
+  - 清理必须写成“编号=目标”，防止清单变化后编号指向别的项。
+  - `adopt -Apply` 必须带 `-Expect <预览时的尖端提交>`，合入的就是这个提交。
+  - 钩子一律从主 checkout 的源码安装。
+  - 证据提示扩大到所有被忽略的非构建文件。
+  - 其他：输出改为 UTF-8；多余的位置参数直接拒绝；合并撤回的结果要核实；只删 `codex/*` 和 `pr/*` 分支；备份失败时删掉半成品，并逐个文件校验哈希；归档时同名文件不覆盖。作者仓库的 PR 通过 `gh repo view` 解析仓库现在的正式名后再查询（作者仓库已从 hibiki 改名为 Fushi，用旧名查询 PR 返回空）。
 
 ## 7. 第 4 层：状态与个人补丁清单
 

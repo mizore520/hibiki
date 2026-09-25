@@ -86,12 +86,12 @@ function Get-FlowAdoptPlan {
     $tip = Get-FlowRefSha $Context "refs/heads/$Branch"
     if (-not $tip) { throw "找不到本地分支 $Branch。" }
     $custom = Get-FlowRefSha $Context 'refs/heads/custom'
-    $commits = @(Get-FlowGitLines -Dir $Context.MainRoot -Arguments @('log', '--oneline', '--no-decorate', "refs/heads/custom..refs/heads/$Branch"))
-    $files = @(Get-FlowGitLines -Dir $Context.MainRoot -Arguments @('-c', 'core.quotepath=false', 'diff', '--name-only', "refs/heads/custom...refs/heads/$Branch"))
-    $stat = @(Get-FlowGitLines -Dir $Context.MainRoot -Arguments @('diff', '--shortstat', "refs/heads/custom...refs/heads/$Branch"))
+    $commits = @(Get-FlowGitLines -Dir $Context.MainRoot -Arguments @('log', '--oneline', '--no-decorate', "refs/heads/custom..$tip"))
+    $files = @(Get-FlowGitLines -Dir $Context.MainRoot -Arguments @('-c', 'core.quotepath=false', 'diff', '--name-only', "refs/heads/custom...$tip"))
+    $stat = @(Get-FlowGitLines -Dir $Context.MainRoot -Arguments @('diff', '--shortstat', "refs/heads/custom...$tip"))
 
     $conflicts = @()
-    $mergeTree = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('merge-tree', '--write-tree', '--name-only', '--no-messages', 'refs/heads/custom', "refs/heads/$Branch") -AllowFail
+    $mergeTree = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('-c', 'core.quotepath=false', 'merge-tree', '--write-tree', '--name-only', '--no-messages', 'refs/heads/custom', $tip) -AllowFail
     if ($mergeTree.Code -eq 1) { $conflicts = @($mergeTree.Lines | Select-Object -Skip 1 | Where-Object { $_ }) }
     elseif ($mergeTree.Code -ne 0) { throw "无法预演合并：$($mergeTree.Error)" }
 
@@ -107,7 +107,7 @@ function Get-FlowAdoptPlan {
         $notes.Add('改动了 native：确认双架构构建与相关证据（Galgame 规则）。')
     }
     if ($files -match '^tool/personal/githooks/') {
-        $notes.Add('改动了护栏钩子：合入后会自动重新安装。')
+        $notes.Add('改动了护栏钩子：合入后会从主 checkout 自动重新安装。')
     }
     return [pscustomobject]@{
         Branch    = $Branch
@@ -126,7 +126,8 @@ function Get-FlowAdoptPlan {
 function Show-FlowAdoptPlan {
     [OutputType([void])]
     param([pscustomobject]$Plan)
-    Write-Output "采用预览：$($Plan.Branch)（$($Plan.Tip.Substring(0, 10))）→ custom（$($Plan.Custom.Substring(0, 10))）"
+    Write-Output "采用预览：$($Plan.Branch) → custom（$($Plan.Custom.Substring(0, 10))）"
+    Write-Output "分支尖端：$($Plan.Tip)"
     if ($Plan.Merged) { Write-Output '该分支已全部在 custom 里，无需采用。'; return }
     Write-FlowSection "提交（$($Plan.Commits.Count) 个）"
     $Plan.Commits | ForEach-Object { Write-Output "  $_" }
@@ -144,8 +145,8 @@ function Show-FlowAdoptPlan {
         $Plan.Notes | ForEach-Object { Write-Output "  - $_" }
     }
     Write-Output ''
-    Write-Output '把以上摘要给用户看；用户明确同意后执行：'
-    Write-Output "  `$env:FUSHI_APPROVE='adopt'; pwsh -File tool/personal/flow.ps1 adopt $($Plan.Branch) -Apply; Remove-Item Env:FUSHI_APPROVE"
+    Write-Output '把以上摘要给用户看；用户明确同意后执行（-Expect 锁定这次预览的提交，分支之后有变化会被拒绝）：'
+    Write-Output "  `$env:FUSHI_APPROVE='adopt'; pwsh -NoProfile -File tool/personal/flow.ps1 adopt $($Plan.Branch) -Apply -Expect $($Plan.Tip); Remove-Item Env:FUSHI_APPROVE"
 }
 
 function Invoke-FlowAdopt {
@@ -153,11 +154,15 @@ function Invoke-FlowAdopt {
     param(
         [pscustomobject]$Context,
         [string]$Branch,
+        [string]$Expect,
         [string]$Message,
         [switch]$KeepClaim
     )
     $plan = Get-FlowAdoptPlan $Context $Branch
     if ($plan.Merged) { Write-Output "$Branch 已全部在 custom 里，无需采用。"; return }
+    if (-not $Expect -or $Expect.Length -lt 7 -or -not $plan.Tip.StartsWith($Expect.ToLowerInvariant())) {
+        throw "分支现在的尖端是 $($plan.Tip)，与 -Expect '$Expect' 不符（或没给 -Expect）。重新运行不带 -Apply 的预览给用户看，再用新的 -Expect 执行。"
+    }
     if (-not (Test-FlowApproved 'adopt')) {
         throw '采用需要用户明确同意：先运行不带 -Apply 的 adopt 把摘要给用户看，同意后带 FUSHI_APPROVE=adopt 再执行。'
     }
@@ -174,13 +179,16 @@ function Invoke-FlowAdopt {
     }
 
     if (-not $Message) { $Message = "Merge $Branch into custom" }
-    $merge = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('merge', '--no-ff', '-q', '-m', $Message, "refs/heads/$Branch") -AllowFail
+    # 合入预览时锁定的那个提交，而不是分支名：避免把预览之后才出现的提交带进来。
+    $merge = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('merge', '--no-ff', '-q', '-m', $Message, $plan.Tip) -AllowFail
     if ($merge.Code -ne 0) {
-        Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('merge', '--abort') -AllowFail | Out-Null
-        throw "合并失败，已 merge --abort：`n$($merge.Error)`n$($merge.Lines -join "`n")"
+        $abort = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('merge', '--abort') -AllowFail
+        $mergeHeadLeft = Test-Path -LiteralPath (Join-Path $Context.CommonDir 'MERGE_HEAD')
+        $state = if ($abort.Code -eq 0 -and -not $mergeHeadLeft) { '已 merge --abort，主 checkout 恢复原状。' } else { "merge --abort 没有成功（$($abort.Error)）；请在主 checkout 运行 git status，按提示 --abort 或 git reset --merge HEAD 恢复后再和用户确认。" }
+        throw "合并失败：`n$($merge.Error)`n$($merge.Lines -join "`n")`n$state"
     }
     $merged = Get-FlowRefSha $Context 'refs/heads/custom'
-    Write-Output "已采用：$Branch → custom $($merged.Substring(0, 10))"
+    Write-Output "已采用：$Branch（$($plan.Tip.Substring(0, 10))）→ custom $($merged.Substring(0, 10))"
 
     if ($plan.Files -match '^tool/personal/githooks/') {
         Install-FushiHooks $Context.MainRoot
@@ -203,54 +211,82 @@ function Invoke-FlowAdopt {
 
 # ---- cleanup --------------------------------------------------------------
 
+$script:CleanupBranchPattern = '^(codex|pr)/'
+
+# 清理项。Target 是执行时核对用的唯一目标（worktree/目录为路径，分支、claim 为名字）。
+function New-FlowCleanupItem {
+    [OutputType([pscustomobject])]
+    param([string]$Kind, [string]$Target, [string]$State, [bool]$Selectable, [string[]]$Notes, [string]$Branch = '', [string]$ClaimName = '')
+    if ($Target.Contains(',')) {
+        $Selectable = $false
+        $Notes = @($Notes) + '路径含逗号，无法按编号安全执行'
+    }
+    return [pscustomobject]@{ Id = ''; Kind = $Kind; Target = $Target; State = $State; Selectable = $Selectable; Notes = @($Notes | Where-Object { $_ }); Branch = $Branch; ClaimName = $ClaimName }
+}
+
 function Get-FlowCleanupItems {
     [OutputType([pscustomobject[]])]
     param([pscustomobject]$Context, [pscustomobject[]]$PullRequests)
     $items = [System.Collections.Generic.List[pscustomobject]]::new()
+    $cache = @{}
     $worktrees = @(Get-FlowWorktrees $Context)
     $claims = @(Read-FlowClaims $Context)
-    $removable = @('已合入 custom', '内容已进作者仓库')
-
-    function Add-Item([string]$Kind, [string]$Target, [string]$State, [bool]$Selectable, [string]$Note, [string]$Branch = '', [string]$ClaimName = '') {
-        $prefix = @{ claim = 'C'; worktree = 'W'; branch = 'B'; dir = 'D' }[$Kind]
-        $id = "$prefix$(@($items | Where-Object { $_.Kind -eq $Kind }).Count + 1)"
-        $items.Add([pscustomobject]@{ Id = $id; Kind = $Kind; Target = $Target; State = $State; Selectable = $Selectable; Note = $Note; Branch = $Branch; ClaimName = $ClaimName })
-    }
 
     foreach ($wt in $worktrees) {
         if (Test-FlowSamePath $wt.Path $Context.MainRoot) { continue }
         if ((Split-Path $wt.Path -Leaf) -eq $script:CandidateBuildDirName) { continue }
-        $state = if ($wt.Branch) { Get-FlowBranchState $Context $wt.Branch $PullRequests } else { '分离 HEAD' }
-        $dirty = Get-FlowDirtyCount $wt.Path
-        $evidence = Get-FlowEvidenceCount $wt.Path
+        $notes = [System.Collections.Generic.List[string]]::new()
         $claim = $claims | Where-Object { $wt.Branch -and $_.Branch -eq $wt.Branch } | Select-Object -First 1
-        $finished = ($removable -contains $state) -or ($state -match '^PR #\d+ 已合并')
-        $notes = @()
-        if ($dirty -ne 0) { $notes += "有 $dirty 处未提交改动" }
-        if ($evidence -gt 0) { $notes += "有 $evidence 个本机证据文件（.codex-test），删除会一并删掉" }
-        if ($state -match '未进作者仓库') { $notes += '删除会丢掉未进作者仓库的提交' }
-        $selectable = $finished -and $dirty -eq 0
+        if ($wt.Branch) {
+            $state = Get-FlowBranchState $Context $wt.Branch $PullRequests $cache
+            $label = $state.Label
+            # 没有自己的提交：尖端本来就在主线上，删分支不丢任何提交；刚开始的任务由 claim 挡住。
+            $landed = $state.Landed -or $state.NoOwnCommits
+            if ($state.NoOwnCommits) { $notes.Add('分支上没有自己的提交；若是刚开始的任务，不要清理') }
+        }
+        else {
+            $label = '分离 HEAD'
+            $landed = $false
+        }
+        $namespaceOk = $wt.Branch -match $script:CleanupBranchPattern
+        if (-not $namespaceOk) { $notes.Add('不是 codex/* 或 pr/* 分支，不自动清理') }
+        $dirty = Get-FlowDirtyCount $wt.Path
+        if ($dirty -ne 0) { $notes.Add("有 $dirty 处未提交改动") }
+        if ($claim) { $notes.Add("claim $($claim.Name) 仍在进行中：任务确实结束时先归档该 claim（见 C 项），再清理 worktree") }
+        $ignored = @(Get-FlowIgnoredItems $wt.Path)
+        if ($ignored.Count -gt 0) {
+            $shown = ($ignored | Select-Object -First 4) -join '、'
+            $more = if ($ignored.Count -gt 4) { " 等 $($ignored.Count) 项" } else { '' }
+            $notes.Add("删除会一并删掉被忽略的本机文件：$shown$more")
+        }
+        $selectable = $landed -and $namespaceOk -and $dirty -eq 0 -and -not $claim
         $claimName = if ($claim) { $claim.Name } else { '' }
-        Add-Item 'worktree' $wt.Path $state $selectable ($notes -join '；') $wt.Branch $claimName
+        $items.Add((New-FlowCleanupItem 'worktree' $wt.Path $label $selectable $notes.ToArray() $wt.Branch $claimName))
     }
 
     $worktreeBranches = @($worktrees | ForEach-Object { $_.Branch } | Where-Object { $_ })
     foreach ($ref in (Get-FlowGitLines -Dir $Context.MainRoot -Arguments @('for-each-ref', '--format=%(refname:short)', 'refs/heads/codex/', 'refs/heads/pr/'))) {
         if ($worktreeBranches -contains $ref) { continue }
-        $state = Get-FlowBranchState $Context $ref $PullRequests
-        $finished = ($removable -contains $state) -or ($state -match '^PR #\d+ 已合并')
-        $note = if ($state -match '未进作者仓库') { '删除会丢掉未进作者仓库的提交' } else { '' }
-        Add-Item 'branch' $ref $state $finished $note $ref
+        $state = Get-FlowBranchState $Context $ref $PullRequests $cache
+        $claim = $claims | Where-Object { $_.Branch -eq $ref } | Select-Object -First 1
+        $notes = @()
+        if ($state.NoOwnCommits) { $notes += '分支上没有自己的提交' }
+        if ($claim) { $notes += "claim $($claim.Name) 仍在进行中" }
+        $items.Add((New-FlowCleanupItem 'branch' $ref $state.Label (($state.Landed -or $state.NoOwnCommits) -and -not $claim) $notes $ref))
     }
 
     foreach ($claim in $claims) {
         $hasBranch = $claim.Branch -and (Test-FlowRef $Context "refs/heads/$($claim.Branch)")
         $hasWorktree = [bool]($worktrees | Where-Object { $claim.Branch -and $_.Branch -eq $claim.Branch })
         if (-not $hasBranch -and -not $hasWorktree) {
-            Add-Item 'claim' $claim.Name "过期（分支和 worktree 都不存在；原状态：$($claim.Status)）" $true '' '' $claim.Name
+            $items.Add((New-FlowCleanupItem 'claim' $claim.Name "过期（分支和 worktree 都不存在；原状态：$($claim.Status)）" $true @() '' $claim.Name))
+            continue
         }
-        elseif ($hasBranch -and -not $hasWorktree -and (Test-FlowAncestor $Context "refs/heads/$($claim.Branch)" 'refs/heads/custom')) {
-            Add-Item 'claim' $claim.Name '分支已合入 custom，worktree 已不存在' $true '' $claim.Branch $claim.Name
+        if ($hasBranch) {
+            $state = Get-FlowBranchState $Context $claim.Branch $PullRequests $cache
+            if ($state.Landed) {
+                $items.Add((New-FlowCleanupItem 'claim' $claim.Name "分支内容已合入（$($state.Label)）；原状态：$($claim.Status)" $true @('只在任务确实结束时归档；任务还要继续就不要选') $claim.Branch $claim.Name))
+            }
         }
     }
 
@@ -261,11 +297,20 @@ function Get-FlowCleanupItems {
             if ($worktreePaths | Where-Object { Test-FlowSamePath $_ $dir.FullName }) { continue }
             $files = @(Get-ChildItem -LiteralPath $dir.FullName -Recurse -File -Force -ErrorAction SilentlyContinue)
             if ($files.Count -eq 0) {
-                Add-Item 'dir' $dir.FullName '空目录（不是 worktree）' $true ''
+                $items.Add((New-FlowCleanupItem 'dir' $dir.FullName '空目录（不是 worktree）' $true @()))
             }
             else {
-                Add-Item 'dir' $dir.FullName "不是 worktree，但有 $($files.Count) 个文件" $false '可能是残留成果，只报告'
+                $items.Add((New-FlowCleanupItem 'dir' $dir.FullName "不是 worktree，但有 $($files.Count) 个文件" $false @('可能是残留成果或删到一半的 worktree，只报告')))
             }
+        }
+    }
+
+    $prefix = @{ worktree = 'W'; branch = 'B'; claim = 'C'; dir = 'D' }
+    foreach ($kind in @('worktree', 'branch', 'claim', 'dir')) {
+        $n = 0
+        foreach ($item in ($items | Where-Object { $_.Kind -eq $kind })) {
+            $n++
+            $item.Id = "$($prefix[$kind])$n"
         }
     }
     return $items.ToArray()
@@ -278,27 +323,43 @@ function Show-FlowCleanupItems {
     foreach ($kind in @('worktree', 'branch', 'claim', 'dir')) {
         $group = @($Items | Where-Object { $_.Kind -eq $kind })
         if ($group.Count -eq 0) { continue }
-        $title = @{ worktree = 'worktree'; branch = '没有 worktree 的本地分支'; claim = 'claim（只归档）'; dir = '.worktrees 下的其他目录' }[$kind]
+        $title = @{ worktree = 'worktree'; branch = '没有 worktree 的本地分支'; claim = 'claim（只归档，不删除）'; dir = '.worktrees 下的其他目录' }[$kind]
         Write-FlowSection $title
         foreach ($item in $group) {
             $mark = if ($item.Selectable) { '可清理' } else { '只报告' }
-            $note = if ($item.Note) { "  ⚠ $($item.Note)" } else { '' }
-            Write-Output "[$($item.Id)] $mark  $($item.Target)  —  $($item.State)$note"
+            Write-Output "[$($item.Id)] $mark  $($item.Target)  —  $($item.State)"
+            foreach ($note in $item.Notes) { Write-Output "        ⚠ $note" }
         }
     }
+    $example = $Items | Where-Object { $_.Selectable } | Select-Object -First 1
     Write-Output ''
-    Write-Output '把清单给用户看，按用户确认的编号执行（删除 worktree/分支/目录需要 cleanup 同意）：'
-    Write-Output "  `$env:FUSHI_APPROVE='cleanup'; pwsh -File tool/personal/flow.ps1 cleanup -Apply -Items W1,C2; Remove-Item Env:FUSHI_APPROVE"
+    Write-Output '把清单给用户看，按用户确认的项执行。每项写成「编号=目标」，编号与目标对不上会被拒绝；'
+    Write-Output '删除 worktree / 分支 / 目录需要 cleanup 同意，只归档 claim 不需要：'
+    if ($example) {
+        Write-Output "  `$env:FUSHI_APPROVE='cleanup'; pwsh -NoProfile -File tool/personal/flow.ps1 cleanup -Apply -Items '$($example.Id)=$($example.Target)'; Remove-Item Env:FUSHI_APPROVE"
+    }
+}
+
+function Test-FlowCleanupTarget {
+    [OutputType([bool])]
+    param([pscustomobject]$Item, [string]$Target)
+    if ($Item.Kind -in @('worktree', 'dir')) { return (Test-FlowSamePath $Item.Target $Target) }
+    return ($Item.Target -ceq $Target)
 }
 
 function Invoke-FlowCleanup {
     [OutputType([void])]
     param([pscustomobject]$Context, [pscustomobject[]]$Items, [string[]]$Selected)
-    $ids = @($Selected | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim().ToUpperInvariant() } | Where-Object { $_ })
-    if ($ids.Count -eq 0) { throw '用 -Items 指定要清理的编号，例如 -Items W1,C2。' }
-    $chosen = foreach ($id in $ids) {
+    $entries = @($Selected | ForEach-Object { $_ -split ',' } | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+    if ($entries.Count -eq 0) { throw "用 -Items 指定要清理的项，写成「编号=目标」，例如 -Items 'W1=E:\...\task,C2=old-claim'。" }
+    $chosen = foreach ($entry in $entries) {
+        $pos = $entry.IndexOf('=')
+        if ($pos -lt 1) { throw "「$entry」缺少目标。每项要写成「编号=目标」（目标照抄清单里的路径或名字），防止清单变化后编号指向别的项。" }
+        $id = $entry.Substring(0, $pos).Trim().ToUpperInvariant()
+        $target = $entry.Substring($pos + 1).Trim()
         $item = $Items | Where-Object { $_.Id -eq $id } | Select-Object -First 1
-        if (-not $item) { throw "没有编号 $id（清单可能已变化，先重新运行 cleanup 查看）。" }
+        if (-not $item) { throw "没有编号 $id（清单已变化），先重新运行 cleanup 给用户看。" }
+        if (-not (Test-FlowCleanupTarget $item $target)) { throw "$id 现在指向 $($item.Target)，不是「$target」；清单已变化，先重新运行 cleanup 给用户看。" }
         if (-not $item.Selectable) { throw "$id 只报告、不可清理：$($item.Target)（$($item.State)）" }
         $item
     }
@@ -308,15 +369,14 @@ function Invoke-FlowCleanup {
     foreach ($item in $chosen) {
         switch ($item.Kind) {
             'worktree' {
-                Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('worktree', 'remove', $item.Target) | Out-Null
+                $remove = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('worktree', 'remove', $item.Target) -AllowFail
+                if ($remove.Code -ne 0) {
+                    throw "[$($item.Id)] 删除 worktree 失败（可能有文件被占用）：$($remove.Error)`n请用户关闭占用该目录的程序后，运行 git worktree prune，再重新运行 cleanup；剩下的目录会显示为「只报告」，确认无用后再处理。后面的项没有执行。"
+                }
                 Write-Output "[$($item.Id)] 已删除 worktree $($item.Target)"
-                if ($item.Branch) {
+                if ($item.Branch -match $script:CleanupBranchPattern) {
                     Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('branch', '-D', $item.Branch) | Out-Null
                     Write-Output "[$($item.Id)] 已删除分支 $($item.Branch)"
-                }
-                if ($item.ClaimName) {
-                    $claim = Read-FlowClaims $Context | Where-Object { $_.Name -eq $item.ClaimName } | Select-Object -First 1
-                    if ($claim) { Move-FlowClaimToDone $Context $claim "cleaned $(Get-Date -Format 'yyyy-MM-dd')" | Out-Null; Write-Output "[$($item.Id)] claim $($claim.Name) 已归档" }
                 }
             }
             'branch' {

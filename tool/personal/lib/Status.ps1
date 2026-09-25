@@ -39,32 +39,51 @@ function Update-FlowRemotes {
     return $warnings.ToArray()
 }
 
-# 把任务分支归类：已合入 custom / 内容已进作者仓库 / 已推送 / 未合入。
+# 把分支归类。Landed=真 表示分支内容已全部在 custom 或作者仓库里，删掉它不会丢改动；
+# NoOwnCommits=真 表示分支只是从某处拉出来、自己没有提交（刚开始的任务）。
+# PR 已合并只作提示：squash、改写或合并后又有新提交都可能让分支带着未落地的改动。
+# $Cache 由调用方传入同一个 hashtable，缓存第一父链集合。
 function Get-FlowBranchState {
-    [OutputType([string])]
-    param([pscustomobject]$Context, [string]$Branch, [pscustomobject[]]$PullRequests)
-    if (-not $Branch -or -not (Test-FlowRef $Context "refs/heads/$Branch")) { return '无分支' }
-    if (Test-FlowAncestor $Context "refs/heads/$Branch" 'refs/heads/custom') { return '已合入 custom' }
-    $pr = @($PullRequests) | Where-Object { $null -ne $_ -and $_.headRefName -eq $Branch } | Select-Object -First 1
-    # 只对“离作者代码不远”的分支做补丁等价比对；基于 custom 的分支比作者多上万提交，
-    # 对它跑 git cherry 既慢又没有意义。
+    [OutputType([pscustomobject])]
+    param([pscustomobject]$Context, [string]$Branch, [pscustomobject[]]$PullRequests, [hashtable]$Cache)
+    function New-State([string]$Label, [bool]$Landed = $false, [bool]$NoOwnCommits = $false) {
+        return [pscustomobject]@{ Label = $Label; Landed = $Landed; NoOwnCommits = $NoOwnCommits }
+    }
+    if (-not $Branch -or -not (Test-FlowRef $Context "refs/heads/$Branch")) { return (New-State '无分支') }
+    $tip = Get-FlowRefSha $Context "refs/heads/$Branch"
+    $upstream = 'refs/remotes/upstream/develop'
+    $hasUpstream = Test-FlowRef $Context $upstream
+
+    if (Test-FlowAncestor $Context $tip 'refs/heads/custom') {
+        if (-not $Cache.ContainsKey('custom')) { $Cache['custom'] = Get-FlowFirstParentSet $Context 'refs/heads/custom' }
+        if ($Cache['custom'].Contains($tip)) { return (New-State '没有自己的提交（尖端在 custom 主线上）' $false $true) }
+        return (New-State '已合入 custom' $true)
+    }
+    # 只对「离作者代码不远」的分支和作者比；基于 custom 的分支比作者多上万提交，比也没意义。
     $nearUpstream = $false
-    if (Test-FlowRef $Context 'refs/remotes/upstream/develop') {
-        $aheadOfUpstream = Get-FlowCount $Context "refs/remotes/upstream/develop..refs/heads/$Branch"
+    if ($hasUpstream) {
+        $aheadOfUpstream = Get-FlowCount $Context "$upstream..$tip"
         $nearUpstream = ($aheadOfUpstream -ge 0 -and $aheadOfUpstream -le $script:NearUpstreamMaxCommits)
     }
-    if ($nearUpstream -and (Get-FlowUnlandedCount $Context 'refs/remotes/upstream/develop' "refs/heads/$Branch") -eq 0) {
-        return '内容已进作者仓库'
+    if ($nearUpstream) {
+        if (Test-FlowAncestor $Context $tip $upstream) {
+            if (-not $Cache.ContainsKey('upstream')) { $Cache['upstream'] = Get-FlowFirstParentSet $Context $upstream }
+            if ($Cache['upstream'].Contains($tip)) { return (New-State '没有自己的提交（尖端在作者主线上）' $false $true) }
+            return (New-State '已合入作者仓库' $true)
+        }
+        if (Test-FlowContentIn $Context $tip $upstream) { return (New-State '内容已进作者仓库' $true) }
     }
-    if ($nearUpstream -and $pr -and $pr.state -eq 'MERGED') {
-        $left = Get-FlowUnlandedCount $Context 'refs/remotes/upstream/develop' "refs/heads/$Branch"
-        return "PR #$($pr.number) 已合并，本地另有 $left 个提交未进作者仓库"
+    elseif (Test-FlowContentIn $Context $tip 'refs/heads/custom') {
+        return (New-State '内容已在 custom（提交号不同）' $true)
     }
-    if ($pr -and $pr.state -eq 'MERGED') { return "PR #$($pr.number) 已合并" }
-    if ($pr -and $pr.state -eq 'OPEN') { return "PR #$($pr.number) 审核中" }
-    $contains = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('for-each-ref', '--count=1', '--contains', "refs/heads/$Branch", 'refs/remotes/') -AllowFail
-    if ($contains.Code -eq 0 -and @($contains.Lines | Where-Object { $_ }).Count -gt 0) { return '已推送，未合入' }
-    return '未合入'
+
+    $pr = @($PullRequests) | Where-Object { $null -ne $_ -and $_.headRefName -eq $Branch } | Select-Object -First 1
+    $where = if ($nearUpstream) { '作者仓库' } else { ' custom ' }
+    if ($pr -and $pr.state -eq 'MERGED') { return (New-State "PR #$($pr.number) 已合并，但分支上还有未进${where}的改动") }
+    if ($pr -and $pr.state -eq 'OPEN') { return (New-State "PR #$($pr.number) 审核中") }
+    $contains = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('for-each-ref', '--count=1', '--contains', $tip, 'refs/remotes/') -AllowFail
+    if ($contains.Code -eq 0 -and @($contains.Lines | Where-Object { $_ }).Count -gt 0) { return (New-State "已推送，未合入${where}".Trim()) }
+    return (New-State "未合入${where}".Trim())
 }
 
 function Show-FlowStatus {
@@ -80,6 +99,7 @@ function Show-FlowStatus {
     }
 
     $pullRequests = @()
+    $stateCache = @{}
     if (-not $Offline) {
         Update-FlowRemotes $Context | ForEach-Object { Write-Output "!! $_" }
         $pullRequests = @(Get-FlowAuthorPullRequests $Context)
@@ -106,7 +126,7 @@ function Show-FlowStatus {
     Write-FlowSection '进行中的任务（claim）'
     $rows = foreach ($claim in $claims) {
         $wt = $worktrees | Where-Object { $claim.Branch -and $_.Branch -eq $claim.Branch } | Select-Object -First 1
-        $branchState = Get-FlowBranchState $Context $claim.Branch $pullRequests
+        $branchState = (Get-FlowBranchState $Context $claim.Branch $pullRequests $stateCache).Label
         if ($branchState -eq '无分支' -and -not $wt) {
             $staleClaims.Add($claim.Name)
             continue
@@ -126,7 +146,7 @@ function Show-FlowStatus {
         if ((Split-Path $wt.Path -Leaf) -eq $script:CandidateBuildDirName) { continue }
         if ($claims | Where-Object { $_.Branch -and $_.Branch -eq $wt.Branch }) { continue }
         $label = if ($wt.Branch) { $wt.Branch } else { "分离 HEAD $($wt.Head.Substring(0, 10))" }
-        "$($wt.Path)  [$label，$(Get-FlowBranchState $Context $wt.Branch $pullRequests)]"
+        "$($wt.Path)  [$label，$((Get-FlowBranchState $Context $wt.Branch $pullRequests $stateCache).Label)]"
     }
     if ($orphans) { $orphans | ForEach-Object { Write-Output $_ } } else { Write-Output '（无）' }
 
@@ -135,7 +155,7 @@ function Show-FlowStatus {
         foreach ($pr in $pullRequests) {
             $note = ''
             if ($pr.state -eq 'MERGED' -and (Test-FlowRef $Context "refs/heads/$($pr.headRefName)")) {
-                $note = "，本地分支：$(Get-FlowBranchState $Context $pr.headRefName $pullRequests)（收尾见 flow cleanup）"
+                $note = "，本地分支：$((Get-FlowBranchState $Context $pr.headRefName $pullRequests $stateCache).Label)（收尾见 flow cleanup）"
             }
             Write-Output "#$($pr.number) $($pr.state)  $($pr.headRefName)$note"
         }

@@ -61,6 +61,25 @@ function Get-FlowFileSha256 {
     return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
 }
 
+# 解压读取每个条目并与清单里的 SHA-256 比对（同时触发 zip 的 CRC 校验）。
+function Test-FlowBackupArchive {
+    [OutputType([void])]
+    param([string]$ZipPath, [System.Collections.IDictionary[]]$Files)
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    try {
+        if (-not $archive.GetEntry('manifest.json')) { throw "备份缺少 manifest.json：$ZipPath" }
+        foreach ($file in $Files) {
+            $entry = $archive.GetEntry($file.entry)
+            if (-not $entry) { throw "备份缺少 $($file.entry)：$ZipPath" }
+            $stream = $entry.Open()
+            try { $hash = [System.Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($stream)).ToLowerInvariant() }
+            finally { $stream.Dispose() }
+            if ($hash -ne $file.sha256) { throw "备份里的 $($file.entry) 与原文件哈希不一致：$ZipPath" }
+        }
+    }
+    finally { $archive.Dispose() }
+}
+
 function New-FlowBackup {
     [OutputType([void])]
     param(
@@ -114,10 +133,16 @@ function New-FlowBackup {
             restore    = '先关闭 Fushi；把 support/ 下的文件复制回 dataSource 对应的 support 目录，shared_preferences.json 复制回 %APPDATA%\Fushi\Fushi\。复制前先把现有文件改名留底。'
         }
         Save-FlowJson -Path (Join-Path $staging 'manifest.json') -Data $manifest
+        if (-not $DataRootOverride -and @(Get-Process -Name $script:FushiProcessNames -ErrorAction SilentlyContinue).Count -gt 0) {
+            throw '复制期间 Fushi 被启动了，这份备份可能不一致，已放弃。请用户关闭 Fushi 后重试。'
+        }
         [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, $zip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
-        $archive = [System.IO.Compression.ZipFile]::OpenRead($zip)
-        try { $entryCount = $archive.Entries.Count } finally { $archive.Dispose() }
-        if ($entryCount -lt $sources.Count + 1) { throw "备份压缩包条目数不对（$entryCount）：$zip" }
+        Test-FlowBackupArchive $zip @($manifestFiles)
+    }
+    catch {
+        # 半成品 zip 的名字符合保留规则，留着会把好的旧备份挤掉。
+        Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
+        throw
     }
     finally {
         Remove-Item -LiteralPath $staging -Recurse -Force -ErrorAction SilentlyContinue

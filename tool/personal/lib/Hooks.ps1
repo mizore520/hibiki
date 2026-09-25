@@ -1,6 +1,15 @@
 # flow.ps1 的护栏钩子安装与检查（G1–G5）。由 flow.ps1 dot-source；依赖 $script:PersonalRoot。
 
-$script:HookSourceDir = Join-Path $script:PersonalRoot 'githooks'
+# 钩子源码一律取主 checkout（即 custom）的 tool/personal/githooks，避免在旧 worktree 里
+# 运行时把旧版钩子装回去；主 checkout 没有这份源码时（临时测试仓库、采用前）才退回本脚本所在目录。
+function Get-FushiHookSourceDir {
+    [OutputType([string])]
+    param([string]$RepoPath)
+    $mainRoot = Split-Path -Parent (Split-Path -Parent (Get-HooksDirectory $RepoPath))
+    $mainSource = Join-Path $mainRoot 'tool\personal\githooks'
+    if (Test-Path -LiteralPath (Join-Path $mainSource 'fushi-lib.sh')) { return $mainSource }
+    return (Join-Path $script:PersonalRoot 'githooks')
+}
 # 源文件名 -> 安装后的文件名
 $script:HookFiles = [ordered]@{
     'fushi-lib.sh'          = 'fushi-lib.sh'
@@ -47,8 +56,8 @@ function Get-ContentStamp {
 
 function Get-SourceStamp {
     [OutputType([string])]
-    param()
-    $paths = foreach ($name in $script:HookFiles.Keys) { Join-Path $script:HookSourceDir $name }
+    param([string]$SourceDir)
+    $paths = foreach ($name in $script:HookFiles.Keys) { Join-Path $SourceDir $name }
     return Get-ContentStamp $paths
 }
 
@@ -68,7 +77,7 @@ function Assert-NoHooksPathOverride {
     }
 }
 
-# G2 靠远端跟踪分支判断“已推送”。个人仓库的 origin 默认只抓 custom，推送
+# G2 靠远端跟踪分支判断「已推送」。个人仓库的 origin 默认只抓 custom，推送
 # codex/*、pr/* 时不会留下 refs/remotes/origin/...，所以补上这两类抓取规则。
 function Get-MissingOriginRefspecs {
     [OutputType([string[]])]
@@ -94,9 +103,10 @@ function Install-FushiHooks {
     Assert-NoHooksPathOverride $RepoPath
     $hooksDir = Get-HooksDirectory $RepoPath
     [void](New-Item -ItemType Directory -Force -Path $hooksDir)
+    $sourceDir = Get-FushiHookSourceDir $RepoPath
 
     foreach ($entry in $script:HookFiles.GetEnumerator()) {
-        $source = Join-Path $script:HookSourceDir $entry.Key
+        $source = Join-Path $sourceDir $entry.Key
         $target = Join-Path $hooksDir $entry.Value
         if ((Test-Path -LiteralPath $target) -and
             -not ([System.IO.File]::ReadAllText($target).Contains($script:OwnershipMarker))) {
@@ -110,9 +120,9 @@ function Install-FushiHooks {
         Move-Item -LiteralPath $staging -Destination $target -Force
     }
 
-    $stamp = Get-SourceStamp
+    $stamp = Get-SourceStamp $sourceDir
     [System.IO.File]::WriteAllText((Join-Path $hooksDir $script:StampFileName), "$stamp`n", $script:Utf8NoBom)
-    Write-Output "已安装 Fushi 护栏钩子到 $hooksDir（版本 $($stamp.Substring(0, 12))）。"
+    Write-Output "已安装 Fushi 护栏钩子到 $hooksDir（源码 $sourceDir，版本 $($stamp.Substring(0, 12))）。"
 
     foreach ($spec in (Get-MissingOriginRefspecs $RepoPath)) {
         git -C $RepoPath config --add remote.origin.fetch $spec
@@ -134,8 +144,9 @@ function Get-FushiHookProblems {
             $problems.Add("缺少 $name。")
         }
     }
-    if ($problems.Count -eq 0 -and (Get-InstalledStamp $hooksDir) -ne (Get-SourceStamp)) {
-        $problems.Add('已安装的钩子与当前源码不一致（源码更新过或已安装副本被改动）。')
+    $sourceDir = Get-FushiHookSourceDir $RepoPath
+    if ($problems.Count -eq 0 -and (Get-InstalledStamp $hooksDir) -ne (Get-SourceStamp $sourceDir)) {
+        $problems.Add("已安装的钩子与源码 $sourceDir 不一致（源码更新过或已安装副本被改动）。")
     }
     foreach ($spec in (Get-MissingOriginRefspecs $RepoPath)) {
         $problems.Add("origin 缺少抓取规则 $spec，删除已推送分支时会被误拦。")

@@ -82,13 +82,26 @@ function Get-FlowCount {
     return [int]$result.Lines[0]
 }
 
-# `git cherry <上游> <分支>`：返回分支上内容尚未进入上游（按补丁等价判断）的提交数。
-function Get-FlowUnlandedCount {
-    [OutputType([int])]
-    param([pscustomobject]$Context, [string]$Upstream, [string]$Branch)
-    $result = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('cherry', $Upstream, $Branch) -AllowFail
-    if ($result.Code -ne 0) { return -1 }
-    return @($result.Lines | Where-Object { $_ -like '+*' }).Count
+# 分支的内容是否已全部在目标里：预演合并，结果树与目标的树相同即说明分支不再带来任何改动。
+# 比按提交 SHA 或 git cherry 判断更可靠：squash 合并、合并提交里夹带的改动都能判对。
+function Test-FlowContentIn {
+    [OutputType([bool])]
+    param([pscustomobject]$Context, [string]$Branch, [string]$Target)
+    $merge = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('merge-tree', '--write-tree', '--no-messages', $Target, $Branch) -AllowFail
+    if ($merge.Code -ne 0) { return $false }
+    $targetTree = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('rev-parse', "$Target^{tree}") -AllowFail
+    if ($targetTree.Code -ne 0) { return $false }
+    return ($merge.Lines[0].Trim() -eq $targetTree.Lines[0].Trim())
+}
+
+# 某分支第一父链上的全部提交。分支尖端落在这条链上，说明它只是从这里拉出来、自己没有提交。
+function Get-FlowFirstParentSet {
+    [OutputType([System.Collections.Generic.HashSet[string]])]
+    param([pscustomobject]$Context, [string]$Ref)
+    $set = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::Ordinal)
+    $result = Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('rev-list', '--first-parent', $Ref) -AllowFail
+    if ($result.Code -eq 0) { foreach ($sha in $result.Lines) { [void]$set.Add($sha.Trim()) } }
+    return , $set
 }
 
 function Test-FlowApproved {
@@ -134,13 +147,15 @@ function Get-FlowDirtyCount {
     return @($result.Lines | Where-Object { $_ }).Count
 }
 
-# .codex-test 下被忽略的本机证据文件数（删除 worktree 会一并删掉它们）。
-function Get-FlowEvidenceCount {
-    [OutputType([int])]
+# 被 git 忽略、删除 worktree 时会一并删掉的非构建内容（.codex-test 证据、*.local.md、
+# 本机笔记等）。目录按一项计；构建产物和依赖缓存不算。
+$script:BuildArtifactPattern = '(^|/)(\.dart_tool|build|dist|\.build-cache|node_modules|\.gradle|\.idea|\.vs|ephemeral|\.plugin_symlinks|\.pub-cache|\.pub)(/|$)|(^|/)\.flutter-plugins(-dependencies)?$|(^|/)pubspec_overrides\.yaml$|\.iml$|(^|/)io/flutter/plugins(/|$)|GeneratedPluginRegistrant\.java$|(^|/)local\.properties$|(^|/)Generated\.xcconfig$|(^|/)flutter_export_environment\.sh$'
+function Get-FlowIgnoredItems {
+    [OutputType([string[]])]
     param([string]$Path)
-    $result = Invoke-FlowGit -Dir $Path -Arguments @('ls-files', '--others', '--ignored', '--exclude-standard', '--', '.codex-test') -AllowFail
-    if ($result.Code -ne 0) { return 0 }
-    return @($result.Lines | Where-Object { $_ }).Count
+    $result = Invoke-FlowGit -Dir $Path -Arguments @('-c', 'core.quotepath=false', 'ls-files', '--others', '--ignored', '--exclude-standard', '--directory') -AllowFail
+    if ($result.Code -ne 0) { return @() }
+    return @($result.Lines | Where-Object { $_ -and $_ -notmatch $script:BuildArtifactPattern })
 }
 
 function Read-FlowClaims {
@@ -179,13 +194,22 @@ function Move-FlowClaimToDone {
         Save-FlowJson -Path $Claim.File -Data $Claim.Data
     }
     [void](New-Item -ItemType Directory -Force -Path $Context.ClaimsDoneDir)
-    Move-Item -LiteralPath $Claim.File -Destination (Join-Path $Context.ClaimsDoneDir (Split-Path $Claim.File -Leaf)) -Force
+    Move-Item -LiteralPath $Claim.File -Destination (Get-FlowFreeDestination $Context.ClaimsDoneDir $Claim.Name '.json')
     $handoff = Join-Path $Context.HandoffsDir "$($Claim.Name).md"
     if (Test-Path -LiteralPath $handoff) {
         [void](New-Item -ItemType Directory -Force -Path $Context.HandoffsDoneDir)
-        Move-Item -LiteralPath $handoff -Destination (Join-Path $Context.HandoffsDoneDir "$($Claim.Name).md") -Force
+        Move-Item -LiteralPath $handoff -Destination (Get-FlowFreeDestination $Context.HandoffsDoneDir $Claim.Name '.md')
     }
     return $Claim.Name
+}
+
+# done/ 里已有同名文件时加时间后缀，不覆盖旧记录。
+function Get-FlowFreeDestination {
+    [OutputType([string])]
+    param([string]$Dir, [string]$BaseName, [string]$Extension)
+    $candidate = Join-Path $Dir "$BaseName$Extension"
+    if (-not (Test-Path -LiteralPath $candidate)) { return $candidate }
+    return (Join-Path $Dir "$BaseName.$(Get-Date -Format 'yyyyMMdd-HHmmss')$Extension")
 }
 
 function Get-FlowClaimForBranch {
