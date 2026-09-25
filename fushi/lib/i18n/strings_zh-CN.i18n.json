@@ -2022,6 +2022,7 @@
   "game_lookup_samples_capture_replace": "替换当前样本",
   "game_lookup_samples_capture_source": "当前没有可采集的台词。请确认游戏已附着，且正文文本正在正常获取。",
   "game_lookup_samples_capture_surface_mapping": "游戏窗口与超分画面的位置暂时无法对应，无法采集校准截图。",
+  "game_lookup_samples_capture_surface_not_ready": "查词层正在切换状态，暂时不能采集。请等一两秒再试；如果一直失败，请重新附着游戏。",
   "game_lookup_samples_capture_unavailable": "未能采集这个窗口。已保存的校准不受影响；采集失败原因已记录到日志，便于排查。",
   "game_lookup_samples_capture_unsupported": "当前文本包含暂不支持的注音格式，请换一条普通台词采集。",
   "game_lookup_samples_capture_window": "未能取得完整的游戏画面。请确认游戏窗口未最小化，再采集一次。",

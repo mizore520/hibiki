@@ -2044,6 +2044,7 @@ class _StringsKo extends _StringsEn {
 	@override String get game_lookup_samples_capture_replace => 'Replace current sample';
 	@override String get game_lookup_samples_capture_source => 'There is no dialogue available to capture. Confirm that the game is attached and dialogue text is being received.';
 	@override String get game_lookup_samples_capture_surface_mapping => 'The game window and the upscaled image cannot be aligned right now, so a calibration screenshot cannot be captured.';
+	@override String get game_lookup_samples_capture_surface_not_ready => 'The lookup layer is switching state and cannot capture right now. Wait a second or two and try again; if it keeps failing, reattach the game.';
 	@override String get game_lookup_samples_capture_unavailable => 'This window could not be captured. Your saved calibration is unchanged; the capture failure has been logged for diagnosis.';
 	@override String get game_lookup_samples_capture_unsupported => 'This text contains a ruby format that is not supported yet. Capture a normal dialogue line instead.';
 	@override String get game_lookup_samples_capture_window => 'Could not get the complete game image. Confirm that the game window is not minimized, then capture again.';
