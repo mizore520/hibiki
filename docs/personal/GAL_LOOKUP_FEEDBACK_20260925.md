@@ -1,6 +1,6 @@
 # 游戏内查词优化：本轮问题清单与交接
 
-更新：2026-09-25。当前阶段：第二轮统一修改完成并通过定向验证，第二个候选等待用户编译复测；未合入 `custom`，未推送。
+更新：2026-09-25。当前阶段：第三轮修改（第 12 条）完成并通过定向验证，第三个候选等待用户编译复测；第 13 条按用户决定暂缓。未合入 `custom`，未推送。
 
 ## 基线
 
@@ -30,26 +30,27 @@
 | 11 | 查词窗口里第一次点制卡失败（[BUG-2679](../bugs/BUG-2679-gal-first-mine-capture-refused.md)） | 既有问题（9-19、9-24 也出现过）：点制卡本身会让拦截进入短暂过渡状态，制卡截图只接受两种状态，撞上过渡状态就被拒。现在这两种过渡状态也允许截图，真实故障仍拒绝 | `8bea7d01a0` | 定向测试通过；未实机验证 |
 | 附 | Dart 比 native 晚约 1.5 s 记为可用 | Dart 收到 native 的「可见」事件后会立即更新状态；该日志行由另一条同步流程打印，时间偏晚，属于记录时机，不是查词闸门。新的 `(host)` 丢弃日志会在 Dart 真因状态拒绝点击时写出原因，复测可验证 | — | 判断为日志时机，待复测日志确认 |
 
-## 第二个候选 `0fb9519824` 复测反馈（收集中）
+## 第二个候选 `0fb9519824` 复测反馈（第三轮）
 
 | # | 现象 | 已核实 | 状态 |
 | --- | --- | --- | --- |
-| 12 | anemoi（SiglusEngine）在「自动」模式下采集，提示「查词层正在切换状态……请重新附着游戏」（截图 `8.webp`、`9.webp`） | 日志 13:56:17～13:56:25 三次 `calibration_sample failed category=surfaceNotReady … surfaceStatus=activeNative`：自动模式下这款游戏使用引擎原生字位置（`activeNative`），`canCaptureCalibrationSample` 不接受该状态，于是被归为 `surfaceNotReady`，套用了本轮新加的「正在切换状态」文案，是误导。用户此前在「仅校准层」模式下已成功采集和校准（档案 3 份）。这不是故障，而是第二轮新文案覆盖不全，以及复测说明没有区分引擎原生游戏。修改方向（倾向 1）：① `activeNative` 时也允许采集和应用，结果作为引擎位置不可用时的备用，窗口里说明这一点；② 或者不允许，但如实提示「由引擎提供字位置，无需校准；如需校准请切到仅校准层」。**用户选择方案 ①**：允许采集和应用，作为备用；用户确认切到「仅校准层」后能正常采集和校准 | 已定位，按方案 ① 待统一修改 |
-| 13 | ディメンション凸ラバース!!（Pal）里点制卡仍报 `the attached glyph surface is no longer current`，制卡不了（截图 `10.webp`） | 日志：14:49:26 校准采集进入 `captureSuppressed`；14:51:15、14:51:19 两次制卡失败；14:52:14 同样状态下成功。三次制卡前的 Dart 状态相同，都是 `suspended/low_level_mouse_arm_failed:singleton_owned_by_other_hwnd`，这个状态第二轮已经放行，所以拒绝来自 `acquireMiningCaptureLease` 的其他条件：`_activeCaptureLease != null`、`_sentSourceText != _latestSourceText`、`_activeVariant == null`、`!_attachedProviderClaimed`、`generation <= 0`，或 native `suspendForCapture` 返回失败后释放；这些条件都不写原因。最可疑的是校准采集的租约没有及时释放：`_releaseMiningCaptureLeaseOnce` 要先循环 `_pushText` 把最新台词送到查词层，Fushi 在前台（目标在后台）时，这一步可能要等状态变化才完成，期间 `_activeCaptureLease` 一直非空。旁证：14:51:47 新加的 host 日志记录 `dropped reason=status_suspended/state_event_layout_pending`，说明应用新档案后，变体切换也有一段未就绪期。修改方向：先给租约拒绝和释放写原因日志，再查清租约为何没释放、变体未就绪期是否影响截图，从根上修 | 已缩小范围，具体原因待日志确认；待统一修改 |
+| 12 | anemoi（SiglusEngine）在「自动」模式下采集，提示「查词层正在切换状态……请重新附着游戏」（截图 `8.webp`、`9.webp`） | 日志 13:56:17～13:56:25 三次 `calibration_sample failed category=surfaceNotReady … surfaceStatus=activeNative`：自动模式下这款游戏使用引擎原生字位置（`activeNative`），`canCaptureCalibrationSample` 不接受该状态，于是被归为 `surfaceNotReady`，套用了本轮新加的「正在切换状态」文案，是误导。用户此前在「仅校准层」模式下已成功采集和校准（档案 3 份）。这不是故障，而是第二轮新文案覆盖不全，以及复测说明没有区分引擎原生游戏。修改方向（倾向 1）：① `activeNative` 时也允许采集和应用，结果作为引擎位置不可用时的备用，窗口里说明这一点；② 或者不允许，但如实提示「由引擎提供字位置，无需校准；如需校准请切到仅校准层」。**用户选择方案 ①**：允许采集和应用，作为备用；用户确认切到「仅校准层」后能正常采集和校准。`3b43205060`：`activeNative` 时允许采集和应用，窗口加注备用说明（记在 [BUG-2677](../bugs/BUG-2677-gal-calibration-capture-refused-auto-mode.md)） | 已写代码，定向测试通过；未实机验证 |
+| 13 | ディメンション凸ラバース!!（Pal）里点制卡仍报 `the attached glyph surface is no longer current`，制卡不了（截图 `10.webp`） | 日志：14:49:26 校准采集进入 `captureSuppressed`；14:51:15、14:51:19 两次制卡失败；14:52:14 同样状态下成功。三次制卡前的 Dart 状态相同，都是 `suspended/low_level_mouse_arm_failed:singleton_owned_by_other_hwnd`，这个状态第二轮已经放行，所以拒绝来自 `acquireMiningCaptureLease` 的其他条件：`_activeCaptureLease != null`、`_sentSourceText != _latestSourceText`、`_activeVariant == null`、`!_attachedProviderClaimed`、`generation <= 0`，或 native `suspendForCapture` 返回失败后释放；这些条件都不写原因。最可疑的是校准采集的租约没有及时释放：`_releaseMiningCaptureLeaseOnce` 要先循环 `_pushText` 把最新台词送到查词层，Fushi 在前台（目标在后台）时，这一步可能要等状态变化才完成，期间 `_activeCaptureLease` 一直非空。旁证：14:51:47 新加的 host 日志记录 `dropped reason=status_suspended/state_event_layout_pending`，说明应用新档案后，变体切换也有一段未就绪期。修改方向：先给租约拒绝和释放写原因日志，再查清租约为何没释放、变体未就绪期是否影响截图，从根上修 | 已缩小范围，具体原因待日志确认。**用户决定本轮先不修**，登记为 [BUG-2680](../bugs/BUG-2680-gal-mine-lease-refused-after-calibration.md)；租约释放未完成的猜测已排除（校准采集成功，说明租约已释放） | 暂缓 |
 
 ## 验证证据
 
 - native（MSVC /W4 /WX）：`attached_text_surface_window.cpp`、`global_lookup_window.cpp`、`flutter_window.cpp` 编译通过；`attached_text_layout_test` 40 cases、glyph latch、bitmap bounds、mouse hook / overlayability / shield policy 源码守卫全部通过。
 - Dart：查词、校准、OCR、texthooker、Hook 会话、i18n 相关 1288 项中 1285 项通过（`.codex-test/lookup-round2-20260925-tests.log`）。失败的 3 项（`gal_attached_popup_placement_test`、`global_lookup_hotkey_guard_test` 的整句横幅用例、`texthooker_char_level_lookup_guard_test`）在基线 `custom@47396e2a2c` 上同样失败，与本轮无关。`bugs_per_file_guard_test` 报历史撞号 BUG-2257，也是既有问题。
+- 第三轮（`3b43205060`）：改动 Dart 文件静态分析无问题；查词、校准窗口、工作台、i18n 相关测试 1060 项中 1058 项通过，失败的 2 项即上面列出的基线既有失败。
 - 界面只有测试环境渲染截图（位于会话临时目录），不等于实机观感。
-- 两轮都没有做独立审查：用户此前要求不再使用子代理。点击拦截时序、Dart↔native 档案字段、截图租约条件都属于第 7 节要求审查的范围，合入前需要用户决定是否补审查。
+- 三轮都没有做独立审查：用户此前要求不再使用子代理。点击拦截时序、Dart↔native 档案字段、截图租约条件都属于第 7 节要求审查的范围，合入前需要用户决定是否补审查。
 
-## 复测清单（第二个候选）
+## 复测清单（第三个候选）
 
 1. 点击：在一句台词里连续点不同的字，点完关窗马上再点；看是否每次都弹。
 2. 快速翻页：连续快速翻页，看新台词的高亮是否马上出现。
-3. 制卡：在查词窗口里直接点制卡，看第一次是否成功。
-4. 校准：模式保持「自动」，打开对话校准并采集，应能正常采集并应用。
+3. 制卡：在查词窗口里直接点制卡（刚校准完的情况属于暂缓的 BUG-2680，可先绕开）。
+4. 校准：模式保持「自动」，在リトルバスターズ（校准层）和 anemoi（引擎位置，会显示「备用」说明）里都采集并应用一次。
 5. 格宽：在手动微调里试滑条和 − / + 按钮；拉到最大再拉回原值，蓝框应回到原位。
 6. 文案：浏览校准窗口里的提示，看是否好懂。
 7. 自带换行的游戏（如超时空恋人）：用两行、靠 Hook 换行的截图重新校准，看长句和三行以上的台词能否对上。
