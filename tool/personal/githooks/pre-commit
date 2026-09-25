@@ -8,10 +8,15 @@
 
 hook_dir=$(dirname "$0")
 if [ ! -f "$hook_dir/fushi-lib.sh" ]; then
-  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is missing; run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
+  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is missing; in the main checkout run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
   exit 1
 fi
 . "$hook_dir/fushi-lib.sh"
+# lib 被截断或清空时函数不存在，不能继续执行（否则所有检查都会静默放行）。
+command -v fushi_block_need_approval >/dev/null 2>&1 || {
+  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is incomplete; in the main checkout run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
+  exit 1
+}
 
 max_bytes=10485760
 empty_tree=$(git hash-object -t tree /dev/null)

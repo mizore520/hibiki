@@ -334,6 +334,10 @@ try {
     Move-Item -LiteralPath $libPath -Destination "$libPath.moved"
     Assert-Blocked '缺少 fushi-lib.sh 时明确拦下并提示重装' (Invoke-TestGit $work @('commit', '-q', '--allow-empty', '-m', 'no lib'))
     Move-Item -LiteralPath "$libPath.moved" -Destination $libPath
+    Copy-Item -LiteralPath $libPath -Destination "$libPath.full"
+    [System.IO.File]::WriteAllText($libPath, '')
+    Assert-Blocked 'fushi-lib.sh 被清空时明确拦下，不静默放行' (Invoke-TestGit $work @('commit', '-q', '--allow-empty', '-m', 'empty lib'))
+    Move-Item -LiteralPath "$libPath.full" -Destination $libPath -Force
     Invoke-SetupGit $work @('checkout', '-q', 'custom') | Out-Null
 
     Write-Host 'check-hooks 发现钩子被改动'

@@ -145,7 +145,7 @@ P1 实施调整：清单的唯一来源改为 `tool/personal/githooks/personal-p
 P1 实施调整：
 
 - **Claude 禁止规则放到用户级 `~/.claude/settings.json`。** `.claude/settings.local.json` 不会进 git，新建的 worktree 里没有这个文件，而 worktree 里的会话读不到主 checkout 的本地设置。
-- **Codex 不加规则。** Codex 的 `prefix_rule` 只能按命令开头匹配，而 Codex 通常用 `pwsh -Command "..."` 包一层来执行命令，这种规则基本匹配不上，加了反而给人“有保护”的错觉。Codex 这边依靠三点：`--no-verify` 跳不过的 G1、G2，GitHub 分支保护，以及入口文件里的禁止条款。剩下的缺口是：Codex 如果用 `--no-verify` 推送，可以跳过“推送需同意”和“PR 个人内容检查”；强推和删除远端 `custom` 仍会被服务器拒绝。
+- **Codex 不加规则。** Codex 的 `prefix_rule` 只能按命令开头匹配，而 Codex 通常用 `pwsh -Command "..."` 包一层来执行命令，这种规则基本匹配不上，加了反而给人“有保护”的错觉。Codex 这边依靠三点：`--no-verify` 跳不过的 G1、G2，GitHub 分支保护，以及入口文件里的禁止条款。剩下的缺口是：Codex 如果用 `--no-verify` 推送，可以跳过“推送需同意”和“PR 个人内容检查”；强推和删除远端 `custom` 仍会被服务器拒绝。Claude 在用户粘贴禁止规则之前也有同样的缺口。
 
 ## 5. 第 2 层：场景手册（`WORKFLOWS.md` 的目录）
 

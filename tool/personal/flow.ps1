@@ -131,7 +131,10 @@ function Install-FushiHooks {
             Copy-Item -LiteralPath $target -Destination $backup -Force
             Write-Warning "已有非 Fushi 的 $($entry.Value)，已备份到 $backup，请人工确认是否需要合并。"
         }
-        [System.IO.File]::WriteAllText($target, (Get-NormalizedText $source), $script:Utf8NoBom)
+        # 先写临时文件再整体替换：其他 worktree 此刻运行的钩子不会读到半截文件。
+        $staging = "$target.fushi-new"
+        [System.IO.File]::WriteAllText($staging, (Get-NormalizedText $source), $script:Utf8NoBom)
+        Move-Item -LiteralPath $staging -Destination $target -Force
     }
 
     $stamp = Get-SourceStamp
