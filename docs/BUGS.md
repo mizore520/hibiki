@@ -29,10 +29,13 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2487 条。点号进各自文件。
+> 共 2490 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2676](bugs/BUG-2676-gal-lookup-hook-linebreak-width.md) | ✅ | ✅ | 自带换行的游戏长句超出校准宽度后对不上 |
+| [BUG-2675](bugs/BUG-2675-gal-lookup-hidden-after-fast-advance.md) | ✅ | 🚧 | 快速翻页后新台词暂时没有内嵌查词 |
+| [BUG-2674](bugs/BUG-2674-gal-lookup-click-after-popup-ignored.md) | ✅ | 🚧 | 关闭查词窗口后点击台词时灵时不灵 |
 | [BUG-2673](bugs/BUG-2673-gal-calibration-alignment-uncertain.md) | 🚧 | 🚧 | 多行台词可见但校准框无法可靠对齐字形 |
 | [BUG-2672](bugs/BUG-2672-gal-calibration-unmeasurable-glyph.md) | 🚧 | 🚧 | 特殊字符宽度无法自动验证而被要求手动排版 |
 | [BUG-2671](bugs/BUG-2671-gal-cross-game-calibration-unrecognized.md) | 🚧 | 🚧 | 换游戏后截图校准找不到正文行，无底色兼容性待验证 |
@@ -131,10 +134,10 @@
 | [BUG-2549](bugs/BUG-2549-english-phrasal-verb-deinflection.md) | ✅ | ✅ | 英语短语动词的变形查不到原形（gave up / picked it up 还原不到 give up / pick up） |
 | [BUG-2548](bugs/BUG-2548-windows-launcher-untracked-unicode-path.md) | ✅ | ✅ | 启动器遇到未跟踪中文路径时无法计算源码状态 |
 | [BUG-2548](bugs/BUG-2548-collection-detail-drops-remote-members.md) | ✅ | ✅ | 合集详情页丢掉全部远端成员：行头 N 项、点进去只剩本地几本 |
-| [BUG-2547](bugs/BUG-2547-gal-attached-popup-coordinate-space.md) | ✅ | ✅ | 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡 |
 | [BUG-2547](bugs/BUG-2547-shelf-remote-sort-ignored.md) | ✅ | ✅ | 书架排序忽略远端占位卡：host 下发的时刻不用、恒沉底 |
-| [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
+| [BUG-2547](bugs/BUG-2547-gal-attached-popup-coordinate-space.md) | ✅ | ✅ | 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡 |
 | [BUG-2546](bugs/BUG-2546-dict-script-window-scope.md) | ✅ | ✅ | 词典自带脚本第二次查词后失效：折叠字段点不开 |
+| [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
 | [BUG-2545](bugs/BUG-2545-toc-current-chapter-unmarked.md) | ✅ | ✅ | 阅读器导航「章节列表」不标当前章节 |
 | [BUG-2545](bugs/BUG-2545-gal-attach-overlapping-stop.md) | ✅ | ✅ | 停止监听与重新附着重叠时旧清理覆盖新会话 |
 | [BUG-2544](bugs/BUG-2544-video-background-pause-no-resume.md) | ✅ | ✅ | 视频切到后台被暂停后回前台不自动续播 |
@@ -143,8 +146,8 @@
 | [BUG-2543](bugs/BUG-2543-english-posless-yomitan-deinflection.md) | ✅ | ✅ | 英语无词性 Yomitan 词典的变形还原全部失效，且不规则形无还原规则 |
 | [BUG-2542](bugs/BUG-2542-mobile-clip-export-silent-hang.md) | ✅ | ✅ | 手机端片段导出点了没反应：ffmpeg-kit 无界 await 挂死 + 分享被静默丢弃后仍报成功 |
 | [BUG-2542](bugs/BUG-2542-gal-cross-game-calibration-still-not-general.md) | 🚧 | ✅ | 换游戏后自动校准兼容性仍不足，需要逐游戏适配 |
-| [BUG-2541](bugs/BUG-2541-gal-magpie-upscaler-breaks-calibration.md) | ✅ | ✅ | Magpie 超分导致校准采集与已校准内嵌查词失效 |
 | [BUG-2541](bugs/BUG-2541-ass-outline-per-char-overlap.md) | ✅ | ✅ | ASS 描边逐字叠画啃进相邻字填充、细描边被夹下限（字重随窗口变） |
+| [BUG-2541](bugs/BUG-2541-gal-magpie-upscaler-breaks-calibration.md) | ✅ | ✅ | Magpie 超分导致校准采集与已校准内嵌查词失效 |
 | [BUG-2540](bugs/BUG-2540-ass-fax-shear-overwrites-rotation.md) | ✅ | ✅ | ASS \fax 切变覆盖 \frz 旋转矩阵项（招牌歪斜） |
 | [BUG-2539](bugs/BUG-2539-ass-layer-zorder.md) | ✅ | ✅ | ASS Layer 不参与绘制 z 序（招牌盖住对白） |
 | [BUG-2538](bugs/BUG-2538-ass-drawing-dropped.md) | ✅ | ✅ | ASS \p 矢量绘图被整条丢弃（招牌白底遮罩不画） |
@@ -371,8 +374,8 @@
 | [BUG-2274](bugs/BUG-2274-cloud-book-title-double-sanitize.md) | ✅ | ✅ | 云盘远端书标题未反解：书架去重二次 sanitize 成 %253A，本地已有的书仍显示为远端待下载 |
 | [BUG-2273](bugs/BUG-2273-mihon-timeout-kills-other-requests.md) | ✅ | ✅ | 单个漫画源超时重启共享桥接并中断其它请求 |
 | [BUG-2272](bugs/BUG-2272-outbound-proxy-native-images.md) | ✅ | ✅ | 公网图片及原生网络链路未继承应用代理 |
-| [BUG-2270](bugs/BUG-2270-windows-close-black-screen.md) | ✅ | ✅ | Windows关闭时主窗口黑屏延迟 |
 | [BUG-2270](bugs/BUG-2270-sidecar-ownership-record-failed-opaque.md) | ✅ | 🚧 | 刮削 sidecar 报「文件已写入，但所有权记录失败」但不给出真实异常，Cover Song Collection 三条无法定位根因 |
+| [BUG-2270](bugs/BUG-2270-windows-close-black-screen.md) | ✅ | ✅ | Windows关闭时主窗口黑屏延迟 |
 | [BUG-2269](bugs/BUG-2269-candidate-windows-runtime-gate.md) | ✅ | ✅ | Windows 候选包可绕过完整运行组件组装与验证 |
 | [BUG-2269](bugs/BUG-2269-ankiconnect-multi-subaction-key.md) | ✅ | ✅ | AnkiConnect multi 子 action 缺 key：配置 apiKey 时所有批量写被整批拒绝 |
 | [BUG-2268](bugs/BUG-2268-windows-aot-stack-overflow-on-slang-flat-map.md) | ✅ | ✅ | Windows AOT 编译 Slang 巨型动态映射时栈溢出 |
