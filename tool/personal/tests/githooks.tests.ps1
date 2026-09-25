@@ -84,6 +84,31 @@ function Assert-Allowed {
     Write-Host "  [失败] 应放行：$Name" -ForegroundColor Red
 }
 
+# 退出码为 0 还不够：gc 之类会在内部步骤被拦后仍返回 0，需要确认输出里没有拦截。
+function Assert-AllowedClean {
+    [OutputType([void])]
+    param([string]$Name, [pscustomobject]$Result)
+    if ($Result.Code -eq 0 -and $Result.Output -notmatch 'FUSHI GUARD') {
+        $script:PassedCount++
+        Write-Host "  [通过] 放行：$Name"
+        return
+    }
+    $script:Failures.Add("应无拦截地放行：$Name（退出码 $($Result.Code)）`n$($Result.Output)")
+    Write-Host "  [失败] 应放行：$Name" -ForegroundColor Red
+}
+
+function Assert-True {
+    [OutputType([void])]
+    param([string]$Name, [bool]$Condition, [string]$Detail = '')
+    if ($Condition) {
+        $script:PassedCount++
+        Write-Host "  [通过] $Name"
+        return
+    }
+    $script:Failures.Add("$Name`n$Detail")
+    Write-Host "  [失败] $Name" -ForegroundColor Red
+}
+
 function Write-TestFile {
     [OutputType([void])]
     param([string]$Dir, [string]$RelativePath, [string]$Content = 'x')
@@ -141,6 +166,8 @@ try {
     }
     Invoke-SetupGit $work @('update-ref', 'refs/heads/custom', $parent) | Out-Null
     Invoke-SetupGit $work @('remote', 'add', 'origin', $origin) | Out-Null
+    # 与真实仓库一致：origin 只抓 custom，install-hooks 负责补上 codex/*、pr/*。
+    Invoke-SetupGit $work @('config', 'remote.origin.fetch', '+refs/heads/custom:refs/remotes/origin/custom') | Out-Null
     Invoke-SetupGit $work @('push', '-q', 'origin', 'custom') | Out-Null
     Invoke-SetupGit $work @('fetch', '-q', 'upstream') | Out-Null
     Invoke-SetupGit $work @('fetch', '-q', 'origin') | Out-Null
@@ -261,8 +288,55 @@ try {
     Invoke-SetupGit $work @('rm', '-q', '--cached', '.codex-test/merge.log') | Out-Null
     Assert-Allowed '合并作者带大文件的更新（adopt）' (Invoke-TestGit $work @('commit', '-q', '--no-edit') -Approve 'adopt')
 
-    Write-Host 'check-hooks 发现钩子被改动'
+    Write-Host '日常操作不应被误拦'
+    Assert-AllowedClean '在 custom 上分离 HEAD' (Invoke-TestGit $work @('checkout', '-q', '--detach', 'HEAD~1'))
+    Invoke-SetupGit $work @('checkout', '-q', 'custom') | Out-Null
+    $detachedTree = Join-Path $script:Root 'wt-detached'
+    Assert-AllowedClean '主 checkout 在 custom 时新建分离 HEAD 的 worktree' (Invoke-TestGit $work @('worktree', 'add', '-q', '--detach', $detachedTree, 'HEAD~1'))
+    Invoke-SetupGit $work @('worktree', 'remove', '--force', $detachedTree) | Out-Null
+    Invoke-SetupGit $work @('branch', 'codex/packed-unmerged', 'custom') | Out-Null
+    Invoke-SetupGit $work @('checkout', '-q', 'codex/packed-unmerged') | Out-Null
+    Invoke-SetupGit $work @('commit', '-q', '--allow-empty', '-m', 'packed wip') | Out-Null
+    Invoke-SetupGit $work @('checkout', '-q', 'custom') | Out-Null
+    Assert-AllowedClean 'git pack-refs --all' (Invoke-TestGit $work @('pack-refs', '--all'))
+    Assert-AllowedClean 'git gc' (Invoke-TestGit $work @('gc', '-q'))
+    Assert-Blocked '打包后删除 custom（即使 adopt）' (Invoke-TestGit $work @('update-ref', '-d', 'refs/heads/custom') -Approve 'adopt')
+    Assert-Blocked '打包后删除未合入分支（无标记）' (Invoke-TestGit $work @('branch', '-D', 'codex/packed-unmerged'))
+    Assert-Blocked '改名未合入分支（按删除处理，无标记）' (Invoke-TestGit $work @('branch', '-m', 'codex/packed-unmerged', 'codex/renamed'))
+    Assert-Allowed '打包后删除未合入分支（cleanup）' (Invoke-TestGit $work @('branch', '-D', 'codex/packed-unmerged') -Approve 'cleanup')
+
+    Write-Host '审查补充：绕过与恢复'
+    Invoke-SetupGit $work @('branch', 'codex/sym-target', 'custom') | Out-Null
+    Assert-Blocked '把 custom 改成符号引用' (Invoke-TestGit $work @('symbolic-ref', 'refs/heads/custom', 'refs/heads/codex/sym-target'))
+    Invoke-SetupGit $work @('checkout', '-q', '-b', 'codex/ff') | Out-Null
+    Write-TestFile $work 'ff.txt' "ff`n"
+    Invoke-SetupGit $work @('add', 'ff.txt') | Out-Null
+    Invoke-SetupGit $work @('commit', '-q', '-m', 'ff') | Out-Null
+    Invoke-SetupGit $work @('checkout', '-q', 'custom') | Out-Null
+    Assert-Blocked '快进合并进 custom（无标记）' (Invoke-TestGit $work @('merge', '-q', '--ff-only', 'codex/ff'))
+    Invoke-SetupGit $work @('reset', '-q', '--merge', 'HEAD') | Out-Null
+    # 只看已跟踪文件：前面用例留下的未跟踪证据文件与本项无关。
+    $status = Invoke-SetupGit $work @('status', '--porcelain', '--untracked-files=no')
+    $restored = [string]::IsNullOrWhiteSpace($status) -and -not (Test-Path -LiteralPath (Join-Path $work 'ff.txt'))
+    Assert-True '被拦的快进合并可用 reset --merge HEAD 恢复干净' $restored $status
+    $authorBare = Join-Path $script:Root 'HajiSensai\hibiki.git'
+    Invoke-SetupGit $script:Root @('init', '-q', '--bare', $authorBare) | Out-Null
+    Invoke-SetupGit $work @('remote', 'add', 'author', $authorBare) | Out-Null
+    Assert-Blocked '推送到大小写不同、名字不叫 upstream 的作者仓库（push）' (Invoke-TestGit $work @('push', '-q', 'author', 'codex/ff') -Approve 'push')
+
+    Write-Host '安装与自检'
     $hooksDir = Join-Path $work '.git\hooks'
+    & pwsh -NoProfile -File $script:Flow install-hooks -Repo $work | Out-Null
+    $backups = @(Get-ChildItem -LiteralPath $hooksDir -Filter '*.pre-fushi.bak')
+    Assert-True '重复 install-hooks 不产生备份文件' ($backups.Count -eq 0) (($backups | ForEach-Object { $_.Name }) -join ', ')
+    $libPath = Join-Path $hooksDir 'fushi-lib.sh'
+    Invoke-SetupGit $work @('checkout', '-q', 'codex/ff') | Out-Null
+    Move-Item -LiteralPath $libPath -Destination "$libPath.moved"
+    Assert-Blocked '缺少 fushi-lib.sh 时明确拦下并提示重装' (Invoke-TestGit $work @('commit', '-q', '--allow-empty', '-m', 'no lib'))
+    Move-Item -LiteralPath "$libPath.moved" -Destination $libPath
+    Invoke-SetupGit $work @('checkout', '-q', 'custom') | Out-Null
+
+    Write-Host 'check-hooks 发现钩子被改动'
     Add-Content -LiteralPath (Join-Path $hooksDir 'pre-push') -Value 'exit 0'
     & pwsh -NoProfile -File $script:Flow check-hooks -Repo $work | Out-Null
     if ($LASTEXITCODE -eq 1) {

@@ -7,6 +7,10 @@
 # 确需提交大文件或素材时，用户同意后加 FUSHI_APPROVE=asset。
 
 hook_dir=$(dirname "$0")
+if [ ! -f "$hook_dir/fushi-lib.sh" ]; then
+  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is missing; run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
+  exit 1
+fi
 . "$hook_dir/fushi-lib.sh"
 
 max_bytes=10485760
@@ -18,7 +22,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 raw="$tmp_dir/raw"
 paths="$tmp_dir/paths"
 
-git -c core.quotepath=false diff --cached --raw --no-renames --abbrev=40 \
+git -c core.quotepath=false diff --cached --raw --no-renames --no-abbrev \
   --diff-filter=ACMR "$base" >"$raw"
 cut -f2- "$raw" >"$paths"
 
@@ -50,8 +54,9 @@ if ! fushi_approved asset; then
   asset_files=$(grep -iE '\.(ogg|opus|wav|flac|mp3|m4a|xp3|pak|ypf|pck|arc)$' "$paths")
   [ -n "$asset_files" ] && add_problem "音频或游戏封包类文件（用户同意后加 FUSHI_APPROVE=asset）：
 $asset_files"
-  # raw 行格式：":<旧模式> <新模式> <旧oid> <新oid> <状态>\t<路径>"
-  large_files=$(awk -F'\t' '{ split($1, f, " "); print f[4] " " $2 }' "$raw" |
+  # raw 行格式：":<旧模式> <新模式> <旧oid> <新oid> <状态>\t<路径>"；
+  # 跳过子模块指针（160000），它不是本仓库的 blob。
+  large_files=$(awk -F'\t' '{ split($1, f, " "); if (f[2] == "160000") next; print f[4] " " $2 }' "$raw" |
     git cat-file --batch-check='%(objectsize) %(rest)' |
     awk -v max="$max_bytes" '$1 > max { sub(/^[0-9]+ /, ""); print }' |
     grep -Fxf "$paths")

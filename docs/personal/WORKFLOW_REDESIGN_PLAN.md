@@ -105,7 +105,7 @@
 | G2 | `reference-transaction` | 删除 `refs/heads/codex/*`、`refs/heads/pr/*` 时，如果它的提交既没进 `custom`、也没进任何远端分支，需要 `FUSHI_APPROVE=cleanup` | 不能 |
 | G3 | `pre-push` | 推到 `upstream` 一律拒绝（与 push URL 双保险）；推到 `origin` 需要 `FUSHI_APPROVE=push`；`custom` 禁止强推和删除 | 能（见 4.4） |
 | G4 | `pre-push` | 推 `pr/*` 分支时：(a) `upstream/develop..分支` 超过 100 个提交就拒绝（说明是从 `custom` 拉出来的）；(b) 改动里出现个人路径就拒绝。`pr/*` 允许强推（带 `push` 标记） | 能（见 4.4） |
-| G5 | `pre-commit` | 暂存区不能包含：`.codex-test/`、`*.local.md`、skip-worktree 的密钥文件、超过 10MB 的文件、游戏素材类扩展名（校准样本目录除外，白名单在钩子里维护） | 能 |
+| G5 | `pre-commit` | 暂存区不能包含：`.codex-test/`、`*.local.md`、skip-worktree 的密钥文件、超过 10MB 的文件、游戏素材类扩展名（确需提交时用户同意后加 `asset`） | 能 |
 
 G4 的个人路径清单：`docs/personal/`、`tool/personal/`、`AGENTS.override.md`、启动 BAT、`tool/*windows_candidate*`、`.worktrees/`。
 
@@ -115,12 +115,23 @@ P1 实施调整：清单的唯一来源改为 `tool/personal/githooks/personal-p
 
 - 给作者的 PR 分支统一命名为 `pr/<主题>`，钩子靠这个前缀识别；
 - 候选分支仍然叫 `codex/<任务>`；
-- G1 覆盖 `git commit`、`merge`、`reset`、`branch -f`、`rebase` 等所有会移动 `custom` 的操作，比只拦 `pre-commit` 可靠。
+- G1 覆盖 `git commit`、`merge`、`reset`、`branch -f`、`rebase`、`update-ref` 等会移动 `custom` 的操作，比只拦 `pre-commit` 可靠。唯一已知例外是 `git branch -C/-M <源> custom`：git 写入新名字时不经过事务。不过 `custom` 常驻主 checkout 时 git 本身会拒绝覆盖，远端还有 GitHub 分支保护兜底。
+
+独立审查后的修正（P1）：
+
+- 只检查 `refs/heads/custom` 自身，不再把裸 `HEAD` 解析成 `custom`。原来的写法会把“在 `custom` 上分离 HEAD”（包括候选构建脚本 `worktree add --detach`）误判为改写历史。
+- `git gc`、`git pack-refs` 清理松散引用时上报的“删除”会被识别并放行，真删除仍然会拦。
+- 被拦后的恢复提示改为：先 `git status`，有进行中的操作就 `--abort`，否则 `git reset --merge HEAD`。
+- 真实仓库的 origin 只抓取 `custom`，`install-hooks` 会补上 `codex/*`、`pr/*` 的抓取规则，这样 G2 才能认出已推送的分支。
+- 作者仓库的识别改为不区分大小写，也能认出 Windows 反斜杠路径；pre-push 列不出改动文件时一律拦截，不会静默放行；钩子内禁止网络懒拉取，并跳过子模块指针；函数库缺失时，所有引用更新都会明确拦下并提示重新安装。
+- 改名未合入的分支（`branch -m`）会被当作删除，需要 `cleanup` 同意，或者先推送。
+- 性能：每次提交多 0.6–0.8 秒。rebase 会被明显放大，实测 40 个提交从 1.2 秒变成约 30 秒，主要花在每次启动 sh 上，精简脚本也省不掉。同步作者更新用 merge，不受影响。
+- 以前给作者的分支叫 `codex/...-upstream-...`，不在 G4 的检查范围内。今后一律用 `pr/*`；旧分支在 P4 清理。
 
 ### 4.3 安装与自检
 
 - `flow.ps1 install-hooks` 负责复制钩子，并写入版本戳；
-- `flow.ps1 status` 每次都检查钩子是否已安装、是否是最新版，缺失时在第一行报警；
+- P1 用 `flow.ps1 check-hooks` 检查钩子是否已安装、是否是最新版，以及 origin 的抓取规则是否齐全；P2 的 `status` 会把这项检查放在输出第一行；
 - 自测放在 `tool/personal/tests/`：在临时仓库里逐项模拟 G1–G5 的放行和拒绝场景，不碰真仓库。
 
 ### 4.4 补上“能被绕过”的缺口

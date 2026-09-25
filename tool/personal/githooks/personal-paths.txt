@@ -1,4 +1,4 @@
-# 给作者的 PR（pr/* 分支）里不得出现的个人专属路径，由 pre-push 钩子（G4）检查。
+# Fushi 个人护栏：给作者的 PR（pr/* 分支）里不得出现的个人专属路径，由 pre-push 钩子（G4）检查。
 # 以 / 结尾表示目录前缀，其余为精确路径（相对仓库根）。
 # 确需把其中某项提给作者时，先取得用户明确同意，再用 FUSHI_APPROVE=push,pr-personal 推送。
 # 修改本文件后运行 tool/personal/flow.ps1 install-hooks 才会生效。

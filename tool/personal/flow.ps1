@@ -95,6 +95,26 @@ function Assert-NoHooksPathOverride {
     }
 }
 
+# G2 靠远端跟踪分支判断“已推送”。个人仓库的 origin 默认只抓 custom，推送
+# codex/*、pr/* 时不会留下 refs/remotes/origin/...，所以补上这两类抓取规则。
+function Get-MissingOriginRefspecs {
+    [OutputType([string[]])]
+    param([string]$RepoPath)
+    $remotes = @(git -C $RepoPath remote)
+    if ($remotes -notcontains 'origin') {
+        return @()
+    }
+    $existing = @(git -C $RepoPath config --get-all remote.origin.fetch)
+    if ($existing -contains '+refs/heads/*:refs/remotes/origin/*') {
+        return @()
+    }
+    $wanted = @(
+        '+refs/heads/codex/*:refs/remotes/origin/codex/*'
+        '+refs/heads/pr/*:refs/remotes/origin/pr/*'
+    )
+    return @($wanted | Where-Object { $existing -notcontains $_ })
+}
+
 function Install-FushiHooks {
     [OutputType([void])]
     param([string]$RepoPath)
@@ -117,6 +137,11 @@ function Install-FushiHooks {
     $stamp = Get-SourceStamp
     [System.IO.File]::WriteAllText((Join-Path $hooksDir $script:StampFileName), "$stamp`n", $script:Utf8NoBom)
     Write-Output "已安装 Fushi 护栏钩子到 $hooksDir（版本 $($stamp.Substring(0, 12))）。"
+
+    foreach ($spec in (Get-MissingOriginRefspecs $RepoPath)) {
+        git -C $RepoPath config --add remote.origin.fetch $spec
+        Write-Output "已为 origin 添加抓取规则 $spec（护栏据此识别已推送的分支）。"
+    }
 }
 
 function Get-FushiHookProblems {
@@ -135,6 +160,9 @@ function Get-FushiHookProblems {
     }
     if ($problems.Count -eq 0 -and (Get-InstalledStamp $hooksDir) -ne (Get-SourceStamp)) {
         $problems.Add('已安装的钩子与当前源码不一致（源码更新过或已安装副本被改动）。')
+    }
+    foreach ($spec in (Get-MissingOriginRefspecs $RepoPath)) {
+        $problems.Add("origin 缺少抓取规则 $spec，删除已推送分支时会被误拦。")
     }
     return $problems.ToArray()
 }

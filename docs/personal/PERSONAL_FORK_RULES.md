@@ -67,12 +67,13 @@ git 钩子（源码 `tool/personal/githooks/`，用 `tool/personal/flow.ps1 inst
 | --- | --- | --- |
 | 在 `custom` 上产生新提交（合入、回滚、解冲突） | `FUSHI_APPROVE=adopt` | 改写历史（reset / rebase / amend / 强推）、删除 `custom` |
 | 推送到 `origin` 的任意分支 | `FUSHI_APPROVE=push` | 推到作者仓库；强推或删除远端 `custom` |
-| 删除既未合入 `custom`、也不在任何远端的 `codex/*`、`pr/*` 分支 | `FUSHI_APPROVE=cleanup` | — |
+| 删除或改名既未合入 `custom`、也不在本地已知远端跟踪分支上的 `codex/*`、`pr/*` 分支 | `FUSHI_APPROVE=cleanup` | — |
 | `pr/*` 含 [个人专属路径](../../tool/personal/githooks/personal-paths.txt) | `FUSHI_APPROVE=push,pr-personal` | `pr/*` 比 `upstream/develop` 多 100 个以上提交（说明是从 `custom` 拉出） |
 | 提交超过 10MB 的文件、音频或游戏封包 | `FUSHI_APPROVE=asset` | `.codex-test/`、`.worktrees/`、`*.local.md`、skip-worktree 密钥 |
 
 - 同意只来自用户在聊天里的明确表态；一次同意只用于一次操作，标记只加在那条命令上。
-- 被拦时照提示处理；被拦的 merge / cherry-pick / revert 先 `--abort`。禁止用 `--no-verify`、`-c core.hooksPath=`、修改或删除钩子绕过。
+- 被拦时照提示处理：先 `git status`，有进行中的 merge / cherry-pick / revert 就用对应的 `--abort`，否则 `git reset --merge HEAD` 撤掉已带进工作区的改动。禁止用 `--no-verify`、`-c core.hooksPath=`、修改或删除钩子绕过。
+- 钩子会让每次提交多约 1 秒，长 rebase 会明显变慢；这是预期代价，不要为提速去掉钩子。
 - 改钩子源码后重新 `install-hooks`；`flow.ps1 check-hooks` 检查是否已安装且与源码一致，`tool/personal/tests/githooks.tests.ps1` 在临时仓库里自测。
 
 ## 7. 保护已有成果

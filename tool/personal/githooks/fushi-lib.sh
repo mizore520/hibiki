@@ -4,6 +4,11 @@
 # 同意标记：用户在聊天里明确同意某个动作后，agent 在执行该命令时设置
 # FUSHI_APPROVE=<动作>（可用逗号组合，例如 push,pr-personal）。每次同意只用于一次操作。
 
+# 真实仓库对 upstream 是 blob:none 部分克隆；钩子里的检查不允许触发网络懒拉取，
+# 缺对象时让命令失败，由调用处按失败处理。
+GIT_NO_LAZY_FETCH=1
+export GIT_NO_LAZY_FETCH
+
 fushi_is_zero_oid() {
   case "$1" in
     *[!0]*) return 1 ;;

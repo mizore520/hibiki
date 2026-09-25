@@ -2,10 +2,15 @@
 # Fushi 个人护栏 G1/G2（reference-transaction，--no-verify 不能跳过）。
 # 由 tool/personal/flow.ps1 install-hooks 安装；源码在 tool/personal/githooks/。
 #
-# G1 refs/heads/custom：任何移动都需要 FUSHI_APPROVE=adopt；非快进（改写历史）
-#    和删除一律拒绝，带标记也不行。
+# G1 refs/heads/custom：任何移动都需要 FUSHI_APPROVE=adopt；非快进（改写历史）、
+#    删除、改成符号引用一律拒绝，带标记也不行。
 # G2 refs/heads/codex/*、refs/heads/pr/*：删除时如果提交既不在 custom 也不在
-#    任何远端跟踪分支上，需要 FUSHI_APPROVE=cleanup。
+#    本地已知的远端跟踪分支上，需要 FUSHI_APPROVE=cleanup。
+#
+# 只看 refs/heads/custom 自身：普通提交经符号引用写入时，事务里出现的就是
+# refs/heads/custom；以裸 HEAD 出现的只有“分离 HEAD”一类操作，与 custom 无关。
+# 已知例外：git branch -C/-M 写入新名字时不经过事务，靠 custom 常驻主 checkout
+# （git 拒绝覆盖已检出分支）和 GitHub 分支保护兜底。
 
 if [ "$1" != "prepared" ]; then
   cat >/dev/null
@@ -13,7 +18,23 @@ if [ "$1" != "prepared" ]; then
 fi
 
 hook_dir=$(dirname "$0")
+if [ ! -f "$hook_dir/fushi-lib.sh" ]; then
+  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is missing; run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
+  exit 1
+fi
 . "$hook_dir/fushi-lib.sh"
+
+common_dir=$(git rev-parse --git-common-dir)
+
+recovery_hint="先运行 git status：有进行中的 merge / cherry-pick / revert 就用对应的 --abort；否则用 git reset --merge HEAD 撤掉被拦操作已带进工作区的改动。"
+
+# git pack-refs / gc 清理松散引用时，会把“同值已写入 packed-refs”的松散副本
+# 作为删除上报。真删除一定持有 packed-refs.lock；清理阶段没有这个锁。
+# 依赖 files 后端的行为，改用 reftable 时需重新验证。
+is_loose_ref_prune() {
+  [ ! -e "$common_dir/packed-refs.lock" ] &&
+    grep -qxF "$1 $2" "$common_dir/packed-refs" 2>/dev/null
+}
 
 check_custom() {
   new=$1
@@ -25,17 +46,18 @@ check_custom() {
   fi
   [ "$current" = "$new" ] && return 0
   if [ -n "$current" ] && ! git merge-base --is-ancestor "$current" "$new" 2>/dev/null; then
-    fushi_block "rewriting custom history (non-fast-forward) is forbidden, even with approval." \
+    fushi_block "rewriting custom history (non-fast-forward) is forbidden, even with approval. Recover with git status, then --abort or git reset --merge HEAD." \
       "禁止改写 custom 历史。" \
       "这次更新不是快进（reset / rebase / branch -f / amend 等）。" \
-      "要撤销已合入的改动，从 custom 建分支用 git revert，再按采用流程合入。"
+      "要撤销已合入的改动，从 custom 建分支用 git revert，再按采用流程合入。" \
+      "$recovery_hint"
   fi
   if ! fushi_approved adopt; then
     fushi_block_need_approval adopt \
-      "updating custom requires user consent (FUSHI_APPROVE=adopt). If a merge/cherry-pick/revert was blocked, run its --abort first." \
+      "updating custom requires user consent (FUSHI_APPROVE=adopt). Recover first: git status, then --abort or git reset --merge HEAD." \
       "在 custom 上产生新提交需要用户同意。" \
       "合入 custom 前要向用户出示差异摘要并取得明确同意。" \
-      "被拦的是 merge / cherry-pick / revert 时，先用对应的 --abort 回到干净状态再重试。"
+      "$recovery_hint"
   fi
 }
 
@@ -51,18 +73,25 @@ check_branch_delete() {
   fi
   fushi_approved cleanup && return 0
   fushi_block_need_approval cleanup \
-    "deleting ${ref#refs/heads/} would lose commits not in custom or any remote (FUSHI_APPROVE=cleanup)." \
-    "删除分支 ${ref#refs/heads/} 会丢失未合入的提交。" \
-    "该分支的提交既不在 custom，也不在任何远端分支上。" \
+    "deleting or renaming ${ref#refs/heads/} would drop commits not in custom or any known remote-tracking branch (FUSHI_APPROVE=cleanup)." \
+    "删除（或改名）分支 ${ref#refs/heads/} 会丢掉未合入的提交。" \
+    "该分支的提交既不在 custom，也不在本地已知的远端跟踪分支上（先 git fetch origin 可刷新）。" \
     "向用户列出这些提交（git log custom..${ref#refs/heads/}），确认可以丢弃后再删除。"
 }
 
 while read -r old new ref; do
   case "$old$new" in
-    *ref:*) continue ;; # 符号引用切换（checkout 等），不涉及提交
+    *ref:*)
+      # 符号引用的切换（checkout 等）不涉及提交；但 custom 本身不能变成符号引用。
+      if [ "$ref" = "refs/heads/custom" ]; then
+        fushi_block "custom must stay a plain branch, not a symbolic ref." \
+          "custom 不能变成符号引用。"
+      fi
+      continue
+      ;;
   esac
-  if [ "$ref" = "HEAD" ]; then
-    ref=$(git symbolic-ref -q HEAD 2>/dev/null) || continue
+  if fushi_is_zero_oid "$new" && ! fushi_is_zero_oid "$old" && is_loose_ref_prune "$old" "$ref"; then
+    continue
   fi
   case "$ref" in
     refs/heads/custom)

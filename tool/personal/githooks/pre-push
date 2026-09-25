@@ -11,18 +11,29 @@ remote_name=$1
 remote_url=$2
 
 hook_dir=$(dirname "$0")
+if [ ! -f "$hook_dir/fushi-lib.sh" ]; then
+  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is missing; run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
+  exit 1
+fi
 . "$hook_dir/fushi-lib.sh"
 
 personal_paths_file="$hook_dir/fushi-personal-paths.txt"
 pr_max_commits=100
 
-case "$remote_name $remote_url" in
-  upstream\ * | *hajisensai/*)
-    fushi_block "pushing to the author's repository ($remote_name) is forbidden." \
-      "禁止推送到作者仓库。" \
-      "给作者的改动只能推到 origin 的 pr/* 分支，再开 PR。"
-    ;;
+# GitHub 的 URL 不区分大小写；也覆盖直接按 URL 推送、远端改名、Windows 反斜杠路径。
+remote_url_lc=$(printf '%s' "$remote_url" | tr '[:upper:]' '[:lower:]' | tr '\\' '/')
+case "$remote_name" in
+  upstream) author_remote=1 ;;
+  *) author_remote=0 ;;
 esac
+case "$remote_url_lc" in
+  *hajisensai/*) author_remote=1 ;;
+esac
+if [ "$author_remote" = 1 ]; then
+  fushi_block "pushing to the author's repository ($remote_name) is forbidden." \
+    "禁止推送到作者仓库。" \
+    "给作者的改动只能推到 origin 的 pr/* 分支，再开 PR。"
+fi
 
 updates=$(cat)
 [ -n "$updates" ] || exit 0
@@ -64,7 +75,9 @@ check_pr_push() {
       "找不到 upstream/develop，无法检查 PR 分支。" \
       "先运行 git fetch upstream。"
   fi
-  count=$(git rev-list --count "$base..$local_oid")
+  count=$(git rev-list --count "$base..$local_oid") ||
+    fushi_block "cannot count commits of $branch against upstream/develop; refusing to push unchecked." \
+      "无法统计 $branch 相对 upstream/develop 的提交数，拒绝未经检查的推送。"
   if [ "$count" -gt "$pr_max_commits" ]; then
     fushi_block "$branch has $count commits on top of upstream/develop; it was probably branched from custom." \
       "$branch 比 upstream/develop 多 $count 个提交。" \
@@ -72,8 +85,13 @@ check_pr_push() {
   fi
   fushi_approved pr-personal && return 0
   [ -f "$personal_paths_file" ] || return 0
-  merge_base=$(git merge-base "$base" "$local_oid")
-  leaked=$(git -c core.quotepath=false diff --name-only "$merge_base" "$local_oid" |
+  # 列不出改动时宁可拦下，也不静默放行。
+  merge_base=$(git merge-base "$base" "$local_oid") &&
+    changed=$(git -c core.quotepath=false diff --name-only --no-renames "$merge_base" "$local_oid") ||
+    fushi_block "cannot list files changed by $branch; refusing to push unchecked." \
+      "无法列出 $branch 的改动文件，拒绝未经检查的推送。" \
+      "先 git fetch upstream，确认分支完整后再推。"
+  leaked=$(printf '%s\n' "$changed" |
     awk -v list="$personal_paths_file" '
       BEGIN {
         while ((getline line < list) > 0) {
