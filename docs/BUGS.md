@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2493 条。点号进各自文件。
+> 共 2494 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2680](bugs/BUG-2680-gal-mine-lease-refused-after-calibration.md) | 🚧 | 🚧 | 校准后制卡截图租约被拒 |
 | [BUG-2679](bugs/BUG-2679-gal-first-mine-capture-refused.md) | ✅ | ✅ | 查词窗口里第一次点制卡截图被拒 |
 | [BUG-2678](bugs/BUG-2678-gal-grid-width-slider-drift.md) | ✅ | ✅ | 调整格宽后字格消失且拉回后位置对不上 |
 | [BUG-2677](bugs/BUG-2677-gal-calibration-capture-refused-auto-mode.md) | ✅ | ✅ | 自动模式下校准采集被误报为没有台词 |
@@ -141,8 +142,8 @@
 | [BUG-2547](bugs/BUG-2547-gal-attached-popup-coordinate-space.md) | ✅ | ✅ | 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡 |
 | [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
 | [BUG-2546](bugs/BUG-2546-dict-script-window-scope.md) | ✅ | ✅ | 词典自带脚本第二次查词后失效：折叠字段点不开 |
-| [BUG-2545](bugs/BUG-2545-toc-current-chapter-unmarked.md) | ✅ | ✅ | 阅读器导航「章节列表」不标当前章节 |
 | [BUG-2545](bugs/BUG-2545-gal-attach-overlapping-stop.md) | ✅ | ✅ | 停止监听与重新附着重叠时旧清理覆盖新会话 |
+| [BUG-2545](bugs/BUG-2545-toc-current-chapter-unmarked.md) | ✅ | ✅ | 阅读器导航「章节列表」不标当前章节 |
 | [BUG-2544](bugs/BUG-2544-gal-popup-blocks-attached-capture.md) | ✅ | ✅ | 词典占用鼠标时贴附层拒绝制卡截图 |
 | [BUG-2544](bugs/BUG-2544-video-background-pause-no-resume.md) | ✅ | ✅ | 视频切到后台被暂停后回前台不自动续播 |
 | [BUG-2543](bugs/BUG-2543-gal-incomplete-game-capture.md) | ✅ | ✅ | 部分游戏无法采集完整游戏画面 |
