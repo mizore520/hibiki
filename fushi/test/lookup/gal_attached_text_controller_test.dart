@@ -322,6 +322,101 @@ void main() {
     ),
   );
 
+  test('auto mode prepares and applies screenshot samples only', () async {
+    preferences[key()] = jsonEncode(
+      _profile(mode: GalLookupSurfaceMode.auto).toJson(),
+    );
+    await sync();
+    expect(controller.profile!.mode, GalLookupSurfaceMode.auto);
+    expect(controller.sampleCalibrationEnabled, isTrue);
+    expect(controller.canCaptureCalibrationSample, isTrue);
+    // The live probe calibration still needs the explicit manual mode.
+    expect(controller.canCalibrate, isFalse);
+    expect(
+      await controller.beginCalibration(acceptUnsafeLeftClick: true),
+      isFalse,
+    );
+    expect(
+      await controller.applyMeasuredCalibration(
+        expectedTarget: controller.target!,
+        expectedExeSha256: _sha,
+        variant: measuredVariant(),
+      ),
+      isTrue,
+    );
+    expect(controller.profile!.mode, GalLookupSurfaceMode.auto);
+
+    for (final GalLookupSurfaceMode mode in <GalLookupSurfaceMode>[
+      GalLookupSurfaceMode.off,
+      GalLookupSurfaceMode.nativeOnly,
+    ]) {
+      await controller.setMode(mode);
+      expect(controller.sampleCalibrationEnabled, isFalse, reason: '$mode');
+      expect(controller.canCaptureCalibrationSample, isFalse, reason: '$mode');
+    }
+  });
+
+  test('engine geometry still accepts a fallback calibration', () async {
+    preferences[key()] = jsonEncode(
+      _profile(mode: GalLookupSurfaceMode.auto).toJson(),
+    );
+    port.inspection = const GalAttachedCallResult(
+      status: 'ready',
+      exePath: r'C:\Games\Sample\game.exe',
+      exeSha256: _sha,
+      referenceClient: _client,
+      providerKind: 1,
+      providerId: 1,
+      providerStatus: 1,
+      shield: GalAttachedShieldStatus(available: true, statusFlags: 0x01),
+    );
+    await sync();
+    expect(controller.status, GalAttachedTextStatus.activeNative);
+    expect(controller.surfaceVisible, isFalse);
+    expect(controller.canCaptureCalibrationSample, isTrue);
+    // No attached surface is shown, so the capture needs no attached lease.
+    expect(controller.calibrationCaptureNeedsAttachedLease, isFalse);
+    expect(
+      await controller.applyMeasuredCalibration(
+        expectedTarget: controller.target!,
+        expectedExeSha256: _sha,
+        variant: measuredVariant(),
+      ),
+      isTrue,
+    );
+    expect(controller.status, GalAttachedTextStatus.activeNative);
+    expect(
+      controller.profile!.variants.any(
+        (GalLookupSurfaceVariantV1 v) => v.layout.cellGrid != null,
+      ),
+      isTrue,
+    );
+  });
+
+  test('a hidden pending re-handshake still allows a clean capture', () async {
+    preferences[key()] = jsonEncode(_profile().toJson());
+    await sync();
+    controller.handleSurfaceStateChanged(
+      GalAttachedSurfaceStateEvent(
+        target: controller.target!,
+        state: 'suspended',
+        status: 'shieldHandshakePending',
+        reason: 'input_shield_rehandshake_pending',
+      ),
+    );
+    expect(controller.surfaceVisible, isFalse);
+    expect(controller.canCaptureCalibrationSample, isTrue);
+    controller.handleSurfaceStateChanged(
+      GalAttachedSurfaceStateEvent(
+        target: controller.target!,
+        state: 'suspended',
+        status: 'shieldHandshakePending',
+        reason: 'input_shield_handshake_unavailable',
+      ),
+    );
+    expect(controller.canCaptureCalibrationSample, isFalse);
+  });
+
   test('measured calibration activates without manufacturing probes', () async {
     await sync();
     await controller.setMode(GalLookupSurfaceMode.attachedOnly);
@@ -1929,6 +2024,48 @@ void main() {
       await controller.releaseMiningCaptureLease(lease!);
       expect(controller.surfaceVisible, isFalse);
       expect(port.calls, contains('restoreAfterCapture:1:1'));
+    },
+  );
+
+  test(
+    'the mine click transaction and its re-handshake keep the fence usable',
+    () async {
+      preferences[key()] = jsonEncode(_profile().toJson());
+      await sync();
+      for (final (String status, String reason) in <(String, String)>[
+        (
+          'mouseHookBusy',
+          'low_level_mouse_arm_failed:conflicting_transaction_pending',
+        ),
+        ('shieldHandshakePending', 'input_shield_rehandshake_pending'),
+      ]) {
+        controller.handleSurfaceStateChanged(
+          GalAttachedSurfaceStateEvent(
+            target: controller.target!,
+            state: 'suspended',
+            status: status,
+            reason: reason,
+          ),
+        );
+        final GalAttachedMiningCaptureLease? lease = await controller
+            .acquireMiningCaptureLease();
+        expect(lease, isNotNull, reason: reason);
+        port.restoreResult = GalAttachedCallResult(
+          status: status,
+          reason: reason,
+          surfaceVisible: false,
+        );
+        await controller.releaseMiningCaptureLease(lease!);
+      }
+      controller.handleSurfaceStateChanged(
+        GalAttachedSurfaceStateEvent(
+          target: controller.target!,
+          state: 'suspended',
+          status: 'shieldHandshakePending',
+          reason: 'input_shield_handshake_unavailable',
+        ),
+      );
+      expect(await controller.acquireMiningCaptureLease(), isNull);
     },
   );
 

@@ -361,7 +361,7 @@ class GalAttachedTextController extends ChangeNotifier {
   /// sample dialog. Only that explicit hidden state is admissible; minimized,
   /// lost-target, unknown suspension and an active live calibration are not.
   bool get canCaptureCalibrationSample =>
-      calibrationManuallyEnabled &&
+      sampleCalibrationEnabled &&
       _target != null &&
       _currentClient != null &&
       _exePath != null &&
@@ -370,9 +370,29 @@ class GalAttachedTextController extends ChangeNotifier {
       _draftLayout == null &&
       (_status == GalAttachedTextStatus.needsCalibration ||
           _status == GalAttachedTextStatus.activeAttached ||
+          // The engine provides glyph positions; a calibration prepared now is
+          // kept as the fallback for when that provider is unavailable. The
+          // attached surface is not shown, so the screenshot stays clean.
+          (_status == GalAttachedTextStatus.activeNative && !_surfaceVisible) ||
           (_status == GalAttachedTextStatus.suspended &&
-              _statusReason == 'targetBackground' &&
+              // While Fushi is in front the native gate may report a pending
+              // re-handshake before it reaches targetBackground; either way
+              // the glyph surface is hidden and the screenshot is clean.
+              (_statusReason == 'targetBackground' ||
+                  _statusReason == 'input_shield_rehandshake_pending') &&
               !_surfaceVisible));
+
+  /// Screenshot samples never draw over the game: capture hides the surface
+  /// and applying a measured grid only stores a variant. They are available
+  /// wherever the attached surface may run (auto or attached-only), matching
+  /// the workbench entry; the live probe calibration stays behind
+  /// [calibrationManuallyEnabled].
+  bool get sampleCalibrationEnabled {
+    final GalLookupSurfaceMode mode =
+        _profile?.mode ?? GalLookupSurfaceMode.auto;
+    return mode == GalLookupSurfaceMode.auto ||
+        mode == GalLookupSurfaceMode.attachedOnly;
+  }
 
   bool get calibrationCaptureNeedsAttachedLease =>
       _status == GalAttachedTextStatus.activeAttached ||
@@ -969,7 +989,10 @@ class GalAttachedTextController extends ChangeNotifier {
   }) async {
     final GalAttachedSurfaceTarget? target = _target;
     final GalLookupReferenceClientV1? client = _currentClient;
-    if (!canCalibrate ||
+    if (!sampleCalibrationEnabled ||
+        calibrationActive ||
+        _exePath == null ||
+        _latestSourceText.isEmpty ||
         target == null ||
         client == null ||
         !target.matches(expectedTarget) ||
@@ -1007,12 +1030,16 @@ class GalAttachedTextController extends ChangeNotifier {
         identical(_profile, measured) &&
         _shieldStatus.conclusion != GalAttachedShieldConclusion.faulted &&
         (_status == GalAttachedTextStatus.activeAttached ||
+            // Saved as the fallback while the engine's own geometry is used.
+            _status == GalAttachedTextStatus.activeNative ||
             _status == GalAttachedTextStatus.waitingForBodyThread ||
             (_status == GalAttachedTextStatus.suspended &&
                 (_statusReason == 'targetBackground' ||
                     _statusReason == 'targetMappingUnavailable' ||
                     _statusReason == 'geometryProviderPending' ||
-                    _statusReason == 'shieldHandshakePending')));
+                    _statusReason == 'shieldHandshakePending' ||
+                    // The native gate reports its reason, not the status.
+                    _statusReason == 'input_shield_rehandshake_pending')));
   }
 
   Future<bool> beginCalibration({
@@ -1548,12 +1575,21 @@ class GalAttachedTextController extends ChangeNotifier {
   }
 
   Future<void> handleLookupText(GalAttachedLookupHitV19 hit) async {
-    if (!_matches(hit.target) ||
-        _status != GalAttachedTextStatus.activeAttached ||
-        !hit.hasConsistentSourceLength ||
-        hit.textGeneration != _textGeneration ||
-        hit.sourceText != _sentSourceText ||
-        hit.sourceText != _latestSourceText) {
+    final String? dropped = !_matches(hit.target)
+        ? 'target_changed'
+        : _status != GalAttachedTextStatus.activeAttached
+        ? 'status_${_status.name}/$_statusReason'
+        : !hit.hasConsistentSourceLength
+        ? 'inconsistent_source_length'
+        : hit.textGeneration != _textGeneration
+        ? 'text_generation_changed'
+        : hit.sourceText != _sentSourceText ||
+              hit.sourceText != _latestSourceText
+        ? 'source_text_changed'
+        : null;
+    if (dropped != null) {
+      // The native click was already swallowed; say why no lookup follows.
+      glog('gal-click: dropped reason=$dropped (host)');
       return;
     }
     await _onLookup?.call(hit);
@@ -1824,15 +1860,23 @@ class GalAttachedTextController extends ChangeNotifier {
   }) async {
     final GalAttachedSurfaceTarget? target = _target;
     final int generation = _textGeneration;
-    // The dictionary card owns the singleton mouse hook while it is open.
-    // Losing input admission for that reason does not invalidate the current
-    // text or the configured surface. Native must still acknowledge hiding
-    // the exact epoch/generation; the caller separately fences the card.
+    // The dictionary card owns the singleton mouse hook while it is open, and
+    // the mine click itself runs a shield transaction that the attached
+    // surface then re-handshakes after. None of these input states invalidate
+    // the current text or the configured surface; refusing them made the first
+    // mine click fail at random. Native still acknowledges hiding the exact
+    // epoch/generation; the caller separately fences the card.
+    final bool transientInputOwner =
+        (_nativeStatus == 'mouseHookBusy' &&
+            (_statusReason ==
+                    'low_level_mouse_arm_failed:singleton_owned_by_other_hwnd' ||
+                _statusReason ==
+                    'low_level_mouse_arm_failed:conflicting_transaction_pending')) ||
+        (_nativeStatus == 'shieldHandshakePending' &&
+            _statusReason == 'input_shield_rehandshake_pending');
     final bool cardOwnsInput =
         _status == GalAttachedTextStatus.suspended &&
-        _nativeStatus == 'mouseHookBusy' &&
-        _statusReason ==
-            'low_level_mouse_arm_failed:singleton_owned_by_other_hwnd' &&
+        transientInputOwner &&
         !_surfaceVisible &&
         _attachedProviderClaimed &&
         _activeVariant != null &&

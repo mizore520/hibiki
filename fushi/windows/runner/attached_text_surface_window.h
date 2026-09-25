@@ -292,7 +292,7 @@ private:
                               std::string *error);
   bool CalibrationProbesComplete(std::string *error) const;
   void ResetObservedCalibrationProbes();
-  bool RecordObservedCalibrationProbe(POINT client_point, std::string *error);
+  bool RecordObservedCalibrationProbe(int cluster_index, std::string *error);
 
   bool EnsureWindow(std::string *error);
   void DestroySurfaceWindow();
@@ -333,7 +333,12 @@ private:
   void RefreshShieldStatus();
   ShieldHandshakeState EnsureShieldHandshake();
   void ResetShieldHandshake();
+  void UpdateShieldHandshakeWatch();
+  void StopShieldHandshakeWatchTimer();
+  void OnShieldHandshakeWatchTimer();
   bool ShieldStatusBelongsToCurrentHandshake() const;
+  bool OwnGlyphTransactionInFlight() const;
+  void LogDroppedClick(const char *reason) const noexcept;
   ShieldStatus ShieldStatusForSnapshot() const;
   bool EffectiveAllowRisk() const;
   void RefreshGeometryProviderStatus();
@@ -421,6 +426,13 @@ private:
   uint64_t shield_handshake_transaction_id_ = 0;
   uint32_t shield_handshake_request_seq_ = 0;
   bool shield_handshake_established_ = false;
+  // Frame-cadence observation of an outstanding shield handshake; see
+  // UpdateShieldHandshakeWatch().
+  bool shield_handshake_watch_active_ = false;
+  bool shield_handshake_watch_timer_running_ = false;
+  ULONGLONG shield_handshake_pending_since_ = 0;
+  ULONGLONG shield_handshake_probe_published_at_ = 0;
+  uint32_t shield_handshake_watch_syncs_ = 0;
   GeometryProviderStatus provider_status_;
   bool native_provider_retire_pending_ = false;
 

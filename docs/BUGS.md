@@ -29,11 +29,18 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2488 条。点号进各自文件。
+> 共 2495 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
 | [BUG-2681](bugs/BUG-2681-ousama-opus-voice.md) | ✅ | ✅ | 王様恋愛导出的 Opus 语音未进入资源索引 |
+| [BUG-2680](bugs/BUG-2680-gal-mine-lease-refused-after-calibration.md) | 🚧 | 🚧 | 校准后制卡截图租约被拒 |
+| [BUG-2679](bugs/BUG-2679-gal-first-mine-capture-refused.md) | ✅ | ✅ | 查词窗口里第一次点制卡截图被拒 |
+| [BUG-2678](bugs/BUG-2678-gal-grid-width-slider-drift.md) | ✅ | ✅ | 调整格宽后字格消失且拉回后位置对不上 |
+| [BUG-2677](bugs/BUG-2677-gal-calibration-capture-refused-auto-mode.md) | ✅ | ✅ | 自动模式下校准采集被误报为没有台词 |
+| [BUG-2676](bugs/BUG-2676-gal-lookup-hook-linebreak-width.md) | ✅ | ✅ | 自带换行的游戏长句超出校准宽度后对不上 |
+| [BUG-2675](bugs/BUG-2675-gal-lookup-hidden-after-fast-advance.md) | 🚧 | 🚧 | 快速翻页后新台词暂时没有内嵌查词 |
+| [BUG-2674](bugs/BUG-2674-gal-lookup-click-after-popup-ignored.md) | ✅ | ✅ | 关闭查词窗口后点击台词时灵时不灵 |
 | [BUG-2673](bugs/BUG-2673-gal-calibration-alignment-uncertain.md) | 🚧 | 🚧 | 多行台词可见但校准框无法可靠对齐字形 |
 | [BUG-2672](bugs/BUG-2672-gal-calibration-unmeasurable-glyph.md) | 🚧 | 🚧 | 特殊字符宽度无法自动验证而被要求手动排版 |
 | [BUG-2671](bugs/BUG-2671-gal-cross-game-calibration-unrecognized.md) | 🚧 | 🚧 | 换游戏后截图校准找不到正文行，无底色兼容性待验证 |
@@ -130,10 +137,10 @@
 | [BUG-2551](bugs/BUG-2551-interconnect-audiobook-zero-audio-package.md) | ✅ | ✅ | 互联同步有声书只过去字幕、音频丢失且永不重推 |
 | [BUG-2550](bugs/BUG-2550-reader-stepper-label-truncated.md) | ✅ | ✅ | 阅读设置面板窄窗下 stepper 行标签被压成一个字 |
 | [BUG-2549](bugs/BUG-2549-english-phrasal-verb-deinflection.md) | ✅ | ✅ | 英语短语动词的变形查不到原形（gave up / picked it up 还原不到 give up / pick up） |
-| [BUG-2548](bugs/BUG-2548-windows-launcher-untracked-unicode-path.md) | ✅ | ✅ | 启动器遇到未跟踪中文路径时无法计算源码状态 |
 | [BUG-2548](bugs/BUG-2548-collection-detail-drops-remote-members.md) | ✅ | ✅ | 合集详情页丢掉全部远端成员：行头 N 项、点进去只剩本地几本 |
-| [BUG-2547](bugs/BUG-2547-gal-attached-popup-coordinate-space.md) | ✅ | ✅ | 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡 |
+| [BUG-2548](bugs/BUG-2548-windows-launcher-untracked-unicode-path.md) | ✅ | ✅ | 启动器遇到未跟踪中文路径时无法计算源码状态 |
 | [BUG-2547](bugs/BUG-2547-shelf-remote-sort-ignored.md) | ✅ | ✅ | 书架排序忽略远端占位卡：host 下发的时刻不用、恒沉底 |
+| [BUG-2547](bugs/BUG-2547-gal-attached-popup-coordinate-space.md) | ✅ | ✅ | 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡 |
 | [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
 | [BUG-2546](bugs/BUG-2546-dict-script-window-scope.md) | ✅ | ✅ | 词典自带脚本第二次查词后失效：折叠字段点不开 |
 | [BUG-2545](bugs/BUG-2545-toc-current-chapter-unmarked.md) | ✅ | ✅ | 阅读器导航「章节列表」不标当前章节 |

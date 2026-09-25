@@ -21,6 +21,7 @@
 #include "attached_shield_status_policy.h"
 #include "lookup_hit_validation.h"
 #include "low_level_mouse_hook.h"
+#include "native_glog.h"
 #include "window_capture.h"
 #include "voice_hook_reader.h"
 
@@ -35,6 +36,17 @@ constexpr UINT kFollowTimerMs = 500;
 // floating lyric window does (floating_lyric_window.cpp MaybeHoverLookup).
 constexpr UINT_PTR kHoverTimerId = 2;
 constexpr UINT kHoverTimerMs = 60;
+// The injected shield acknowledges a handshake probe only through shared
+// memory, with no wake-up channel. A re-handshake takes one admission pass to
+// publish the probe and another to observe the ack, so leaving it to the 500 ms
+// follow timer kept the surface hidden (no highlight, clicks not looked up)
+// for up to seconds after every popup dismissal or advanced line. While a
+// handshake is outstanding, re-run admission at frame cadence instead.
+constexpr UINT_PTR kShieldHandshakeWatchTimerId = 3;
+constexpr UINT kShieldHandshakeWatchTimerMs = 16;
+// Resource bound only: a handshake still pending after this long returns to
+// the follow-timer cadence (and is logged) rather than polling indefinitely.
+constexpr ULONGLONG kShieldHandshakeWatchMaxMs = 5000;
 constexpr UINT kSyncTargetMessage = WM_APP + 0x235;
 constexpr int kMinimumBodyPixels = 8;
 constexpr size_t kMaximumSourceTextUnits = 32768;
@@ -1035,14 +1047,13 @@ void AttachedTextSurfaceWindow::ResetObservedCalibrationProbes() {
 }
 
 bool AttachedTextSurfaceWindow::RecordObservedCalibrationProbe(
-    POINT client_point, std::string *error) {
+    int cluster_index, std::string *error) {
   if (mode_ != Mode::kCalibration || source_text_.empty() ||
       text_generation_ <= 0 || layout_dirty_ || clusters_.empty()) {
     if (error != nullptr)
       *error = "calibration_probe_layout_unavailable";
     return false;
   }
-  const int cluster_index = ClusterAt(client_point);
   if (cluster_index < 0 ||
       static_cast<size_t>(cluster_index) >= clusters_.size()) {
     if (error != nullptr)
@@ -1535,6 +1546,8 @@ void AttachedTextSurfaceWindow::DestroySurfaceWindow() {
   if (hwnd_ != nullptr && IsWindow(hwnd_)) {
     KillTimer(hwnd_, kFollowTimerId);
     KillTimer(hwnd_, kHoverTimerId);
+    StopShieldHandshakeWatchTimer();
+    shield_handshake_watch_active_ = false;
     HWND old = hwnd_;
     // DestroySurfaceWindow clears the member and userdata before DestroyWindow,
     // so WM_NCDESTROY cannot recover |this| to retire the passive candidate.
@@ -1662,7 +1675,28 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
   }
   // Calibration probes consume game clicks too. They require the same
   // acknowledged shield and immutable glyph snapshot as ordinary lookup.
+  // Sample the LL ownership before the shared-memory status. Read the other
+  // way round, a release acknowledged and retired between the two reads would
+  // pair a stale pending status with an inactive worker and hide the surface
+  // under the still-queued up message.
+  const bool own_ll_transaction =
+      fushi::LowLevelAttachedGlyphTransactionActiveFor(hwnd_);
   const ShieldHandshakeState handshake = EnsureShieldHandshake();
+  if (handshake == ShieldHandshakeState::kPending && surface_visible_ &&
+      !layout_dirty_ &&
+      (mode_ == Mode::kConfigured || mode_ == Mode::kCalibration) &&
+      own_ll_transaction && OwnGlyphTransactionInFlight()) {
+    // Our own glyph click (its down or its release tail) is waiting for the
+    // injected acknowledgement. That input is already owned by this surface,
+    // not a lost handshake: hiding here cancelled the in-flight gesture, so
+    // the click was swallowed without a lookup whenever any sync landed inside
+    // the ~200 ms ack window. Keep the published surface only while the LL
+    // worker still owns that transaction. If the shield never answers or
+    // reports a fault, the worker fails it open after the physical up: it
+    // revokes the snapshot, clears the transaction and posts the abort
+    // message, so the next sync falls through to the pending-handshake hide.
+    return;
+  }
   if (handshake != ShieldHandshakeState::kReady) {
     HideSurface();
     SetState("suspended", "shieldHandshakePending",
@@ -1810,11 +1844,11 @@ void AttachedTextSurfaceWindow::SyncToTarget() {
     EmitStateIfChanged();
     return;
   }
-  // Hard-break grids may have a final glyph just outside the saved body.
-  // Keep the overlay click-through and expose only actual glyph hit regions.
+  // Hard-break grids may have glyphs outside the saved body (right of it, or
+  // rows below it). Keep the overlay click-through and expose only actual
+  // glyph hit regions.
   const bool hard_break_grid =
-      fushi::attached_text_layout::HasExplicitGridLineBreak(source_text_,
-                                                            layout_);
+      fushi::attached_text_layout::UsesHookLineBreaks(source_text_, layout_);
   const RECT surface = calibration || hard_break_grid ? client : body;
   const bool size_changed =
       surface.right - surface.left !=
@@ -2015,16 +2049,20 @@ bool AttachedTextSurfaceWindow::RebuildClusters() {
                             source_body_screen_rect_.top;
   const RECT layout_bounds{0, 0, source_width, source_height};
   const bool hard_break_grid =
-      fushi::attached_text_layout::HasExplicitGridLineBreak(source_text_,
-                                                            layout_);
+      fushi::attached_text_layout::UsesHookLineBreaks(source_text_, layout_);
   const int surface_width = hard_break_grid
       ? surface_geometry_.source_client_screen.right -
             source_body_screen_rect_.left
       : source_width;
+  const int surface_height =
+      layout_.cell_grid.has_value() && layout_.cell_grid->explicit_line_breaks
+      ? surface_geometry_.source_client_screen.bottom -
+            source_body_screen_rect_.top
+      : source_height;
   fushi::attached_text_layout::Result result =
       fushi::attached_text_layout::Build(
           dwrite_factory_.Get(), source_text_, layout_,
-          live_reference_client_.height_px, surface_width, source_height,
+          live_reference_client_.height_px, surface_width, surface_height,
           layout_bounds);
   if (!result.ok())
     return ClusterFailure(result.reason.c_str());
@@ -2506,7 +2544,111 @@ AttachedTextSurfaceWindow::EnsureShieldHandshake() {
   shield_handshake_transaction_id_ = transaction_id;
   shield_handshake_request_seq_ = request_seq;
   shield_handshake_established_ = false;
+  shield_handshake_probe_published_at_ = GetTickCount64();
   return ShieldHandshakeState::kPending;
+}
+
+void AttachedTextSurfaceWindow::UpdateShieldHandshakeWatch() {
+  // "unavailable" has no acknowledgement to wait for; only an outstanding
+  // (re)handshake is worth observing at frame cadence.
+  const bool pending = status_ == "shieldHandshakePending" &&
+                       reason_ != "input_shield_handshake_unavailable";
+  if (pending) {
+    if (!shield_handshake_watch_active_) {
+      shield_handshake_watch_active_ = true;
+      // The probe that opens an episode is usually published by this same
+      // admission pass just before SetState, so it is not cleared here.
+      shield_handshake_pending_since_ = GetTickCount64();
+      shield_handshake_watch_syncs_ = 0;
+    }
+    if (!shield_handshake_watch_timer_running_ && hwnd_ != nullptr &&
+        IsWindow(hwnd_) &&
+        GetTickCount64() - shield_handshake_pending_since_ <=
+            kShieldHandshakeWatchMaxMs &&
+        SetTimer(hwnd_, kShieldHandshakeWatchTimerId,
+                 kShieldHandshakeWatchTimerMs, nullptr) != 0) {
+      shield_handshake_watch_timer_running_ = true;
+    }
+    return;
+  }
+  if (!shield_handshake_watch_active_)
+    return;
+  StopShieldHandshakeWatchTimer();
+  shield_handshake_watch_active_ = false;
+  const ULONGLONG now = GetTickCount64();
+  const ULONGLONG probe_at = shield_handshake_probe_published_at_;
+  std::ostringstream line;
+  line << "gal-shield: handshake pending ended after "
+       << (now - shield_handshake_pending_since_) << "ms";
+  const ULONGLONG since = shield_handshake_pending_since_;
+  if (probe_at != 0 && probe_at + kShieldHandshakeWatchTimerMs >= since) {
+    line << " (neutral_wait=" << (probe_at > since ? probe_at - since : 0)
+         << "ms ack_wait=" << (now - probe_at) << "ms)";
+  } else {
+    line << " (no new probe)";
+  }
+  line << " syncs=" << shield_handshake_watch_syncs_ << " -> " << state_ << '/'
+       << status_;
+  NativeGlog(line.str());
+}
+
+void AttachedTextSurfaceWindow::StopShieldHandshakeWatchTimer() {
+  if (!shield_handshake_watch_timer_running_)
+    return;
+  if (hwnd_ != nullptr && IsWindow(hwnd_))
+    KillTimer(hwnd_, kShieldHandshakeWatchTimerId);
+  shield_handshake_watch_timer_running_ = false;
+}
+
+void AttachedTextSurfaceWindow::OnShieldHandshakeWatchTimer() {
+  if (!shield_handshake_watch_active_ || mode_ == Mode::kDetached ||
+      target_.hwnd == nullptr) {
+    // Detach/epoch changes hide the surface without a new admission state;
+    // there is no handshake left to observe.
+    StopShieldHandshakeWatchTimer();
+    shield_handshake_watch_active_ = false;
+    return;
+  }
+  const ULONGLONG elapsed = GetTickCount64() - shield_handshake_pending_since_;
+  if (elapsed > kShieldHandshakeWatchMaxMs) {
+    // Keep the episode open so its eventual end is still logged; only the
+    // cadence drops back to the follow timer.
+    StopShieldHandshakeWatchTimer();
+    std::ostringstream line;
+    line << "gal-shield: handshake still pending after " << elapsed
+         << "ms; request_seq=" << shield_status_.request_seq
+         << " applied_seq=" << shield_status_.applied_seq
+         << " active_buttons=" << shield_status_.active_buttons
+         << " transaction_active=" << shield_transaction_active_
+         << " probe_published=" << (shield_handshake_probe_published_at_ != 0);
+    NativeGlog(line.str());
+    return;
+  }
+  ++shield_handshake_watch_syncs_;
+  SyncToTarget();
+}
+
+bool AttachedTextSurfaceWindow::OwnGlyphTransactionInFlight() const {
+  namespace policy = fushi::attached_shield_status_policy;
+  const auto status_identity = policy::StatusIdentity{
+      shield_status_.available,      shield_status_.request_seq,
+      shield_status_.applied_seq,    shield_status_.owner_kind,
+      shield_status_.target_hwnd,    shield_status_.transaction_id,
+      shield_status_.active_buttons, shield_status_.allow_risk,
+      shield_status_.status_flags,
+  };
+  const auto handshake = policy::HandshakeIdentity{
+      policy::Epoch{shield_handshake_epoch_.session,
+                    shield_handshake_epoch_.surface},
+      static_cast<uint64_t>(
+          reinterpret_cast<uintptr_t>(shield_handshake_target_)),
+      shield_handshake_transaction_id_, shield_handshake_request_seq_};
+  return policy::ClassifyAttachedAfterHandshake(
+             status_identity, shield_handshake_established_, handshake,
+             policy::Epoch{epoch_.session, epoch_.surface},
+             static_cast<uint64_t>(
+                 reinterpret_cast<uintptr_t>(target_.hwnd))) ==
+         policy::Attribution::kPending;
 }
 
 bool AttachedTextSurfaceWindow::ShieldStatusBelongsToCurrentHandshake() const {
@@ -2738,10 +2880,14 @@ void AttachedTextSurfaceWindow::BeginPointerGesture(
     POINT client_point, uint64_t external_transaction_id) {
   CancelPointerGesture();
   const int cluster = ClusterAt(client_point);
-  if (cluster < 0)
+  if (cluster < 0) {
+    LogDroppedClick("down_outside_glyph");
     return;
-  if (!AdoptShieldTransaction(external_transaction_id))
+  }
+  if (!AdoptShieldTransaction(external_transaction_id)) {
+    LogDroppedClick("down_transaction_not_adopted");
     return;
+  }
   pointer_down_ = true;
   pointer_dragged_ = false;
   pressed_cluster_ = cluster;
@@ -2754,9 +2900,15 @@ void AttachedTextSurfaceWindow::UpdatePointerGesture(POINT client_point) {
   if (!pointer_down_ || pointer_dragged_)
     return;
   // Match the shell's configured drag rectangle (including accessibility and
-  // user customisation), rather than inventing a DPI-scaled pixel constant.
-  const int threshold_x = std::max(1, GetSystemMetrics(SM_CXDRAG) / 2);
-  const int threshold_y = std::max(1, GetSystemMetrics(SM_CYDRAG) / 2);
+  // user customisation) at this surface's DPI. Half of it (about 2 px) turned
+  // ordinary hand jitter into a "drag" that silently dropped the lookup.
+  const UINT dpi = hwnd_ != nullptr ? GetDpiForWindow(hwnd_) : 0;
+  const int threshold_x = std::max(
+      1, dpi != 0 ? GetSystemMetricsForDpi(SM_CXDRAG, dpi)
+                  : GetSystemMetrics(SM_CXDRAG));
+  const int threshold_y = std::max(
+      1, dpi != 0 ? GetSystemMetricsForDpi(SM_CYDRAG, dpi)
+                  : GetSystemMetrics(SM_CYDRAG));
   if (std::abs(client_point.x - pointer_down_point_.x) > threshold_x ||
       std::abs(client_point.y - pointer_down_point_.y) > threshold_y) {
     pointer_dragged_ = true;
@@ -2767,20 +2919,33 @@ void AttachedTextSurfaceWindow::EndPointerGesture(
     POINT client_point, uint64_t external_transaction_id) {
   if (external_transaction_id == 0 || !shield_transaction_active_ ||
       shield_transaction_.transaction_id != external_transaction_id) {
+    LogDroppedClick("up_without_active_gesture");
     return;
   }
   if (!pointer_down_) {
     ReleaseShieldTransaction();
+    LogDroppedClick("up_without_pointer_down");
     return;
   }
   UpdatePointerGesture(client_point);
   const int released_cluster = ClusterAt(client_point);
   const int pressed_cluster = pressed_cluster_;
-  const bool valid = !pointer_dragged_ && pressed_cluster >= 0 &&
-                     pressed_cluster == released_cluster &&
-                     static_cast<size_t>(pressed_cluster) < clusters_.size() &&
-                     CompareEpoch(pointer_epoch_, epoch_) == 0 &&
-                     pointer_text_generation_ == text_generation_;
+  // A press and release on the same glyph is a click even if the hand moved a
+  // little in between; a release on a neighbour counts only within the drag
+  // rectangle (a boundary graze), and then looks up the pressed glyph.
+  const bool same_identity = CompareEpoch(pointer_epoch_, epoch_) == 0 &&
+                             pointer_text_generation_ == text_generation_;
+  const bool pressed_valid =
+      pressed_cluster >= 0 &&
+      static_cast<size_t>(pressed_cluster) < clusters_.size();
+  const bool same_glyph_or_near =
+      pressed_cluster == released_cluster || !pointer_dragged_;
+  const bool valid = pressed_valid && same_identity && same_glyph_or_near;
+  if (!valid) {
+    LogDroppedClick(!pressed_valid    ? "pressed_glyph_gone"
+                    : !same_identity  ? "text_or_epoch_changed"
+                                      : "released_on_other_glyph_after_drag");
+  }
   pointer_down_ = false;
   pointer_dragged_ = false;
   pressed_cluster_ = -1;
@@ -2788,9 +2953,11 @@ void AttachedTextSurfaceWindow::EndPointerGesture(
     ReleaseCapture();
   ReleaseShieldTransaction();
   if (mode_ == Mode::kCalibration) {
+    // A boundary graze may release on the neighbour; the probe, like the
+    // lookup below, belongs to the glyph that was pressed.
     std::string probe_error;
     const bool observed =
-        valid && RecordObservedCalibrationProbe(client_point, &probe_error);
+        valid && RecordObservedCalibrationProbe(pressed_cluster, &probe_error);
     SetState("calibrating", "calibrating",
              observed ? "calibration_probe_observed"
                       : (valid ? probe_error : "calibration_click_rejected"));
@@ -2914,7 +3081,27 @@ void AttachedTextSurfaceWindow::TickHoverLookup() {
   EmitLookupEvent(cluster, true);
 }
 
+void AttachedTextSurfaceWindow::LogDroppedClick(
+    const char *reason) const noexcept {
+  // One line per swallowed glyph click that will not produce a lookup, so a
+  // "clicked but nothing opened" report names its gate (SOP: a consumed click
+  // without a published lookup must carry a reason).
+  // CancelPointerGesture reaches this from DestroySurfaceWindow and so from
+  // the destructor: a diagnostic line is best-effort and must never let an
+  // allocation failure escape into teardown.
+  try {
+    std::ostringstream line;
+    line << "gal-click: dropped reason=" << reason << " state=" << state_
+         << '/' << status_ << " visible=" << surface_visible_
+         << " gen=" << text_generation_;
+    NativeGlog(line.str());
+  } catch (...) {
+  }
+}
+
 void AttachedTextSurfaceWindow::CancelPointerGesture() {
+  if (pointer_down_)
+    LogDroppedClick("gesture_cancelled");
   pointer_down_ = false;
   pointer_dragged_ = false;
   pressed_cluster_ = -1;
@@ -2928,6 +3115,7 @@ void AttachedTextSurfaceWindow::SetState(std::string state, std::string status,
   state_ = std::move(state);
   status_ = std::move(status);
   reason_ = std::move(reason);
+  UpdateShieldHandshakeWatch();
 }
 
 AttachedTextSurfaceWindow::Snapshot
@@ -3042,6 +3230,10 @@ LRESULT AttachedTextSurfaceWindow::HandleMessage(UINT message, WPARAM wparam,
       TickHoverLookup();
       return 0;
     }
+    if (wparam == kShieldHandshakeWatchTimerId) {
+      OnShieldHandshakeWatchTimer();
+      return 0;
+    }
     return DefWindowProcW(hwnd_, message, wparam, lparam);
   case WM_MOUSEACTIVATE:
     return MA_NOACTIVATE;
@@ -3066,6 +3258,9 @@ LRESULT AttachedTextSurfaceWindow::HandleMessage(UINT message, WPARAM wparam,
         !surface_visible_ ||
         transaction_id == 0 || snapshot_token == 0 ||
         snapshot_token != hit_snapshot_token_) {
+      if (transaction_id != 0)
+        LogDroppedClick(!surface_visible_ ? "down_while_surface_hidden"
+                                          : "down_stale_hit_snapshot");
       return 0;
     }
     POINT point = fushi::UnpackMouseHookPoint(static_cast<WPARAM>(lparam));
@@ -3077,6 +3272,8 @@ LRESULT AttachedTextSurfaceWindow::HandleMessage(UINT message, WPARAM wparam,
     const uint64_t transaction_id = static_cast<uint64_t>(wparam);
     if (transaction_id == 0 || fushi::LowLevelAttachedGlyphSnapshotToken(
                                    transaction_id) != hit_snapshot_token_) {
+      if (transaction_id != 0 && pointer_down_)
+        LogDroppedClick("up_stale_hit_snapshot");
       return 0;
     }
     POINT point = fushi::UnpackMouseHookPoint(static_cast<WPARAM>(lparam));

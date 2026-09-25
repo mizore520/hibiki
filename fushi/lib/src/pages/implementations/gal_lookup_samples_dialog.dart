@@ -47,6 +47,7 @@ class GalLookupSamplesDialog extends StatefulWidget {
     this.slot,
     this.onOpenNarrationCalibration,
     this.onOpenDialogueCalibration,
+    this.nativeGeometryActive = false,
     this.store = const GalLookupCalibrationStore(),
     this.previewBuilder = GalLookupCalibrationPreviewChannel.build,
     this.imageFitter = fitGalCalibrationImages,
@@ -60,6 +61,10 @@ class GalLookupSamplesDialog extends StatefulWidget {
   final GalLookupCalibrationSlotV1? slot;
   final Future<void> Function()? onOpenNarrationCalibration;
   final Future<void> Function()? onOpenDialogueCalibration;
+
+  /// The engine currently supplies glyph positions, so this calibration is
+  /// only a fallback for when that provider is unavailable.
+  final bool nativeGeometryActive;
   final GalLookupCalibrationStore store;
   final GalCalibrationPreviewBuilder previewBuilder;
   final Future<GalCalibrationImageFit> Function(
@@ -90,6 +95,11 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   bool _fitAllSamples = false;
   bool _manualGridEdit = false;
   bool _specialCharacterAdvancesEnabled = false;
+
+  /// Grid advance and blue-box width when the current grid-width adjustment
+  /// began. The slider derives the box from it; any other grid or box edit
+  /// (canvas drag, auto-align, new selection) clears it.
+  ({double advance, double width})? _advanceBaseline;
   late final TextEditingController _specialCharacterController;
   Timer? _autoSaveTimer;
   Future<bool>? _saveInFlight;
@@ -142,7 +152,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     super.initState();
     _rect = widget.initialRect;
     _layoutRect = widget.initialRect;
-    _layout = widget.initialLayout;
+    _layout = _withoutQuotedFilter(widget.initialLayout);
     _specialCharacterController = TextEditingController();
     _specialCharacterAdvancesEnabled = _layout.characterAdvances.isNotEmpty;
     unawaited(_load());
@@ -166,7 +176,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       if (draft != null) {
         _rect = draft.searchRect;
         _layoutRect = draft.rect;
-        _layout = draft.layout;
+        _layout = _withoutQuotedFilter(draft.layout);
+        _advanceBaseline = null;
         _specialCharacterAdvancesEnabled = _layout.characterAdvances.isNotEmpty;
         _layoutReferenceClient = draft.layoutReferenceClient;
         _layoutCaptureMetadata = draft.layoutCaptureMetadata;
@@ -382,6 +393,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       GalLookupCalibrationCaptureFailure.sourceNotReady ||
       GalLookupCalibrationCaptureFailure.invalidSource =>
         t.game_lookup_samples_capture_source,
+      GalLookupCalibrationCaptureFailure.surfaceNotReady =>
+        t.game_lookup_samples_capture_surface_not_ready,
       GalLookupCalibrationCaptureFailure.rubyUnsupported =>
         t.game_lookup_samples_capture_unsupported,
       GalLookupCalibrationCaptureFailure.overlayHideFailed ||
@@ -605,6 +618,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
       } else {
         _layoutRect = result.draft!.rect;
         _layout = result.draft!.layout;
+        _advanceBaseline = null;
         _layoutReferenceClient =
             result.draft!.layoutReferenceClient ??
             fittingSamples.first.capture.referenceClient;
@@ -630,11 +644,17 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
 
   void _setLayoutRect(GalLookupNormalizedRectV1 rect) {
     if (!rect.isValid) return;
+    _advanceBaseline = null;
     _layoutRect = rect;
     _changed();
   }
 
   void _setGrid(GalLookupCellGridV1 grid) {
+    _advanceBaseline = null;
+    _applyGrid(grid);
+  }
+
+  void _applyGrid(GalLookupCellGridV1 grid) {
     if (!grid.isValid) return;
     _layout = GalLookupTextLayoutV1(
       fontFamily: _layout.fontFamily,
@@ -652,76 +672,113 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     _changed();
   }
 
-  void _setQuotedTextOnly(bool value) {
-    if (_layout.quotedTextOnly == value) return;
-    _layout = copyGalCalibrationLayout(_layout, quotedTextOnly: value);
-    _changed();
-  }
+  // The calibration-only 「」 filter is superseded by the Hook text processing
+  // rules (keep 「」 text, regex replace), which already shape the text the
+  // attached surface receives. A saved profile keeps its stored value until it
+  // is recalibrated here.
+  static GalLookupTextLayoutV1 _withoutQuotedFilter(
+    GalLookupTextLayoutV1 layout,
+  ) => layout.quotedTextOnly
+      ? copyGalCalibrationLayout(layout, quotedTextOnly: false)
+      : layout;
 
   void _setContinuationIndent(double value) {
     final GalLookupCellGridV1? grid = _layout.cellGrid;
     if (grid == null || !value.isFinite) return;
     final double maximumIndent = math.min(grid.columns - 1, 8).toDouble();
     final double indent = value.clamp(-1.0, maximumIndent).toDouble();
-    final GalLookupCellGridV1 next = GalLookupCellGridV1(
-      advancePerClientHeight: grid.advancePerClientHeight,
-      lineAdvancePerClientHeight: grid.lineAdvancePerClientHeight,
-      cellHeightPerClientHeight: grid.cellHeightPerClientHeight,
-      columns: grid.columns,
+    final GalLookupCellGridV1 next = grid.copyWith(
       // Keep the legacy second field synchronized so old profile files and
       // native payloads still round-trip while one UI value controls all text.
       continuationIndent: indent,
       quotedContinuationIndent: indent,
-      hangingPunctuation: grid.hangingPunctuation,
-      trimWrapWhitespace: grid.trimWrapWhitespace,
-      lineWidthInCells: grid.lineWidthInCells,
     );
     _setGrid(next);
+  }
+
+  /// Half-width of the grid-width slider around its baseline, as a fraction of
+  /// the cell height. The full 15%-200% range made one pixel of travel worth
+  /// several tenths of a percent.
+  static const double _advanceSliderSpan = 0.15;
+
+  /// One button/keyboard step of the grid-width control (0.1 %).
+  static const double _advanceStep = 0.001;
+
+  GalLookupReferenceClientV1? get _gridClient =>
+      _layoutReferenceClient ?? _sample?.capture.referenceClient;
+
+  /// Normalized blue-box width gained per unit of grid advance.
+  double _boxWidthPerAdvance(
+    GalLookupCellGridV1 grid,
+    GalLookupReferenceClientV1 client,
+  ) =>
+      (grid.effectiveLineWidthInCells + (grid.hangingPunctuation ? 1 : 0)) *
+      client.heightPx /
+      client.widthPx;
+
+  ({double advance, double width}) _advanceBaselineFor(
+    GalLookupCellGridV1 grid,
+  ) =>
+      _advanceBaseline ??
+      (advance: grid.advancePerClientHeight, width: _layoutRect.width);
+
+  /// Slider bounds as advance/cell-height ratios: a narrow span around the
+  /// baseline, never letting the box leave the screenshot or collapse.
+  ({double min, double max}) _gridAdvanceRange(GalLookupCellGridV1 grid) {
+    final double cell = grid.cellHeightPerClientHeight;
+    final ({double advance, double width}) base = _advanceBaselineFor(grid);
+    final double baseRatio = base.advance / cell;
+    double minimum = math.max(0.001 / cell, baseRatio - _advanceSliderSpan);
+    double maximum = math.min(0.25 / cell, baseRatio + _advanceSliderSpan);
+    final GalLookupReferenceClientV1? client = _gridClient;
+    if (client != null) {
+      final double perAdvance = _boxWidthPerAdvance(grid, client);
+      final double minimumWidth = math.min(
+        base.width,
+        math.max(0.001, 8 / client.widthPx),
+      );
+      maximum = math.min(
+        maximum,
+        (base.advance + (1 - _layoutRect.left - base.width) / perAdvance) /
+            cell,
+      );
+      minimum = math.max(
+        minimum,
+        (base.advance - (base.width - minimumWidth) / perAdvance) / cell,
+      );
+    }
+    final double current = grid.advancePerClientHeight / cell;
+    return (min: math.min(minimum, current), max: math.max(maximum, current));
   }
 
   void _setGridAdvanceRatio(double ratio) {
     final GalLookupCellGridV1? grid = _layout.cellGrid;
     if (grid == null || !ratio.isFinite) return;
-    final double nextAdvance = (grid.cellHeightPerClientHeight * ratio)
-        .clamp(0.001, 0.25)
-        .toDouble();
+    final ({double min, double max}) range = _gridAdvanceRange(grid);
+    final double nextAdvance =
+        (grid.cellHeightPerClientHeight * ratio.clamp(range.min, range.max))
+            .clamp(0.001, 0.25)
+            .toDouble();
     if ((nextAdvance - grid.advancePerClientHeight).abs() < 0.0000001) {
       return;
     }
-    final GalLookupCellGridV1 next = GalLookupCellGridV1(
-      advancePerClientHeight: nextAdvance,
-      lineAdvancePerClientHeight: grid.lineAdvancePerClientHeight,
-      cellHeightPerClientHeight: grid.cellHeightPerClientHeight,
-      columns: grid.columns,
-      continuationIndent: grid.continuationIndent,
-      quotedContinuationIndent: grid.quotedContinuationIndent,
-      hangingPunctuation: grid.hangingPunctuation,
-      trimWrapWhitespace: grid.trimWrapWhitespace,
-      lineWidthInCells: grid.lineWidthInCells,
-    );
-    final GalLookupReferenceClientV1? client =
-        _layoutReferenceClient ?? _sample?.capture.referenceClient;
+    // Derive the box from the baseline instead of accumulating deltas, so a
+    // value that returns to where it started restores the exact same box.
+    final ({double advance, double width}) base = _advanceBaseline ??=
+        _advanceBaselineFor(grid);
+    final GalLookupReferenceClientV1? client = _gridClient;
     if (client != null) {
-      final double widthDelta =
-          (nextAdvance - grid.advancePerClientHeight) *
-          client.heightPx /
-          client.widthPx;
-      final double minWidth = math.min(
-        _layoutRect.width,
-        math.max(0.001, 8 / client.widthPx),
-      );
-      final double right =
-          (_layoutRect.right + widthDelta * grid.effectiveLineWidthInCells)
-              .clamp(_layoutRect.left + minWidth, 1.0)
-              .toDouble();
+      final double width =
+          base.width +
+          (nextAdvance - base.advance) * _boxWidthPerAdvance(grid, client);
       _layoutRect = GalLookupNormalizedRectV1(
         left: _layoutRect.left,
         top: _layoutRect.top,
-        width: right - _layoutRect.left,
+        width: width,
         height: _layoutRect.height,
       );
     }
-    _setGrid(next);
+    _applyGrid(grid.copyWith(advancePerClientHeight: nextAdvance));
   }
 
   void _setCharacterAdvances(List<GalLookupCharacterAdvanceV1> advances) {
@@ -847,7 +904,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         child: Scaffold(
           appBar: AppBar(
             automaticallyImplyLeading: false,
-            title: Text(_title),
+            title: _canSwitchSlot ? _slotSwitch() : Text(_title),
             actions: [
               IconButton(
                 onPressed: _busy ? null : _capture,
@@ -860,7 +917,8 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                 icon: const Icon(Icons.delete_outline),
                 tooltip: t.game_lookup_samples_remove,
               ),
-              TextButton(
+              const SizedBox(width: 8),
+              FilledButton.icon(
                 onPressed:
                     _busy ||
                         !_canPreview ||
@@ -869,43 +927,18 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                         !_applyPreviewsAccepted
                     ? null
                     : () => _finish(apply: true),
-                child: Text(t.game_lookup_samples_apply),
+                icon: const Icon(Icons.sports_esports_outlined),
+                label: Text(t.game_lookup_samples_apply),
               ),
+              const SizedBox(width: 4),
               CloseButton(onPressed: _busy ? null : () => _finish()),
+              const SizedBox(width: 4),
             ],
           ),
           body: Column(
             children: [
               if (_busy || _previewRunning) const LinearProgressIndicator(),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Text(
-                      _message ??
-                          (_canPreview
-                              ? t.game_lookup_samples_auto_hint
-                              : t.game_lookup_samples_auto_pending),
-                      style: _failed
-                          ? TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            )
-                          : null,
-                    ),
-                    if (_failed && _diagnosticDetail != null) ...<Widget>[
-                      const SizedBox(height: 4),
-                      SelectableText(
-                        t.game_lookup_samples_diagnostic(
-                          reason: _diagnosticDetail!,
-                          detail: '',
-                        ),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+              _statusBanner(),
               Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -918,83 +951,65 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                               BoxConstraints constraints,
                             ) => Column(
                               children: [
-                                if (_showAdvanced)
+                                if (_samples.length > 1)
                                   ConstrainedBox(
                                     constraints: BoxConstraints(
                                       maxHeight: constraints.maxHeight * 0.2,
                                     ),
                                     child: SingleChildScrollView(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                        ),
-                                        child: Wrap(
-                                          spacing: 6,
-                                          runSpacing: 6,
-                                          children: [
-                                            for (
-                                              int i = 0;
-                                              i < _samples.length;
-                                              i++
-                                            )
-                                              ChoiceChip(
-                                                label: Text('${i + 1}'),
-                                                selected: i == _selected,
-                                                onSelected: _busy
-                                                    ? null
-                                                    : (_) => setState(() {
-                                                        _selected = i;
-                                                        _hoverIndex = null;
-                                                      }),
-                                              ),
-                                          ],
-                                        ),
+                                      padding: const EdgeInsets.fromLTRB(
+                                        16,
+                                        8,
+                                        16,
+                                        0,
                                       ),
-                                    ),
-                                  )
-                                else if (_samples.length > 1)
-                                  Padding(
-                                    padding: const EdgeInsets.fromLTRB(
-                                      12,
-                                      8,
-                                      12,
-                                      0,
-                                    ),
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        t.game_lookup_samples_current(
-                                          sample: '${_selected + 1}',
-                                          total: '${_samples.length}',
-                                        ),
+                                      child: Wrap(
+                                        spacing: 6,
+                                        runSpacing: 6,
+                                        children: [
+                                          for (
+                                            int i = 0;
+                                            i < _samples.length;
+                                            i++
+                                          )
+                                            ChoiceChip(
+                                              label: Text('${i + 1}'),
+                                              selected: i == _selected,
+                                              showCheckmark: false,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              onSelected: _busy
+                                                  ? null
+                                                  : (_) => setState(() {
+                                                      _selected = i;
+                                                      _hoverIndex = null;
+                                                    }),
+                                            ),
+                                        ],
                                       ),
                                     ),
                                   ),
                                 Expanded(
                                   child: Padding(
-                                    padding: const EdgeInsets.all(12),
+                                    padding: const EdgeInsets.fromLTRB(
+                                      16,
+                                      12,
+                                      16,
+                                      8,
+                                    ),
                                     child: _image(),
                                   ),
                                 ),
-                                if (_sample != null)
-                                  SizedBox(
-                                    height: math.min(
-                                      _manualGridEdit ? 210 : 160,
-                                      constraints.maxHeight * 0.45,
-                                    ),
-                                    child: SingleChildScrollView(
-                                      child: _sampleControls(),
-                                    ),
-                                  ),
+                                if (_sample != null) _sampleControls(),
                               ],
                             ),
                       ),
                     ),
                     const VerticalDivider(width: 1),
                     SizedBox(
-                      width: 310,
+                      width: 340,
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                         child: _controls(),
                       ),
                     ),
@@ -1008,9 +1023,194 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     );
   }
 
+  Widget _statusBanner() {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    final TextTheme text = Theme.of(context).textTheme;
+    final Color foreground = _failed
+        ? colors.onErrorContainer
+        : colors.onSurfaceVariant;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: _failed
+            ? colors.errorContainer
+            : colors.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(
+            _failed ? Icons.error_outline : Icons.info_outline,
+            size: 18,
+            color: foreground,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  _message ??
+                      (_canPreview
+                          ? t.game_lookup_samples_auto_hint
+                          : t.game_lookup_samples_auto_pending),
+                  style: text.bodyMedium?.copyWith(color: foreground),
+                ),
+                if (_failed && _diagnosticDetail != null) ...<Widget>[
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    t.game_lookup_samples_diagnostic(
+                      reason: _diagnosticDetail!,
+                      detail: '',
+                    ),
+                    style: text.bodySmall?.copyWith(color: foreground),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptySamples() {
+    final TextTheme text = Theme.of(context).textTheme;
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border.all(color: colors.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 360),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Icon(
+                Icons.add_photo_alternate_outlined,
+                size: 48,
+                color: colors.onSurfaceVariant,
+              ),
+              const SizedBox(height: 12),
+              Text(t.game_lookup_samples_empty, style: text.titleMedium),
+              const SizedBox(height: 6),
+              Text(
+                t.game_lookup_samples_hint,
+                textAlign: TextAlign.center,
+                style: text.bodySmall?.copyWith(color: colors.onSurfaceVariant),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.tonalIcon(
+                key: const ValueKey<String>('calibration-empty-capture'),
+                onPressed: _busy ? null : _capture,
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: Text(t.game_lookup_samples_capture),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _stepHeader(int step, String title) {
+    final ColorScheme colors = Theme.of(context).colorScheme;
+    return Row(
+      children: <Widget>[
+        Container(
+          width: 22,
+          height: 22,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: colors.primaryContainer,
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            '$step',
+            style: Theme.of(
+              context,
+            ).textTheme.labelMedium?.copyWith(color: colors.onPrimaryContainer),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(title, style: Theme.of(context).textTheme.titleSmall),
+        ),
+      ],
+    );
+  }
+
+  Widget _secondaryText(String value) => Text(
+    value,
+    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    ),
+  );
+
+  bool get _canSwitchSlot =>
+      widget.slot != null &&
+      (widget.onOpenNarrationCalibration != null ||
+          widget.onOpenDialogueCalibration != null);
+
+  /// Replaces the title when the other calibration slot can be opened.
+  Widget _slotSwitch() {
+    final GalLookupCalibrationSlotV1 slot = widget.slot!;
+    final Future<void> Function()? toNarration =
+        widget.onOpenNarrationCalibration;
+    final Future<void> Function()? toDialogue =
+        widget.onOpenDialogueCalibration;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SegmentedButton<GalLookupCalibrationSlotV1>(
+        showSelectedIcon: false,
+        segments: <ButtonSegment<GalLookupCalibrationSlotV1>>[
+          ButtonSegment<GalLookupCalibrationSlotV1>(
+            value: GalLookupCalibrationSlotV1.dialogue,
+            icon: const Icon(Icons.format_quote_outlined),
+            enabled:
+                slot == GalLookupCalibrationSlotV1.dialogue ||
+                toDialogue != null,
+            label: Text(
+              t.game_lookup_samples_dialogue,
+              key: const ValueKey<String>('calibration-dialogue-settings'),
+            ),
+          ),
+          ButtonSegment<GalLookupCalibrationSlotV1>(
+            value: GalLookupCalibrationSlotV1.narration,
+            icon: const Icon(Icons.subject_outlined),
+            enabled:
+                slot == GalLookupCalibrationSlotV1.narration ||
+                toNarration != null,
+            label: Text(
+              t.game_lookup_samples_narration,
+              key: const ValueKey<String>('calibration-narration-settings'),
+            ),
+          ),
+        ],
+        selected: <GalLookupCalibrationSlotV1>{slot},
+        onSelectionChanged: _busy
+            ? null
+            : (Set<GalLookupCalibrationSlotV1> next) {
+                final Future<void> Function()? open =
+                    next.first == GalLookupCalibrationSlotV1.narration
+                    ? toNarration
+                    : toDialogue;
+                if (next.first != slot && open != null) {
+                  unawaited(_switchCalibrationSlot(open));
+                }
+              },
+      ),
+    );
+  }
+
   Widget _image() {
     final GalCalibrationSample? sample = _sample;
-    if (sample == null) return Center(child: Text(t.game_lookup_samples_empty));
+    if (sample == null) return _emptySamples();
     return GalLookupCalibrationCanvas(
       key: ValueKey<Object>(sample.capture),
       pngBytes: sample.capture.pngBytes,
@@ -1047,24 +1247,27 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         ? null
         : _preview?.boxForIndex(_hoverIndex!);
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (_canPreview)
-            Text(
-              hovered == null
-                  ? t.game_lookup_samples_hover
-                  : '「${sample.capture.sourceText.substring(hovered.charIndex, hovered.charIndex + hovered.charLength)}」 · ${hovered.charIndex + 1}',
-            ),
-          Text(t.game_lookup_samples_region_hint),
-          if (_manualGridEdit) ...<Widget>[
-            const SizedBox(height: 4),
-            Text(t.game_lookup_samples_grid_edit_hint),
-          ],
-          Text(
-            '${sample.capture.referenceClient.widthPx} × ${sample.capture.referenceClient.heightPx}',
-            style: Theme.of(context).textTheme.bodySmall,
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  !_canPreview
+                      ? t.game_lookup_samples_region_hint
+                      : hovered == null
+                      ? t.game_lookup_samples_hover
+                      : '「${sample.capture.sourceText.substring(hovered.charIndex, hovered.charIndex + hovered.charLength)}」 · ${hovered.charIndex + 1}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+              const SizedBox(width: 12),
+              _secondaryText(
+                '${sample.capture.referenceClient.widthPx} × ${sample.capture.referenceClient.heightPx}',
+              ),
+            ],
           ),
           if (_preview != null && !_preview!.accepted)
             Text(
@@ -1175,26 +1378,19 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   }
 
   Widget _gridAdvanceControl(GalLookupCellGridV1 grid) {
-    final double currentRatio =
-        grid.advancePerClientHeight / grid.cellHeightPerClientHeight;
-    final double validMinimum = 0.001 / grid.cellHeightPerClientHeight;
-    final double validMaximum = 0.25 / grid.cellHeightPerClientHeight;
-    // Keep an older, unusual but valid ratio visible instead of silently
-    // snapping the slider to the usual 15%--200% range.
-    final double minimum = math.max(
-      validMinimum,
-      math.min(GalLookupCharacterAdvanceV1.minAdvanceRatio, currentRatio),
-    );
-    final double maximum = math.min(
-      validMaximum,
-      math.max(GalLookupCharacterAdvanceV1.maxAdvanceRatio, currentRatio),
-    );
-    final double value = currentRatio.clamp(minimum, maximum).toDouble();
-    // Keep the displayed value as a whole percentage, but make each internal
-    // slider step only 0.05% of the normal cell width. The previous 0.5%
-    // step was still too coarse for correcting accumulated line drift.
-    final int divisions = ((maximum - minimum) * 2000).round().clamp(1, 8000);
-    final String formattedValue = '${(value * 100).round()}%';
+    final ({double min, double max}) range = _gridAdvanceRange(grid);
+    final double value =
+        (grid.advancePerClientHeight / grid.cellHeightPerClientHeight)
+            .clamp(range.min, range.max)
+            .toDouble();
+    // 0.1 % per slider step, keyboard arrow and button press.
+    final int divisions = ((range.max - range.min) / _advanceStep)
+        .round()
+        .clamp(1, 4000);
+    final String formattedValue = '${(value * 100).toStringAsFixed(1)}%';
+    // Snap button steps to the 0.1 % grid so repeated presses stay exact.
+    double stepped(int direction) =>
+        ((value / _advanceStep).round() + direction) * _advanceStep;
     return Column(
       key: const ValueKey<String>('calibration-grid-advance'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1202,13 +1398,34 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         Row(
           children: <Widget>[
             Expanded(child: Text(t.game_lookup_samples_grid_advance)),
-            Text(formattedValue),
+            IconButton(
+              key: const ValueKey<String>('calibration-grid-advance-decrease'),
+              visualDensity: VisualDensity.compact,
+              tooltip: t.game_lookup_samples_grid_advance_decrease,
+              onPressed: _busy || value <= range.min
+                  ? null
+                  : () => _setGridAdvanceRatio(stepped(-1)),
+              icon: const Icon(Icons.remove),
+            ),
+            SizedBox(
+              width: 56,
+              child: Text(formattedValue, textAlign: TextAlign.center),
+            ),
+            IconButton(
+              key: const ValueKey<String>('calibration-grid-advance-increase'),
+              visualDensity: VisualDensity.compact,
+              tooltip: t.game_lookup_samples_grid_advance_increase,
+              onPressed: _busy || value >= range.max
+                  ? null
+                  : () => _setGridAdvanceRatio(stepped(1)),
+              icon: const Icon(Icons.add),
+            ),
           ],
         ),
         Slider(
           key: const ValueKey<String>('calibration-grid-advance-slider'),
-          min: minimum,
-          max: maximum,
+          min: range.min,
+          max: range.max,
           divisions: divisions,
           value: value,
           label: formattedValue,
@@ -1273,7 +1490,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
           t.game_lookup_samples_continuation_title,
           style: Theme.of(context).textTheme.titleSmall,
         ),
-        Text(t.game_lookup_samples_continuation_hint),
+        _secondaryText(t.game_lookup_samples_continuation_hint),
         const SizedBox(height: 8),
         _continuationIndentControl(
           keyName: 'continuation-indent',
@@ -1291,7 +1508,38 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Text(
+        if (widget.nativeGeometryActive) ...<Widget>[
+          Row(
+            key: const ValueKey<String>('calibration-native-fallback'),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Icon(
+                Icons.info_outline,
+                size: 16,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  t.game_lookup_samples_native_fallback_hint,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+        ],
+        if (_canSwitchSlot) ...<Widget>[
+          _secondaryText(t.game_lookup_samples_narration_hint),
+          const SizedBox(height: 20),
+        ],
+        _stepHeader(1, t.game_lookup_samples_search_title),
+        const SizedBox(height: 6),
+        _secondaryText(t.game_lookup_samples_search_hint),
+        const SizedBox(height: 20),
+        _stepHeader(2, t.game_lookup_samples_auto_align),
+        const SizedBox(height: 6),
+        _secondaryText(
           _fitAllSamples
               ? t.game_lookup_samples_auto_all_hint
               : t.game_lookup_samples_auto_current_hint,
@@ -1299,9 +1547,19 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
         const SizedBox(height: 8),
         if (galCalibrationOcrModelStatus != null) ...[
           if (_ocrModel?.ready == true)
-            Text(t.manga_ocr_model_status_ready)
+            Row(
+              children: <Widget>[
+                Icon(
+                  Icons.check_circle_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 6),
+                Expanded(child: _secondaryText(t.manga_ocr_model_status_ready)),
+              ],
+            )
           else ...[
-            Text(
+            _secondaryText(
               '${t.manga_ocr_model_status_missing} · '
               '${t.manga_ocr_model_download_size(size: '31 MB')}。'
               '${t.manga_ocr_engine_local_onnx_desc}',
@@ -1339,19 +1597,19 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                 : t.game_lookup_samples_auto_align_current,
           ),
         ),
-        const Divider(),
-        Text(
-          t.game_lookup_samples_search_title,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        Text(t.game_lookup_samples_search_hint),
-        const SizedBox(height: 8),
+        const SizedBox(height: 16),
+        const Divider(height: 1),
         ExpansionTile(
           key: const ValueKey<String>('calibration-advanced'),
           initiallyExpanded: _showAdvanced,
           tilePadding: EdgeInsets.zero,
-          title: Text(t.game_lookup_samples_advanced),
-          subtitle: Text(t.game_lookup_samples_advanced_hint),
+          shape: const Border(),
+          collapsedShape: const Border(),
+          title: Text(
+            t.game_lookup_samples_advanced,
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          subtitle: _secondaryText(t.game_lookup_samples_advanced_hint),
           onExpansionChanged: (bool value) =>
               setState(() => _showAdvanced = value),
           children: [
@@ -1366,14 +1624,6 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
                     ? null
                     : (bool value) => setState(() => _fitAllSamples = value),
               ),
-            SwitchListTile.adaptive(
-              key: const ValueKey<String>('calibration-quoted-text-only'),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-              title: Text(t.game_lookup_samples_quoted_text_only),
-              subtitle: Text(t.game_lookup_samples_quoted_text_only_hint),
-              value: _layout.quotedTextOnly,
-              onChanged: _busy ? null : _setQuotedTextOnly,
-            ),
             const Divider(height: 24),
             Align(
               alignment: Alignment.centerLeft,
@@ -1414,49 +1664,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
               _continuationIndentControls(grid),
               _specialCharacterControls(),
             ],
-            if (widget.slot == GalLookupCalibrationSlotV1.narration) ...[
-              const Divider(height: 24),
-              Text(
-                t.game_lookup_samples_narration_hint,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-              if (widget.onOpenDialogueCalibration != null)
-                OutlinedButton.icon(
-                  key: const ValueKey<String>('calibration-dialogue-settings'),
-                  onPressed: _busy
-                      ? null
-                      : () => unawaited(
-                          _switchCalibrationSlot(
-                            widget.onOpenDialogueCalibration,
-                          ),
-                        ),
-                  icon: const Icon(Icons.format_quote_outlined),
-                  label: Text(t.game_lookup_samples_dialogue),
-                ),
-            ],
-            if (widget.slot == GalLookupCalibrationSlotV1.dialogue &&
-                widget.onOpenNarrationCalibration != null) ...<Widget>[
-              const Divider(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  key: const ValueKey<String>('calibration-narration-settings'),
-                  onPressed: _busy
-                      ? null
-                      : () => unawaited(
-                          _switchCalibrationSlot(
-                            widget.onOpenNarrationCalibration,
-                          ),
-                        ),
-                  icon: const Icon(Icons.subject_outlined),
-                  label: Text(t.game_lookup_samples_narration),
-                ),
-              ),
-              Text(
-                t.game_lookup_samples_narration_hint,
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
+            const SizedBox(height: 8),
           ],
         ),
       ],
@@ -1466,6 +1674,7 @@ class _GalLookupSamplesDialogState extends State<GalLookupSamplesDialog> {
   void _setSearchRect(GalLookupNormalizedRectV1 rect) {
     _rect = rect;
     _layoutRect = rect;
+    _advanceBaseline = null;
     _manualGridEdit = false;
     // A new crop needs a new fit; never apply stale geometry from another crop.
     _layout = copyGalCalibrationLayout(_layout, clearCellGrid: true);
