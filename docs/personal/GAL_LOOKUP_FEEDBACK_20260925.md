@@ -34,7 +34,7 @@
 
 | # | 现象 | 已核实 | 状态 |
 | --- | --- | --- | --- |
-| 12 | anemoi（SiglusEngine）在「自动」模式下采集，提示「查词层正在切换状态……请重新附着游戏」（截图 `8.webp`、`9.webp`） | 日志 13:56:17～13:56:25 三次 `calibration_sample failed category=surfaceNotReady … surfaceStatus=activeNative`：自动模式下这款游戏使用引擎原生字位置（`activeNative`），`canCaptureCalibrationSample` 不接受该状态，于是被归为 `surfaceNotReady`，套用了本轮新加的「正在切换状态」文案，是误导。用户此前在「仅校准层」模式下已成功采集和校准（档案 3 份）。这不是故障，而是第二轮新文案覆盖不全，以及复测说明没有区分引擎原生游戏。修改方向（倾向 1）：① `activeNative` 时也允许采集和应用，结果作为引擎位置不可用时的备用，窗口里说明这一点；② 或者不允许，但如实提示「由引擎提供字位置，无需校准；如需校准请切到仅校准层」 | 已定位，待统一修改 |
+| 12 | anemoi（SiglusEngine）在「自动」模式下采集，提示「查词层正在切换状态……请重新附着游戏」（截图 `8.webp`、`9.webp`） | 日志 13:56:17～13:56:25 三次 `calibration_sample failed category=surfaceNotReady … surfaceStatus=activeNative`：自动模式下这款游戏使用引擎原生字位置（`activeNative`），`canCaptureCalibrationSample` 不接受该状态，于是被归为 `surfaceNotReady`，套用了本轮新加的「正在切换状态」文案，是误导。用户此前在「仅校准层」模式下已成功采集和校准（档案 3 份）。这不是故障，而是第二轮新文案覆盖不全，以及复测说明没有区分引擎原生游戏。修改方向（倾向 1）：① `activeNative` 时也允许采集和应用，结果作为引擎位置不可用时的备用，窗口里说明这一点；② 或者不允许，但如实提示「由引擎提供字位置，无需校准；如需校准请切到仅校准层」。**用户选择方案 ①**：允许采集和应用，作为备用；用户确认切到「仅校准层」后能正常采集和校准 | 已定位，按方案 ① 待统一修改 |
 
 ## 验证证据
 
