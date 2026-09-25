@@ -1,0 +1,137 @@
+#!/bin/sh
+# Fushi 个人护栏 G3/G4（pre-push）。
+# 由 tool/personal/flow.ps1 install-hooks 安装；源码在 tool/personal/githooks/。
+#
+# G3 推到作者仓库一律拒绝；推到其他远端需要 FUSHI_APPROVE=push；
+#    custom 禁止强推和删除（带标记也不行）。
+# G4 推 pr/* 分支时：必须基于 upstream/develop（不能从 custom 拉出），
+#    且不能包含 personal-paths.txt 列出的个人路径（用户同意后加 pr-personal 放行）。
+
+remote_name=$1
+remote_url=$2
+
+hook_dir=$(dirname "$0")
+if [ ! -f "$hook_dir/fushi-lib.sh" ]; then
+  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is missing; in the main checkout run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
+  exit 1
+fi
+. "$hook_dir/fushi-lib.sh"
+# lib 被截断或清空时函数不存在，不能继续执行（否则所有检查都会静默放行）。
+command -v fushi_block_need_approval >/dev/null 2>&1 || {
+  echo "==== FUSHI GUARD BLOCKED: $hook_dir/fushi-lib.sh is incomplete; in the main checkout run: pwsh -File tool/personal/flow.ps1 install-hooks" >&2
+  exit 1
+}
+
+personal_paths_file="$hook_dir/fushi-personal-paths.txt"
+pr_max_commits=100
+
+# GitHub 的 URL 不区分大小写；也覆盖直接按 URL 推送、远端改名、Windows 反斜杠路径。
+remote_url_lc=$(printf '%s' "$remote_url" | tr '[:upper:]' '[:lower:]' | tr '\\' '/')
+case "$remote_name" in
+  upstream) author_remote=1 ;;
+  *) author_remote=0 ;;
+esac
+case "$remote_url_lc" in
+  *hajisensai/*) author_remote=1 ;;
+esac
+if [ "$author_remote" = 1 ]; then
+  fushi_block "pushing to the author's repository ($remote_name) is forbidden." \
+    "禁止推送到作者仓库。" \
+    "给作者的改动只能推到 origin 的 pr/* 分支，再开 PR。"
+fi
+
+updates=$(cat)
+[ -n "$updates" ] || exit 0
+
+if ! fushi_approved push; then
+  fushi_block_need_approval push \
+    "pushing to $remote_name requires user consent (FUSHI_APPROVE=push)." \
+    "推送到 $remote_name 需要用户同意。" \
+    "本次要推送：$(printf '%s\n' "$updates" | awk '{printf "%s ", $3}')"
+fi
+
+check_custom_push() {
+  local_oid=$1
+  remote_oid=$2
+  if fushi_is_zero_oid "$local_oid"; then
+    fushi_block "deleting remote custom is forbidden." \
+      "禁止删除远端 custom。"
+  fi
+  fushi_is_zero_oid "$remote_oid" && return 0
+  if ! git cat-file -e "$remote_oid^{commit}" 2>/dev/null; then
+    fushi_block "remote custom has commits unknown locally; fetch first, never force-push." \
+      "远端 custom 有本地没有的提交。" \
+      "先 git fetch origin，把差异告诉用户，按采用流程处理；禁止强推覆盖。"
+  fi
+  if ! git merge-base --is-ancestor "$remote_oid" "$local_oid"; then
+    fushi_block "force-pushing custom is forbidden, even with approval." \
+      "禁止强推 custom。" \
+      "这次推送会覆盖远端 custom 的历史。"
+  fi
+}
+
+check_pr_push() {
+  branch=$1
+  local_oid=$2
+  fushi_is_zero_oid "$local_oid" && return 0
+  base=refs/remotes/upstream/develop
+  if ! git rev-parse -q --verify "$base" >/dev/null; then
+    fushi_block "upstream/develop is missing; run git fetch upstream first." \
+      "找不到 upstream/develop，无法检查 PR 分支。" \
+      "先运行 git fetch upstream。"
+  fi
+  count=$(git rev-list --count "$base..$local_oid") ||
+    fushi_block "cannot count commits of $branch against upstream/develop; refusing to push unchecked." \
+      "无法统计 $branch 相对 upstream/develop 的提交数，拒绝未经检查的推送。"
+  if [ "$count" -gt "$pr_max_commits" ]; then
+    fushi_block "$branch has $count commits on top of upstream/develop; it was probably branched from custom." \
+      "$branch 比 upstream/develop 多 $count 个提交。" \
+      "PR 分支必须从 upstream/develop 新建，再 cherry-pick 需要的提交；看起来它是从 custom 拉出来的。"
+  fi
+  fushi_approved pr-personal && return 0
+  [ -f "$personal_paths_file" ] || return 0
+  # 列不出改动时宁可拦下，也不静默放行。
+  merge_base=$(git merge-base "$base" "$local_oid") &&
+    changed=$(git -c core.quotepath=false diff --name-only --no-renames "$merge_base" "$local_oid") ||
+    fushi_block "cannot list files changed by $branch; refusing to push unchecked." \
+      "无法列出 $branch 的改动文件，拒绝未经检查的推送。" \
+      "先 git fetch upstream，确认分支完整后再推。"
+  leaked=$(printf '%s\n' "$changed" |
+    awk -v list="$personal_paths_file" '
+      BEGIN {
+        while ((getline line < list) > 0) {
+          sub(/\r$/, "", line)
+          if (line == "" || substr(line, 1, 1) == "#") continue
+          patterns[++n] = line
+        }
+      }
+      {
+        for (i = 1; i <= n; i++) {
+          p = patterns[i]
+          if (substr(p, length(p), 1) == "/") {
+            if (index($0, p) == 1) { print; next }
+          } else if ($0 == p) { print; next }
+        }
+      }')
+  if [ -n "$leaked" ]; then
+    set -f # 下面按行展开路径，不做通配
+    IFS='
+'
+    fushi_block_need_approval push,pr-personal \
+      "$branch contains personal-only paths that must not go to the author." \
+      "$branch 包含个人专属路径，不能提给作者：" \
+      $leaked \
+      "从 PR 分支里去掉这些改动；确实要提交时先得到用户明确同意。"
+  fi
+}
+
+while read -r local_ref local_oid remote_ref remote_oid; do
+  case "$remote_ref" in
+    refs/heads/custom) check_custom_push "$local_oid" "$remote_oid" ;;
+    refs/heads/pr/*) check_pr_push "${remote_ref#refs/heads/}" "$local_oid" ;;
+  esac
+done <<EOF
+$updates
+EOF
+
+exit 0
