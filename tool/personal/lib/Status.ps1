@@ -56,7 +56,7 @@ function Get-FlowBranchState {
 
     if (Test-FlowAncestor $Context $tip 'refs/heads/custom') {
         if (-not $Cache.ContainsKey('custom')) { $Cache['custom'] = Get-FlowFirstParentSet $Context 'refs/heads/custom' }
-        if ($Cache['custom'].Contains($tip)) { return (New-State '没有自己的提交（尖端在 custom 主线上）' $false $true) }
+        if ($Cache['custom'].Contains($tip)) { return (New-State '尖端已在 custom 主线上（快进合入，或还没有自己的提交）' $false $true) }
         return (New-State '已合入 custom' $true)
     }
     # 只对「离作者代码不远」的分支和作者比；基于 custom 的分支比作者多上万提交，比也没意义。
@@ -68,7 +68,7 @@ function Get-FlowBranchState {
     if ($nearUpstream) {
         if (Test-FlowAncestor $Context $tip $upstream) {
             if (-not $Cache.ContainsKey('upstream')) { $Cache['upstream'] = Get-FlowFirstParentSet $Context $upstream }
-            if ($Cache['upstream'].Contains($tip)) { return (New-State '没有自己的提交（尖端在作者主线上）' $false $true) }
+            if ($Cache['upstream'].Contains($tip)) { return (New-State '尖端已在作者主线上（快进合入，或还没有自己的提交）' $false $true) }
             return (New-State '已合入作者仓库' $true)
         }
         if (Test-FlowContentIn $Context $tip $upstream) { return (New-State '内容已进作者仓库' $true) }

@@ -113,9 +113,15 @@ function New-FlowBackup {
     [void](New-Item -ItemType Directory -Force -Path $backupRoot)
     $customSha = Get-FlowRefSha $Context 'refs/heads/custom'
     $shortSha = if ($customSha) { $customSha.Substring(0, 10) } else { 'nocustom' }
-    $name = "fushi-data-$(Get-Date -Format 'yyyyMMdd-HHmmss')-$shortSha"
+    # 名字以时间开头（保证按名字排序即按时间排序），再加毫秒和随机后缀，
+    # 同一秒内多次运行也不会撞名。
+    $suffix = [guid]::NewGuid().ToString('N').Substring(0, 6)
+    $name = "fushi-data-$(Get-Date -Format 'yyyyMMdd-HHmmss-fff')-$shortSha-$suffix"
     $staging = Join-Path $backupRoot "$name.partial"
     $zip = Join-Path $backupRoot "$name.zip"
+    if ((Test-Path -LiteralPath $zip) -or (Test-Path -LiteralPath $staging)) {
+        throw "备份目标已存在，停止以免覆盖：$zip"
+    }
     [void](New-Item -ItemType Directory -Force -Path $staging)
     try {
         $manifestFiles = foreach ($item in $sources) {
@@ -140,7 +146,8 @@ function New-FlowBackup {
         Test-FlowBackupArchive $zip @($manifestFiles)
     }
     catch {
-        # 半成品 zip 的名字符合保留规则，留着会把好的旧备份挤掉。
+        # 半成品 zip 的名字符合保留规则，留着会把好的旧备份挤掉。上面已确认这个名字事先不存在，
+        # 所以这里删掉的只会是本次运行自己写出的文件。
         Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
         throw
     }

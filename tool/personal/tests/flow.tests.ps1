@@ -305,6 +305,11 @@ try {
     $manifestDb = $manifest.files | Where-Object { $_.entry -eq 'support/fushi.db' }
     Assert-Check '备份包含数据库、WAL、设置和清单，不含音频资源库' (($entries -contains 'support/fushi.db') -and ($entries -contains 'support/fushi.db-wal') -and ($entries -contains 'shared_preferences.json') -and ($entries -contains 'manifest.json') -and -not ($entries -match 'local_audio')) ($entries -join ', ')
     Assert-Check '清单记录的哈希与原数据库一致，理由为最后一次' ($manifestDb.sha256 -eq $dbHash -and $manifest.reason -eq '测试 3') ($manifest | ConvertTo-Json -Depth 4)
+    $rapidRoot = Join-Path $script:Root 'backups-rapid'
+    $rapidFirst = Invoke-Flow @('backup', '-Reason', '连跑 1', '-DataRoot', $dataRoot, '-BackupRoot', $rapidRoot)
+    $rapidSecond = Invoke-Flow @('backup', '-Reason', '连跑 2', '-DataRoot', $dataRoot, '-BackupRoot', $rapidRoot)
+    $rapidZips = @(Get-ChildItem $rapidRoot -Filter 'fushi-data-*.zip')
+    Assert-Check '紧接着连跑两次备份都成功，互不覆盖或误删' ($rapidFirst.Code -eq 0 -and $rapidSecond.Code -eq 0 -and $rapidZips.Count -eq 2) "$($rapidFirst.Output)`n$($rapidSecond.Output)"
     $listBackups = Invoke-Flow @('backup', '-List', '-BackupRoot', $backupRoot)
     Assert-Check 'backup -List 显示理由' ($listBackups.Code -eq 0 -and $listBackups.Output -match '测试 3') $listBackups.Output
     $missing = Invoke-Flow @('backup', '-DataRoot', (Join-Path $script:Root 'no-data'), '-BackupRoot', $backupRoot)

@@ -149,7 +149,7 @@ function Get-FlowDirtyCount {
 
 # 被 git 忽略、删除 worktree 时会一并删掉的非构建内容（.codex-test 证据、*.local.md、
 # 本机笔记等）。目录按一项计；构建产物和依赖缓存不算。
-$script:BuildArtifactPattern = '(^|/)(\.dart_tool|build|dist|\.build-cache|node_modules|\.gradle|\.idea|\.vs|ephemeral|\.plugin_symlinks|\.pub-cache|\.pub)(/|$)|(^|/)\.flutter-plugins(-dependencies)?$|(^|/)pubspec_overrides\.yaml$|\.iml$|(^|/)io/flutter/plugins(/|$)|GeneratedPluginRegistrant\.java$|(^|/)local\.properties$|(^|/)Generated\.xcconfig$|(^|/)flutter_export_environment\.sh$'
+$script:BuildArtifactPattern = '(^|/)(\.dart_tool|build|dist|bin|obj|prebuilt|__pycache__|\.build-cache|node_modules|\.gradle|\.idea|\.vs|ephemeral|\.plugin_symlinks|\.pub-cache|\.pub)(/|$)|(^|/)\.flutter-plugins(-dependencies)?$|(^|/)pubspec_overrides\.yaml$|\.iml$|(^|/)io/flutter/plugins(/|$)|GeneratedPluginRegistrant\.(java|h|m|swift|cc|cpp)$|(^|/)local\.properties$|(^|/)Generated\.xcconfig$|(^|/)flutter_export_environment\.sh$'
 function Get-FlowIgnoredItems {
     [OutputType([string[]])]
     param([string]$Path)

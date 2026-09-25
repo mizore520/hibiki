@@ -242,7 +242,7 @@ function Get-FlowCleanupItems {
             $label = $state.Label
             # 没有自己的提交：尖端本来就在主线上，删分支不丢任何提交；刚开始的任务由 claim 挡住。
             $landed = $state.Landed -or $state.NoOwnCommits
-            if ($state.NoOwnCommits) { $notes.Add('分支上没有自己的提交；若是刚开始的任务，不要清理') }
+            if ($state.NoOwnCommits) { $notes.Add('删除不会丢提交；但如果是刚开始、还没登记 claim 的任务，不要清理') }
         }
         else {
             $label = '分离 HEAD'
@@ -270,7 +270,7 @@ function Get-FlowCleanupItems {
         $state = Get-FlowBranchState $Context $ref $PullRequests $cache
         $claim = $claims | Where-Object { $_.Branch -eq $ref } | Select-Object -First 1
         $notes = @()
-        if ($state.NoOwnCommits) { $notes += '分支上没有自己的提交' }
+        if ($state.NoOwnCommits) { $notes += '尖端已在主线上，删除不会丢提交' }
         if ($claim) { $notes += "claim $($claim.Name) 仍在进行中" }
         $items.Add((New-FlowCleanupItem 'branch' $ref $state.Label (($state.Landed -or $state.NoOwnCommits) -and -not $claim) $notes $ref))
     }
