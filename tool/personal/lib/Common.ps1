@@ -218,6 +218,24 @@ function Get-FlowClaimForBranch {
     return (Read-FlowClaims $Context | Where-Object { $_.Branch -eq $Branch } | Select-Object -First 1)
 }
 
+# 路径模式（相对仓库根，/ 分隔）：以 / 结尾表示目录前缀；* 匹配一段内任意字符，** 跨目录；其余精确匹配。
+function ConvertTo-FlowPathRegex {
+    [OutputType([string])]
+    param([string]$Pattern)
+    if ($Pattern.EndsWith('/')) { return '^' + [regex]::Escape($Pattern) }
+    $escaped = [regex]::Escape($Pattern).Replace('\*\*', '.*').Replace('\*', '[^/]*')
+    return "^$escaped$"
+}
+
+function Test-FlowPathMatch {
+    [OutputType([bool])]
+    param([string]$Path, [string[]]$Patterns)
+    foreach ($pattern in $Patterns) {
+        if ($Path -cmatch (ConvertTo-FlowPathRegex $pattern)) { return $true }
+    }
+    return $false
+}
+
 function Write-FlowSection {
     [OutputType([void])]
     param([string]$Title)
