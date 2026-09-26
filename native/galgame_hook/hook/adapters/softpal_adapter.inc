@@ -1,6 +1,6 @@
 // Exact, build-pinned TextShow bridge for totsulover.exe.
-// Script calls 2 and 15 pass body offset, speaker offset and voice key. Call 2
-// also has a leading mode. The detours only copy scalars; worker resolves PAC
+// Script calls 2 and 15 both pass a leading mode, body offset, speaker offset,
+// and voice key. The detours only copy scalars; worker resolves PAC
 // members and publishes the body/OGG with the same committed text event ID.
 #include "softpal_profile.h"
 
@@ -187,7 +187,7 @@ bool SoftpalMeasuredBuild() {
   return g_softpal_profile_state > 0;
 }
 
-void SoftpalQueueTextShow(void* context, bool has_mode) {
+void SoftpalQueueTextShow(void* context) {
   if (g_capture_enabled &&
       g_softpal_task_cs_ready.load(std::memory_order_acquire) && context) {
     SoftpalTextTask task;
@@ -198,7 +198,7 @@ void SoftpalQueueTextShow(void* context, bool has_mode) {
       const auto* values = reinterpret_cast<const uint32_t*>(bytes + 0x3f178);
       fushi_voice_hook::SoftpalTextShowOperands args;
       valid = fushi_voice_hook::ReadSoftpalTextShowOperands(
-          values, count, has_mode,
+          values, count,
           static_cast<uint32_t>(g_softpal_text.size()),
           fushi_voice_hook::SoftpalLe32(g_softpal_files.data() + 12), &args);
       if (valid) {
@@ -225,13 +225,13 @@ void SoftpalQueueTextShow(void* context, bool has_mode) {
 }
 
 int __cdecl SoftpalTextShowDetour(void* context) {
-  SoftpalQueueTextShow(context, true);
+  SoftpalQueueTextShow(context);
   return g_softpal_original_text_show
       ? g_softpal_original_text_show(context) : 0;
 }
 
 int __cdecl SoftpalTextShow15Detour(void* context) {
-  SoftpalQueueTextShow(context, false);
+  SoftpalQueueTextShow(context);
   return g_softpal_original_text_show_15
       ? g_softpal_original_text_show_15(context) : 0;
 }
@@ -311,6 +311,9 @@ bool SoftpalInstallTextShow() {
   if (g_softpal_hook_installed) {
     g_softpal_task_cs_ready.store(true, std::memory_order_release);
     g_softpal_install_flags |= 8u;
+    // This exact-build script hook owns the text. Suppress the generic GDI
+    // fallback before the first script line, so it cannot create a stray lane.
+    if (g_header) g_header->luna_active = 1;
   }
   return g_softpal_hook_installed;
 }

@@ -42,6 +42,7 @@ struct VoiceHookStatus {
   bool text_hooked = false;  // 文本 hook 是否已装（v2）
   bool audio_hooks_ready = false;  // 首轮音频导出 hook 探测是否已完成
   bool raw_voice_ready = false;  // 游戏资源逐句音频 hook 已就绪（可无 PCM 格式）
+  bool softpal_ready = false;  // 精确构建的 Softpal 正文和资源语音适配器已安装
   bool ok = false;           // 映射有效且格式已就绪（音频格式已填）
   // v13 文本分道的两个容量事实。必须一路带到 UI/诊断：道用尽的症状（某些线程的台词
   // 就是不来）与 v13 要根治的 256 槽挤压完全同形，没有这两个数，真机上分不出

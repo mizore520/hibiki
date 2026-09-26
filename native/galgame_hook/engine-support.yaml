@@ -3177,8 +3177,8 @@
         "attach": "generic_attach_available",
         "follow_child_processes": false,
         "notes": [
-          "A prior candidate was shown attached to the running game in user screenshots on 2026-09-26; the call-15 fix in this revision has not been run.",
-          "Adapter hooks the two measured x86 text-display RVAs after SHA-256 and prologue checks."
+          "A prior candidate was shown attached to the running game in user screenshots on 2026-09-26; the corrected call-15 fix in this revision has not been run.",
+          "Adapter hooks registered call-2 RVA 0x6fb90 and call-15 RVA 0x6ea60 after SHA-256 and prologue checks; the prior candidate mistakenly hooked call-16 RVA 0x6e6d0."
         ]
       },
       "text": {
@@ -3186,11 +3186,11 @@
           {
             "kind": "native_text_show",
             "status": "implemented_unverified",
-            "verification": "Static script inspection found distinct call-2 and call-15 dialogue paths. A user screenshot shows the previous candidate's dedicated thread capturing call-2 text; call-15 capture in this revision is not yet runtime verified."
+            "verification": "Static SCRIPT.SRC inspection found distinct call-2 and call-15 dialogue paths; EXE registration maps call 15 to RVA 0x6ea60. User screenshots show the previous candidate's dedicated thread capturing call-2 text and resource audio, while call-15 text remains absent because that candidate hooked call 16. The corrected hook is not yet runtime verified."
           }
         ],
         "codepage": "932",
-        "thread_selection_hint": "Select Softpal TextShow; it emits dialogue body only on a dedicated thread."
+        "thread_selection_hint": "When the exact-build Softpal adapter is ready, only its Softpal TextShow thread is offered; it emits dialogue body and event-owned OGG where present."
       },
       "audio": {
         "priority": [

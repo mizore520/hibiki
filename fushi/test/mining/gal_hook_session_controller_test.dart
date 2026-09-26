@@ -1593,6 +1593,106 @@ void main() {
     },
   );
 
+  test(
+    'installed Softpal shows only its voice-capable script thread',
+    () async {
+      final TexthookerService service = TexthookerService.test();
+      final ChangeNotifier endpoints = ChangeNotifier();
+      bool releaseLines = false;
+      bool linesSent = false;
+      final _FakeEngineSource engine = _FakeEngineSource(
+        pairedBytes: Uint8List(0),
+        audioFormat: null,
+        textReady: true,
+        softpalReadyFlag: false,
+        pollLinesForInvocation: (_) {
+          if (!releaseLines || linesSent) return const <GalHookedLine>[];
+          linesSent = true;
+          return const <GalHookedLine>[
+            GalHookedLine(
+              seq: 1,
+              timestampMs: 100,
+              text: 'render noise',
+              threadId: 123,
+              sourceKind: 2,
+              hookName: 'Pal',
+            ),
+            GalHookedLine(
+              seq: 2,
+              timestampMs: 101,
+              text: 'おにーさん、動かないでね',
+              threadId: 0x534f465450414c01,
+              sourceKind: 7,
+              hookName: 'Softpal TextShow',
+            ),
+          ];
+        },
+      );
+      final GalHookSessionController controller = GalHookSessionController(
+        textService: service,
+        isWindows: true,
+        targetWow64Probe: (_) async => false,
+        injectorResolver: ({required bool is32Bit}) async => 'injector.exe',
+        engineSourceFactory:
+            ({
+              required int targetPid,
+              required String? launchExe,
+              required String injectorPath,
+              required bool lunaPcHooks,
+              int? lunaCodepage,
+              List<String> launchArguments = const <String>[],
+              String launchWorkdir = '',
+              GalJapaneseLocaleMode japaneseLocaleMode =
+                  kGalDefaultJapaneseLocaleMode,
+              String? contentLanguage,
+            }) => engine,
+        loopbackSourceFactory: () => _FakeLoopbackSource(),
+        textPollInterval: const Duration(milliseconds: 5),
+        endpointListenable: endpoints,
+        endpointStatusLoader: () => const <TexthookerEndpointStatus>[],
+      );
+      await controller.startAttachedCapture(
+        const ExternalWindowInfo(hwnd: 8, pid: 909, title: 'totsulover'),
+      );
+      service.registerTextThread(
+        key: 'luna',
+        label: 'Pal',
+        nativeThreadId: 123,
+      );
+      service.registerTextThread(
+        key: 'softpal',
+        label: 'Softpal TextShow',
+        nativeThreadId: 0x534f465450414c01,
+      );
+      await controller.selectTextThread(123, threadKey: 'luna', remember: true);
+      final Completer<bool> oldSelection = Completer<bool>();
+      engine.staleSelectionGate = oldSelection;
+      final Future<bool> pendingOldSelection = controller.selectTextThread(
+        123,
+        threadKey: 'luna',
+      );
+      await Future<void>.delayed(Duration.zero);
+      engine.softpalReadyFlag = true;
+      releaseLines = true;
+      for (int i = 0; i < 40 && service.entries.isEmpty; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      expect(controller.textThreads.map((thread) => thread.key), <String>[
+        'softpal:534f465450414c01',
+      ]);
+      expect(controller.textThreads.single.nativeThreadId, 0x534f465450414c01);
+      expect(controller.selectedNativeTextThreadId, 0x534f465450414c01);
+      expect(service.entries.map((line) => line.text), <String>[
+        'おにーさん、動かないでね',
+      ]);
+      oldSelection.complete(true);
+      expect(await pendingOldSelection, isFalse);
+      expect(controller.selectedNativeTextThreadId, 0x534f465450414c01);
+      await controller.close();
+      endpoints.dispose();
+    },
+  );
+
   test('系统 UI 文字行被 poll 剔除，只有真台词进入文本服务', () async {
     final TexthookerService service = TexthookerService.test();
     final ChangeNotifier endpoints = ChangeNotifier();
@@ -4463,6 +4563,7 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
     ),
     this.textReady = false,
     this.rawReady = false,
+    this.softpalReadyFlag = false,
     this.lateRawReady = false,
     this.pairedCandidate = false,
     this.pairedReadyAfterCalls = 1,
@@ -4487,6 +4588,8 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
   final PcmFormat? audioFormat;
   final bool textReady;
   bool rawReady;
+  bool softpalReadyFlag;
+  Completer<bool>? staleSelectionGate;
   final bool lateRawReady;
   final bool pairedCandidate;
   final int pairedReadyAfterCalls;
@@ -4540,6 +4643,9 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
 
   @override
   bool get rawVoiceReady => rawReady;
+
+  @override
+  bool get softpalReady => softpalReadyFlag;
 
   @override
   bool get pcmReady => !rawReady && audioFormat != null;
@@ -4670,7 +4776,12 @@ class _FakeEngineSource extends EngineHookGalAudioSource {
   }
 
   @override
-  Future<bool> selectTextThread(int? threadId) async => true;
+  Future<bool> selectTextThread(int? threadId) async {
+    if (threadId == 123 && staleSelectionGate != null) {
+      return staleSelectionGate!.future;
+    }
+    return true;
+  }
 
   @override
   Future<void> stop() async {

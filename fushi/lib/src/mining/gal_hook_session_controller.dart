@@ -861,6 +861,7 @@ class GalHookSessionController extends ChangeNotifier {
   /// LunaTranslator 原文在 Fushi 线程选择器中的稳定身份。
   static const String lunaExternalTextThreadKey =
       'external:luna-translator-origin';
+  static const int _softpalTextThreadId = 0x534f465450414c01;
 
   final TexthookerService _textService;
   final GalEngineSourceFactory _engineSourceFactory;
@@ -899,6 +900,24 @@ class GalHookSessionController extends ChangeNotifier {
     final List<TexthookerTextThread> native = _textService.textThreadsSince(
       _state.sessionStartedAt,
     );
+    // The installed, exact-build Softpal adapter publishes one script lane
+    // with event-owned OGG. Hide any renderer threads discovered before its
+    // readiness report, including the synthetic external Luna choice.
+    if (_engineSource?.softpalReady == true) {
+      final List<TexthookerTextThread> candidates = native
+          .where((thread) => thread.nativeThreadId == _softpalTextThreadId)
+          .toList(growable: false);
+      if (candidates.isEmpty) return const <TexthookerTextThread>[];
+      for (final TexthookerTextThread thread in candidates) {
+        if (thread.key == _selectedTextThreadKey) {
+          return <TexthookerTextThread>[thread];
+        }
+      }
+      candidates.sort(
+        (a, b) => b.observedLineCount.compareTo(a.observedLineCount),
+      );
+      return <TexthookerTextThread>[candidates.first];
+    }
     final DateTime? startedAt = _state.sessionStartedAt;
     if (startedAt == null) return native;
     final List<TexthookerLineEntry> lunaLines = _textService.entries
@@ -2928,10 +2947,23 @@ class GalHookSessionController extends ChangeNotifier {
     bool remember = false,
   }) async {
     final EngineHookGalAudioSource? engine = _engineSource;
+    if (engine?.softpalReady == true &&
+        threadId != null &&
+        threadId != _softpalTextThreadId) {
+      return false;
+    }
     // WebSocket/剪贴板等外部 Hook 线程没有 native helper，也仍需由 app 级状态
     // 驱动工作台与浮窗过滤；有 helper 时再同步其 native thread id。
     final bool selected =
         engine == null || await engine.selectTextThread(threadId);
+    if (engine?.softpalReady == true &&
+        threadId != null &&
+        threadId != _softpalTextThreadId) {
+      // A remembered renderer selection may have started before Softpal
+      // became ready. Its late native completion must not replace this lane.
+      unawaited(engine!.selectTextThread(_softpalTextThreadId));
+      return false;
+    }
     if (selected) {
       _selectedTextThreadKey = threadKey == null || threadKey.isEmpty
           ? null
@@ -3340,6 +3372,10 @@ class GalHookSessionController extends ChangeNotifier {
   /// （ctx 未透出），靠「谁真的在出台词」消歧。选中后本会话不再自动改，避免
   /// 行数此消彼长导致选择反复跳动。
   void _maybeRestoreTextThread() {
+    // For this measured Softpal build, only the adapter's fixed script lane is
+    // selectable. A remembered Pal renderer fingerprint must never restore a
+    // hidden thread behind the single-thread picker.
+    if (_engineSource?.softpalReady == true) return;
     if (_textThreadMemoryApplied || _selectedTextThreadKey != null) return;
     // 记忆未接入 / 本局拿不到游戏 key / 记忆里没有线程指纹，三种情况都落到
     // 引擎精确线程的自动选择；只有真有记忆时才按指纹恢复（用户显式选择优先）。
@@ -5942,6 +5978,10 @@ class GalHookSessionController extends ChangeNotifier {
             details: <String, Object?>{'from': cursor, 'to': line.seq},
           );
         }
+        if (engine.softpalReady && line.threadId != _softpalTextThreadId) {
+          cursor = line.seq;
+          continue;
+        }
         // 重连到一个仍在运行、仍已注入的游戏时，旧的 threadDiscovered 事件不会重放。
         // 如果这里直接执行下面的“未选中就丢”过滤，自定义 hook（SGRE 的 UserHook1
         // 即为实测现场）虽然持续把正文写进文本环，却永远不会重新进入线程目录，跨会话
@@ -5958,6 +5998,44 @@ class GalHookSessionController extends ChangeNotifier {
               hookCode: line.hookCode.isEmpty ? null : line.hookCode,
               nativeThreadId: line.threadId == 0 ? null : line.threadId,
             );
+            if (engine.softpalReady &&
+                line.threadId == _softpalTextThreadId &&
+                (_selectedNativeTextThreadId != _softpalTextThreadId ||
+                    _selectedTextThreadKey != threadKey)) {
+              // Adopt before the consumer gate; native selection and history
+              // recovery run asynchronously so this poll stays nonblocking.
+              _selectedNativeTextThreadId = line.threadId;
+              _selectedTextThreadKey = threadKey;
+              _selectedTextThreadFaceId = 0;
+              _selectedThreadClaimedKeys
+                ..clear()
+                ..add(threadKey);
+              _textThreadMemoryApplied = true;
+              unawaited(
+                selectTextThread(line.threadId, threadKey: threadKey).then((
+                  bool selected,
+                ) {
+                  if (selected ||
+                      engine != _engineSource ||
+                      _selectedNativeTextThreadId != _softpalTextThreadId ||
+                      _selectedTextThreadKey != threadKey) {
+                    return;
+                  }
+                  // Keep the next line eligible to retry native selection.
+                  _selectedNativeTextThreadId = null;
+                  _selectedTextThreadKey = null;
+                  _selectedTextThreadFaceId = 0;
+                  _selectedThreadClaimedKeys.clear();
+                  _textThreadMemoryApplied = false;
+                  _record(
+                    GalHookEventSeverity.warning,
+                    'text',
+                    'text.softpal_thread_selection_failed',
+                    'Softpal thread selection failed; next line will retry',
+                  );
+                }),
+              );
+            }
             _maybeAutoSelectLittleBustersThread(line);
             _maybeRestoreTextThread();
           }

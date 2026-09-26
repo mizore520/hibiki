@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cstdint>
+#include <string_view>
 
 namespace fushi_voice_hook {
 
@@ -24,9 +25,9 @@ inline constexpr std::array<uint8_t, 32> kTotsuloverPalDllSha256 = {
 inline constexpr uint32_t kTotsuloverTextShowRva = 0x6fb90;
 inline constexpr std::array<uint8_t, 12> kTotsuloverTextShowPrologue = {
     0x55, 0x8b, 0xec, 0x83, 0xec, 0x14, 0x53, 0x8b, 0x5d, 0x08, 0x56, 0x8b};
-inline constexpr uint32_t kTotsuloverTextShow15Rva = 0x6e6d0;
+inline constexpr uint32_t kTotsuloverTextShow15Rva = 0x6ea60;
 inline constexpr std::array<uint8_t, 12> kTotsuloverTextShow15Prologue = {
-    0x55, 0x8b, 0xec, 0x83, 0xec, 0x10, 0x53, 0x8b, 0x5d, 0x08, 0x56, 0x8b};
+    0x55, 0x8b, 0xec, 0x83, 0xec, 0x14, 0x53, 0x8b, 0x5d, 0x08, 0x56, 0x8b};
 inline constexpr uint32_t kSoftpalNoVoice = 0x0fffffffu;
 
 struct SoftpalTextShowOperands {
@@ -35,16 +36,15 @@ struct SoftpalTextShowOperands {
   uint32_t voice_key = 0;
 };
 
-// Script calls 2 and 15 share the last three operands. Call 2 also has a
-// leading mode (zero for dialogue); call 15 has exactly the three operands.
+// Script calls 2 and 15 each pop four operands. Both carry a leading mode
+// (zero for dialogue) followed by body, speaker, and voice operands.
 inline bool ReadSoftpalTextShowOperands(const uint32_t* values, uint32_t count,
-                                        bool has_mode, uint32_t text_bytes,
+                                        uint32_t text_bytes,
                                         uint32_t file_count,
                                         SoftpalTextShowOperands* out) {
-  const uint32_t required = has_mode ? 4u : 3u;
-  if (!values || !out || count < required || count > 4096) return false;
+  if (!values || !out || count < 4u || count > 4096) return false;
   const uint32_t* args = values + count - 3;
-  if ((has_mode && args[-1] != 0) || args[0] < 16 ||
+  if (args[-1] != 0 || args[0] < 16 ||
       args[0] >= text_bytes ||
       (args[2] != kSoftpalNoVoice && args[2] >= file_count)) return false;
   *out = {args[0], args[1], args[2]};
@@ -53,6 +53,17 @@ inline bool ReadSoftpalTextShowOperands(const uint32_t* values, uint32_t count,
 
 inline bool MatchesSoftpalProfile(const std::array<uint8_t, 32>& digest) {
   return digest == kTotsuloverSha256;
+}
+
+inline bool MatchesSoftpalProfileHex(std::string_view digest) {
+  if (digest.size() != kTotsuloverSha256.size() * 2) return false;
+  constexpr char kHex[] = "0123456789abcdef";
+  for (size_t i = 0; i < kTotsuloverSha256.size(); ++i) {
+    const uint8_t byte = kTotsuloverSha256[i];
+    if (digest[i * 2] != kHex[byte >> 4] ||
+        digest[i * 2 + 1] != kHex[byte & 0xf]) return false;
+  }
+  return true;
 }
 
 }  // namespace fushi_voice_hook

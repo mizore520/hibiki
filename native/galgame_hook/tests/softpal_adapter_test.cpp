@@ -15,29 +15,37 @@ void Put32(std::vector<uint8_t>& b, size_t at, uint32_t v) {
 int main() {
   using namespace fushi_voice_hook;
   assert(MatchesSoftpalProfile(kTotsuloverSha256));
+  assert(MatchesSoftpalProfileHex(
+      "a2d14820e5c63520084565768ab8f14f7c356aad623de2e313b12c14bae83688"));
+  assert(!MatchesSoftpalProfileHex(
+      "b2d14820e5c63520084565768ab8f14f7c356aad623de2e313b12c14bae83688"));
   auto wrong = kTotsuloverSha256;
   wrong[0] ^= 1;
   assert(!MatchesSoftpalProfile(wrong));
 
   SoftpalTextShowOperands operands;
   const uint32_t regular[] = {0, 54435, kSoftpalNoVoice, kSoftpalNoVoice};
-  assert(ReadSoftpalTextShowOperands(regular, 4, true, 2150000, 28426,
+  assert(ReadSoftpalTextShowOperands(regular, 4, 2150000, 28426,
                                       &operands));
   assert(operands.body_offset == 54435 &&
          operands.voice_key == kSoftpalNoVoice);
-  const uint32_t alternate[] = {54490, 54533, 16558};
-  assert(ReadSoftpalTextShowOperands(alternate, 3, false, 2150000, 28426,
+  const uint32_t alternate[] = {0, 54490, 54533, 16558};
+  assert(ReadSoftpalTextShowOperands(alternate, 4, 2150000, 28426,
                                       &operands));
   assert(operands.body_offset == 54490 && operands.speaker_offset == 54533 &&
          operands.voice_key == 16558);
-  assert(!ReadSoftpalTextShowOperands(alternate, 3, true, 2150000, 28426,
+  assert(!ReadSoftpalTextShowOperands(alternate, 3, 2150000, 28426,
                                        &operands));
+  const uint32_t missed_line[] = {0, 55409, 55444, 10506};
+  assert(ReadSoftpalTextShowOperands(missed_line, 4, 2150000, 28426,
+                                      &operands));
+  assert(operands.body_offset == 55409 && operands.voice_key == 10506);
   const uint32_t wrong_mode[] = {1, 54435, kSoftpalNoVoice,
                                  kSoftpalNoVoice};
-  assert(!ReadSoftpalTextShowOperands(wrong_mode, 4, true, 2150000, 28426,
+  assert(!ReadSoftpalTextShowOperands(wrong_mode, 4, 2150000, 28426,
                                        &operands));
-  const uint32_t wrong_voice[] = {54490, 54533, 28426};
-  assert(!ReadSoftpalTextShowOperands(wrong_voice, 3, false, 2150000, 28426,
+  const uint32_t wrong_voice[] = {0, 54490, 54533, 28426};
+  assert(!ReadSoftpalTextShowOperands(wrong_voice, 4, 2150000, 28426,
                                        &operands));
 
   std::vector<uint8_t> pac(0x804 + 40);
