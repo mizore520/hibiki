@@ -47,6 +47,7 @@ import 'package:fushi/src/media/manga/mihon/mihon_models.dart'
     show MihonRuntimeException;
 import 'package:fushi/src/media/media_cover_source.dart';
 import 'package:fushi/src/media/video/dandanplay_client.dart';
+import 'package:fushi/src/media/video/media_server/media_server_browser.dart';
 import 'package:fushi/src/media/video/video_source_fingerprint.dart';
 import 'package:fushi/src/media/video/danmaku_manual_match_panel.dart';
 import 'package:fushi/src/media/source_library/source_stream_headers.dart';
@@ -829,7 +830,13 @@ abstract class VideoFushiTestHooks {
   int get debugCueCount;
   String? get debugActiveSubtitleTrackId;
   bool get debugGraphicSubtitleActive;
+
+  /// BUG-2648：内嵌文本轨由 libmpv 解码、`sub-text` 回流成可点 cue。
+  bool get debugPlayerDecodedSubtitleActive;
   List<int> get debugRemoteEmbeddedStreamIndices;
+
+  /// BUG-2691：当前是否已切到 gpu-next 宿主窗（Windows HDR / DV P5 路径）。
+  bool get debugHdrHostActive;
 }
 
 // TODO-314：字幕跳转列表不再走 overlay 面板系统，改 push-aside（[_subtitleListVisible]
@@ -1103,6 +1110,13 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   @override
   bool get debugGraphicSubtitleActive =>
       _controller?.isPlayerRenderedSubtitleActive ?? false;
+
+  @override
+  bool get debugPlayerDecodedSubtitleActive =>
+      _controller?.isPlayerDecodedTextSubtitleActive ?? false;
+
+  @override
+  bool get debugHdrHostActive => _controller?.hdrHostActive.value ?? false;
 
   @override
   List<int> get debugRemoteEmbeddedStreamIndices => <int>[
@@ -2058,6 +2072,9 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
   /// 服务器抽不出内嵌文本轨时，决定能否把轨交给 libmpv 自绘（转码 HLS 不带轨）。
   bool _remoteStreamIsOriginalContainer = false;
 
+  /// 服务器元数据说当前远端流是 DV P5 类（BUG-2691），开片时交给控制器。
+  bool _remoteSourceRequiresDolbyVisionReshape = false;
+
   /// TODO-1307 字幕后置：用户在「字幕后置异步解析」间隙是否已显式关闭字幕
   /// （[_clearRemoteSubtitle]）。为真时 [_resolveDeferredYoutubeCaptions] 只回填 cue 供菜单
   /// 重选、不自动抢占应用（尊重用户选择）。每次 [_loadRemoteEpisode] 起播时重置为 false。
@@ -2959,6 +2976,11 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     _asbConfig = VideoAsbplayerConfig.decode(appModel.videoAsbplayerConfig);
     _controlLayoutNotifier.value = appModel.videoControlLayout;
     _customActionBindingsNotifier.value = appModel.videoCustomActionBindings;
+    // BUG-2691：画面 fit 与 HDR 输出是全局设置，本地路径（上面 `_init` 本体）读了，
+    // 远端路径此前漏读——Emby / Jellyfin / 互联播放恒按默认 auto / contain，用户设的
+    // 「关闭」「始终」对远端片源全不生效。
+    _videoFitMode = appModel.videoFitMode;
+    _videoHdrOutputMode = appModel.videoHdrOutputMode;
 
     // 客户端合集连播（Phase 3 合集 = N 个独立 VideoBooks 行）：host 不把兄弟集填进
     // RemoteVideoInfo.episodes（那是旧单行 playlistJson 模型），故由 client 用合集成员列表
@@ -3117,6 +3139,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       );
       _remoteEmbeddedSubtitleTracks = urls.embeddedSubtitleTracks;
       _remoteStreamIsOriginalContainer = urls.streamIsOriginalContainer;
+      _remoteSourceRequiresDolbyVisionReshape =
+          urls.sourceRequiresDolbyVisionReshape;
       String? externalSub;
       List<AudioCue> cues = const <AudioCue>[];
       // 优先恢复用户上次为该远端集手选的字幕：远端视频无本地 DB 行，字幕只进内存、退出即丢
@@ -3134,7 +3158,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       // _currentSubtitleSource 设成外挂文件路径（下载的临时抽取产物），须在其后
       // 改回本编码，否则字幕菜单的内嵌轨行高亮不上、再选一次还会重复下载。
       String? restoredPrimarySource;
-      // BUG-2590：上次是服务器抽不出、走了 libmpv 自绘的内嵌轨——起播后仍按同一
+      // BUG-2590：上次是服务器抽不出、走了 libmpv 回落的内嵌轨——起播后仍按同一
       // 序号交给 libmpv（mpv 轨表要等 load 后才有，故记下来在 _applyLoad 之后做）。
       RemoteVideoEmbeddedSubtitleTrack? playerRenderedTrack;
       if (persistedSub != null) {
@@ -3193,9 +3217,10 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
               debugPrint(
                 '[VideoFushiPage] embedded subtitle replay failed: $e',
               );
-              // BUG-2590：服务器抽不出 → 与手选时同款回落，起播后交给 libmpv 自绘。
+              // BUG-2590：服务器抽不出 → 与手选时同款回落，起播后交给 libmpv 解码（BUG-2648）。
               if (track != null &&
                   track.isText &&
+                  !track.isExternalFile &&
                   urls.streamIsOriginalContainer) {
                 playerRenderedTrack = track;
                 subtitleResolved = true;
@@ -3291,7 +3316,7 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
           seq == _episodeLoadSeq &&
           mounted &&
           !_failed) {
-        // BUG-2590：mpv 轨表 load 后才有，此时再把上次选的轨交给 libmpv 自绘；
+        // BUG-2590：mpv 轨表 load 后才有，此时再把上次选的轨交给 libmpv 解码回流（BUG-2648）；
         // 选不中（轨已变）静默无字幕，不阻断播放。
         unawaited(
           _showRemoteEmbeddedTrackViaPlayer(
@@ -4200,6 +4225,9 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
       mode: _videoHdrOutputMode,
       fitMode: _videoFitMode,
     );
+    controller.setSourceDolbyVisionHint(
+      _isRemote && _remoteSourceRequiresDolbyVisionReshape,
+    );
     // BUG-772：首开新建的在途 controller 登记进字段，让页面 dispose 能主动取消它。
     // 换集复用同一 _controller 时不设，避免误 dispose 正在用的实例。
     if (isInitialVideoOpen) _pendingController = controller;
@@ -4297,6 +4325,9 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     }
     controller.removeListener(_syncWindowAspectRatioLock);
     controller.addListener(_syncWindowAspectRatioLock);
+    controller.dolbyVisionColorsUnsupportedNotifier
+      ..removeListener(_onDolbyVisionColorsUnsupportedChanged)
+      ..addListener(_onDolbyVisionColorsUnsupportedChanged);
     if (_isRemote) {
       controller.removeListener(_syncRemotePlaybackPausedState);
       controller.addListener(_syncRemotePlaybackPausedState);
@@ -4824,6 +4855,8 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     _firstFramePromoteTimer = null;
     _controller?.removeListener(_promoteVideoReadyOnFirstFrame);
     _controller?.removeListener(_syncWindowAspectRatioLock);
+    _controller?.dolbyVisionColorsUnsupportedNotifier
+        .removeListener(_onDolbyVisionColorsUnsupportedChanged);
     _controller?.removeListener(_syncRemotePlaybackPausedState);
     _detachControllerChapterListener();
     _controller?.setOnCompleted(null);
@@ -8144,6 +8177,23 @@ class _VideoFushiPageState extends ConsumerState<VideoFushiPage>
     _controller?.setPauseAtSubtitleEnd(config.pauseAtSubtitleEnd);
     await appModel.setVideoAsbplayerConfig(VideoAsbplayerConfig.encode(config));
     if (mounted) setState(() {});
+  }
+
+  /// BUG-2691：DV Profile 5 片源在没有 gpu-next 的平台 / 设置下会紫绿反色，
+  /// 至少告诉用户这不是片子坏了。每次由假变真提示一次（换集会重新判断）。
+  void _onDolbyVisionColorsUnsupportedChanged() {
+    final VideoPlayerController? controller = _controller;
+    if (controller == null ||
+        !controller.dolbyVisionColorsUnsupportedNotifier.value) {
+      return;
+    }
+    _showOsd(
+      Platform.isWindows
+          ? t.video_dolby_vision_colors_enable_hdr_output
+          : t.video_dolby_vision_colors_unsupported,
+      severity: ToastSeverity.warning,
+      prominent: true,
+    );
   }
 
   Future<void> _syncWindowAspectRatioLock() async {

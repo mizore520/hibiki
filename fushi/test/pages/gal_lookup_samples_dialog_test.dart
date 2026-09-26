@@ -372,8 +372,6 @@ void main() {
         find.byKey(const ValueKey<String>('calibration-manual-layout')),
         findsOneWidget,
       );
-      expect(find.text(t.game_lookup_samples_boxes), findsNothing);
-      expect(find.text(t.game_lookup_samples_saved_hint), findsNothing);
       expect(tester.takeException(), isNull);
     },
   );

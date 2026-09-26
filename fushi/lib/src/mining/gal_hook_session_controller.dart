@@ -2201,11 +2201,13 @@ class GalHookSessionController extends ChangeNotifier {
     // 用户点「停止捕获」就是这一局游玩的终点（BUG-1892）：结算必须在这里发生，
     // 不能拖到游戏进程死或 App 退出——否则停了捕获、人早就不玩了，计时器还在跑。
     await _stopPlayTracker();
-    // A newer attach/launch must not be cleared by the prior stop.
+    // A newer attach/launch may have started while the old tracker was
+    // settling. The old stop must not flush or reset the newer session.
     if (generation != _operationGeneration) return;
-    _activityPendingChars = 0;
+    // Preserve the author's awaited activity flush before releasing ownership.
     await _stopActivityClock();
     if (generation != _operationGeneration) return;
+    _activityPendingChars = 0;
     _activityGameTitle = null;
     _activityGameKey = null;
     if (_state.phase == GalHookSessionPhase.idle && _audioSource == null) {

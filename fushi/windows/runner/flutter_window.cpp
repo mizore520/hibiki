@@ -12,7 +12,6 @@
 #include <algorithm>
 #include <charconv>
 #include <cstdio>
-#include <algorithm>
 #include <cctype>
 #include <cmath>
 #include <cstdint>

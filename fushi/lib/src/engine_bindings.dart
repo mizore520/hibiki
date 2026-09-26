@@ -96,9 +96,9 @@ void installEngineHostBindings() {
   ocrSessionFactoryBuilder = buildOrtOcrFactory;
   ocrIsolateBootstrap = fushiOcrIsolateBootstrap;
   ocrIsolateBootstrapArg = RootIsolateToken.instance;
+  installMangaPanelDetectorFactory();
   // Calibration OCR is an offline assist.  Installing the callback does not
   // download models or create an ONNX session; both happen only when the user
   // invokes screenshot alignment and the small pack is already present.
   installGalCalibrationOcrAssist();
-  installMangaPanelDetectorFactory();
 }

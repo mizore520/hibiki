@@ -766,7 +766,6 @@ void main() {
         reason: '实际产出是 GIF，若跟用户所选拼成 .avif 就是名不副实的容器',
       );
       expect(degraded.degradedToStill, isFalse, reason: '换格式不是降级为静态图');
-
       // ② 没降级：请求 avif、实际产出 avif → 名字是 .avif。两条一起才把「跟实际产出」
       // 与「跟用户所选」这两种实现区分开——只有 ① 会被「恒返回 gif」的假实现蒙混。
       final _RecordingRepo okRepo = _RecordingRepo();
