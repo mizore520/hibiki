@@ -22,7 +22,10 @@ function Invoke-FlowGit {
         $ErrorActionPreference = $previous
     }
     $stdout = @($raw | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" })
-    $stderr = (@($raw | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" }) -join "`n")
+    # stderr 的空行会被包装成占位异常文本，过滤掉，只留真实的错误行。
+    $stderr = (@($raw | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } |
+            ForEach-Object { $_.Exception.Message } |
+            Where-Object { $_ -and $_ -ne 'System.Management.Automation.RemoteException' }) -join "`n")
     if ($code -ne 0 -and -not $AllowFail) {
         throw "git $($Arguments -join ' ') 失败（退出码 $code）：`n$stderr`n$($stdout -join "`n")"
     }
