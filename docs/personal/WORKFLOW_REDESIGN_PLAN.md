@@ -188,10 +188,26 @@ P1 实施调整：
 | `cleanup [--apply <编号>]` | 列出：已合入且干净的 worktree、已合并 PR 的分支、过期 claim、空目录。每一项注明“是否已合入 / 有无未提交改动 / 有无本机证据”。`--apply` 需要 `cleanup` 标记，未合入的内容只报告不删；远端分支删除另需 `push` 标记 | 需要标记 |
 | `install-hooks` | 安装或更新钩子 | 写 `.git/hooks` |
 
-需要实施时核实的点：
+P2 实施结果（2026-09-26）：
 
-- 当前版本实际使用哪个数据目录。目前找到 `Roaming\Hibiki\<用户>\support\hibiki.db`（0.4MB），同时还有 `Roaming\Fushi`、`Local\Fushi` 等目录，要以源码中的路径逻辑为准；
-- 词典资源（约 350MB）不备份，因为可以重新导入。
+- **数据位置**：`backup` 按 `fushi/lib/src/storage/app_paths.dart` 的逻辑定位。先读 `%APPDATA%\Fushi\Fushi\shared_preferences.json` 中的 `flutter.data_root`，有值时数据库在 `<data_root>\support`，否则在默认支持目录。本机的 `data_root` 是仓库根下的 `date\`（已由 `.git/info/exclude` 忽略），当前数据库 `fushi.db` 约 128MB。原方案按旧版 Hibiki 数据库估算的“几 MB”是错的：实际每份备份是一个 zip，只保留 2 份。
+- **备份范围**：只备份数据库（含 `-wal`、`-shm`）和 SharedPreferences。`local_audio_*.db`（约 7GB）、OCR 模型、校准样本等都不受 schema 迁移影响且体积大，不在备份范围内。Fushi 运行时拒绝备份。
+- `date\` 里另有前几轮手动做的备份（`backup-before-pr1625-20260925`、`backup-schema-v112-20260924`，以及 `support\hibiki-db-backup-20260806-003605`），它们属于用户数据，只在 P4 报告，不自动删除。
+- **实现方式**：`flow.ps1` 只负责接收参数和分发，功能放在 `tool/personal/lib/{Common,Hooks,Status,Tasks,Backup}.ps1`；自测放在 `tool/personal/tests/flow.tests.ps1`。
+- **状态判断**：`status` 和 `cleanup` 只拿“比作者多 100 个以内提交”的分支去和作者仓库比；基于 `custom` 的分支比作者多上万个提交，只和 `custom` 比。
+- **独立审查后的修正**：
+  - 判断“内容是否已落地”改为合并预演的树比对，不再用 `git cherry`。“PR 已合并”只作为提示，不能单独让一项变成可清理（原来会把带未落地提交的分支标成可清理）。
+  - 进行中 claim 的 worktree 只报告；没有自己提交的分支，只有在没有 claim 时才算可清理。
+  - 清理必须写成“编号=目标”，防止清单变化后编号指向别的项。
+  - `adopt -Apply` 必须带 `-Expect <预览时的尖端提交>`，合入的就是这个提交。
+  - 钩子一律从主 checkout 的源码安装。
+  - 证据提示扩大到所有被忽略的非构建文件。
+  - 其他：输出改为 UTF-8；多余的位置参数直接拒绝；合并撤回的结果要核实；只删 `codex/*` 和 `pr/*` 分支；备份失败时删掉半成品，并逐个文件校验哈希；归档时同名文件不覆盖。
+  - 复核后补修：备份文件名加上毫秒和随机后缀。原来同一秒内连跑两次，第二次失败时会删掉第一次的好备份。
+- **已知限制（暂不修）**：
+  - 钩子源码取的是主 checkout 当前工作区的文件。主 checkout 不在 `custom` 上、或钩子源码有未提交改动时，装上的就是那一份。
+  - 树比对依赖 git 的默认合并规则。如果将来给某些文件配了 `merge=ours` 之类的自定义合并驱动，“内容已落地”可能误判。目前仓库里没有任何 merge 驱动配置。
+  - 快进合入的分支会显示为“尖端已在主线上”，不会显示为“已合入”。删除不会丢提交，只是标签不够具体。作者仓库的 PR 通过 `gh repo view` 解析仓库现在的正式名后再查询（作者仓库已从 hibiki 改名为 Fushi，用旧名查询 PR 返回空）。
 
 ## 7. 第 4 层：状态与个人补丁清单
 

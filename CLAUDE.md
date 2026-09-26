@@ -1,6 +1,6 @@
 # Fushi 技术规则
 
-本文件维护技术、数据与平台约束；协作、验证范围和正式采用授权见 [个人工作规则](docs/personal/PERSONAL_FORK_RULES.md)。根入口和本文件不要求每次操作重读，专项文档按任务触发。
+本文件维护技术、数据与平台约束；协作、验证范围和正式采用授权见 [个人工作规则](docs/personal/PERSONAL_FORK_RULES.md)，各场景的操作步骤见 [场景手册](docs/personal/WORKFLOWS.md)。根入口和本文件不要求每次操作重读，专项文档按任务触发。
 
 @docs/personal/PERSONAL_FORK_RULES.md
 

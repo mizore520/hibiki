@@ -1,6 +1,6 @@
 # Fushi 个人工作规则
 
-本文件只放个人协作约定；技术、数据与验证细节以根 `CLAUDE.md` 和 `docs/agent/` 为准。当前进度与证据写任务记录，不写这里。
+本文件只放个人协作约定；技术、数据与验证细节以根 `CLAUDE.md` 和 `docs/agent/` 为准。各场景的具体步骤（开任务、采用、同步作者、提 PR、备份、收尾）见 [场景手册](WORKFLOWS.md)，开场先运行 `pwsh -File tool/personal/flow.ps1 status`。当前进度与证据写任务交接单，不写这里。
 
 ## 1. 范围
 
@@ -54,9 +54,9 @@
 ## 6. 分支、提交与采用
 
 - `upstream/develop` 只读；`custom` 是个人正式线（远端 `origin/custom`）；候选分支用 `codex/<任务名>`；给作者的 PR 分支用 `pr/<主题>`，从 `upstream/develop` 新建。不向 upstream 推送，不改写 `custom` 历史，`custom` 永不 force-push；`pr/*` 在 rebase 后可经推送同意强推。
-- 每个任务一个 worktree；并发时在 `.worktrees/coordination/claims/` 登记并只改自己的 claim。本地提交只暂存本轮文件，不用 `git add -A`。
+- 每个任务一个 worktree，用 `flow.ps1 start` 建立（同时生成 `.worktrees/coordination/claims/` 下的 claim 和 `handoffs/` 下的交接单）；只改自己的 claim。本地提交只暂存本轮文件，不用 `git add -A`。
 - **合入 `custom` 需要用户明确同意；推送、正式构建、发布、向上游贡献各自单独授权。**“继续改”“测试绿了”都不算同意。请求批准前先准备好可审阅的实际差异。
-- 清理 worktree：候选合入或用户宣布作废后，列出待清理项并注明是否已合入、有无未提交改动或本机证据（`.codex-test/`、校准样本）；用户确认后再删，claim 移到 `done/`。有未合入内容的只报告不删；`_candidate-build` 是编译缓存，不在清理范围。
+- 采用用 `flow.ps1 adopt`：先预览给用户看，同意后带预览里的尖端提交号 `-Apply -Expect <提交>`。清理用 `flow.ps1 cleanup`：清单给用户看，按用户确认的项以“编号=目标”执行；有未合入内容、未提交改动或进行中 claim 的只报告不删，`_candidate-build` 是编译缓存，不在清理范围。
 - 回复用中文，先讲结果、用户下一步和重要限制；简单任务几句话。没有必须由用户决定的事就把活做完，不以“要不要我继续”收尾。
 
 ### 护栏
@@ -83,4 +83,5 @@ git 钩子（源码 `tool/personal/githooks/`，用 `tool/personal/flow.ps1 inst
 - 不为通过测试而删用例、跳断言或放宽阈值；预期确需改变时写清依据。
 - 数据迁移、文本/画面归属、点击拦截、跨进程契约、生命周期或算法路线变化，交付前做一次独立审查（第 4 节），审查者看实际 diff 与证据；发现关键缺口就保留候选、写明缺口，不宣称验收或合入。
 - Git 只保护已提交源码。动数据库、设置、校准样本、模型文件前先确认备份与兼容性；不绕过 schema/version 守卫打开旧数据，不删用户样本来“恢复正常”。
-- 每批结束只维护一份短交接单：基线、阶段、已确认事实、未解决项、证据位置、下一步。
+- 每个任务只维护一份短交接单（`.worktrees/coordination/handoffs/<任务>.md`）：基线、阶段、已确认事实、未解决项、证据位置、下一步。长期有用的结论（如校准样本）才写进 `docs/personal/` 并提交。
+- 数据库迁移前按场景手册 S8 用 `flow.ps1 backup` 备份；恢复只在用户明确要求时做。

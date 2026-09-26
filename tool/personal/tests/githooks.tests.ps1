@@ -196,7 +196,7 @@ try {
     Assert-Blocked 'branch -f 移动 custom（无标记）' (Invoke-TestGit $work @('branch', '-f', 'custom', 'codex/feature'))
     Invoke-SetupGit $work @('checkout', '-q', 'custom') | Out-Null
     Assert-Blocked '合并候选进 custom（无标记）' (Invoke-TestGit $work @('merge', '-q', '--no-ff', '-m', 'adopt feature', 'codex/feature'))
-    # 被拦的合并会停在“合并进行中”，按拦截提示先 abort 再重试。
+    # 被拦的合并会停在「合并进行中」，按拦截提示先 abort 再重试。
     Invoke-SetupGit $work @('merge', '--abort') | Out-Null
     Assert-Allowed '合并候选进 custom（adopt）' (Invoke-TestGit $work @('merge', '-q', '--no-ff', '-m', 'adopt feature', 'codex/feature') -Approve 'adopt')
 

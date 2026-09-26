@@ -1,0 +1,187 @@
+# flow.ps1 backup：数据库迁移前备份 Fushi 的数据库与设置，只保留最近 2 份。
+# 由 flow.ps1 dot-source；依赖 Common.ps1。
+#
+# 数据位置与应用一致（fushi/lib/src/storage/app_paths.dart）：
+#   SharedPreferences 固定在 %APPDATA%\Fushi\Fushi\shared_preferences.json；
+#   其中 flutter.data_root 有值时数据库在 <data_root>\support，否则在 %APPDATA%\Fushi\Fushi。
+# 只备份数据库（含 -wal/-shm）和设置；词典/音频资源库、OCR 模型、校准样本等
+# 不受 schema 迁移影响且体积大，不在此备份。
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+
+$script:BackupKeepCount = 2
+$script:BackupDatabaseNames = @('fushi.db', 'hibiki.db')
+$script:BackupDatabaseSuffixes = @('', '-wal', '-shm')
+$script:FushiProcessNames = @('fushi', 'Fushi')
+
+function Get-FlowBackupRoot {
+    [OutputType([string])]
+    param([string]$Override)
+    if ($Override) { return $Override }
+    return (Join-Path $env:LOCALAPPDATA 'FushiBackups')
+}
+
+function Get-FlowBackups {
+    [OutputType([System.IO.FileInfo[]])]
+    param([string]$BackupRoot)
+    if (-not (Test-Path -LiteralPath $BackupRoot)) { return @() }
+    return @(Get-ChildItem -LiteralPath $BackupRoot -File -Filter 'fushi-data-*.zip' | Sort-Object Name -Descending)
+}
+
+# 返回 { SupportRoot, PrefsFile, Source }。-DataRoot 覆盖用于测试：<DataRoot>\support 与
+# <DataRoot>\shared_preferences.json。
+function Resolve-FlowDataPaths {
+    [OutputType([pscustomobject])]
+    param([string]$DataRootOverride)
+    if ($DataRootOverride) {
+        return [pscustomobject]@{
+            SupportRoot = Join-Path $DataRootOverride 'support'
+            PrefsFile   = Join-Path $DataRootOverride 'shared_preferences.json'
+            Source      = "指定的数据根 $DataRootOverride"
+        }
+    }
+    $defaultSupport = Join-Path $env:APPDATA 'Fushi\Fushi'
+    $prefs = Join-Path $defaultSupport 'shared_preferences.json'
+    $support = $defaultSupport
+    $source = "默认位置 $defaultSupport"
+    if (Test-Path -LiteralPath $prefs) {
+        $json = Get-Content -LiteralPath $prefs -Raw | ConvertFrom-Json
+        if ($json.PSObject.Properties['flutter.data_root'] -and "$($json.'flutter.data_root')".Trim()) {
+            $dataRoot = "$($json.'flutter.data_root')".Trim()
+            $support = Join-Path $dataRoot 'support'
+            $source = "自定义数据根 $dataRoot（来自 flutter.data_root）"
+        }
+    }
+    return [pscustomobject]@{ SupportRoot = $support; PrefsFile = $prefs; Source = $source }
+}
+
+function Get-FlowFileSha256 {
+    [OutputType([string])]
+    param([string]$Path)
+    return (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+}
+
+# 解压读取每个条目并与清单里的 SHA-256 比对（同时触发 zip 的 CRC 校验）。
+function Test-FlowBackupArchive {
+    [OutputType([void])]
+    param([string]$ZipPath, [System.Collections.IDictionary[]]$Files)
+    $archive = [System.IO.Compression.ZipFile]::OpenRead($ZipPath)
+    try {
+        if (-not $archive.GetEntry('manifest.json')) { throw "备份缺少 manifest.json：$ZipPath" }
+        foreach ($file in $Files) {
+            $entry = $archive.GetEntry($file.entry)
+            if (-not $entry) { throw "备份缺少 $($file.entry)：$ZipPath" }
+            $stream = $entry.Open()
+            try { $hash = [System.Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData($stream)).ToLowerInvariant() }
+            finally { $stream.Dispose() }
+            if ($hash -ne $file.sha256) { throw "备份里的 $($file.entry) 与原文件哈希不一致：$ZipPath" }
+        }
+    }
+    finally { $archive.Dispose() }
+}
+
+function New-FlowBackup {
+    [OutputType([void])]
+    param(
+        [pscustomobject]$Context,
+        [string]$Reason,
+        [string]$DataRootOverride,
+        [string]$BackupRootOverride
+    )
+    if (-not $DataRootOverride) {
+        $running = @(Get-Process -Name $script:FushiProcessNames -ErrorAction SilentlyContinue)
+        if ($running.Count -gt 0) {
+            throw 'Fushi 正在运行（数据库可能正在写入）。请用户先关闭 Fushi，再重新运行 backup。'
+        }
+    }
+    $paths = Resolve-FlowDataPaths $DataRootOverride
+    $sources = [System.Collections.Generic.List[pscustomobject]]::new()
+    foreach ($db in $script:BackupDatabaseNames) {
+        foreach ($suffix in $script:BackupDatabaseSuffixes) {
+            $file = Join-Path $paths.SupportRoot "$db$suffix"
+            if (Test-Path -LiteralPath $file) { $sources.Add([pscustomobject]@{ Path = $file; Entry = "support/$db$suffix" }) }
+        }
+    }
+    if (-not ($sources | Where-Object { $_.Entry -match '\.db$' })) {
+        throw "在 $($paths.SupportRoot) 没找到 fushi.db / hibiki.db（数据位置来源：$($paths.Source)）。不要猜测位置，先和用户确认数据在哪。"
+    }
+    if (Test-Path -LiteralPath $paths.PrefsFile) {
+        $sources.Add([pscustomobject]@{ Path = $paths.PrefsFile; Entry = 'shared_preferences.json' })
+    }
+
+    $backupRoot = Get-FlowBackupRoot $BackupRootOverride
+    [void](New-Item -ItemType Directory -Force -Path $backupRoot)
+    $customSha = Get-FlowRefSha $Context 'refs/heads/custom'
+    $shortSha = if ($customSha) { $customSha.Substring(0, 10) } else { 'nocustom' }
+    # 名字以时间开头（保证按名字排序即按时间排序），再加毫秒和随机后缀，
+    # 同一秒内多次运行也不会撞名。
+    $suffix = [guid]::NewGuid().ToString('N').Substring(0, 6)
+    $name = "fushi-data-$(Get-Date -Format 'yyyyMMdd-HHmmss-fff')-$shortSha-$suffix"
+    $staging = Join-Path $backupRoot "$name.partial"
+    $zip = Join-Path $backupRoot "$name.zip"
+    if ((Test-Path -LiteralPath $zip) -or (Test-Path -LiteralPath $staging)) {
+        throw "备份目标已存在，停止以免覆盖：$zip"
+    }
+    [void](New-Item -ItemType Directory -Force -Path $staging)
+    try {
+        $manifestFiles = foreach ($item in $sources) {
+            $target = Join-Path $staging ($item.Entry -replace '/', '\')
+            [void](New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent))
+            Copy-Item -LiteralPath $item.Path -Destination $target
+            [ordered]@{ entry = $item.Entry; source = $item.Path; bytes = (Get-Item -LiteralPath $target).Length; sha256 = Get-FlowFileSha256 $target }
+        }
+        $manifest = [ordered]@{
+            createdAt  = (Get-Date).ToString('s')
+            reason     = $Reason
+            customSha  = $customSha
+            dataSource = $paths.Source
+            files      = @($manifestFiles)
+            restore    = '先关闭 Fushi；把 support/ 下的文件复制回 dataSource 对应的 support 目录，shared_preferences.json 复制回 %APPDATA%\Fushi\Fushi\。复制前先把现有文件改名留底。'
+        }
+        Save-FlowJson -Path (Join-Path $staging 'manifest.json') -Data $manifest
+        if (-not $DataRootOverride -and @(Get-Process -Name $script:FushiProcessNames -ErrorAction SilentlyContinue).Count -gt 0) {
+            throw '复制期间 Fushi 被启动了，这份备份可能不一致，已放弃。请用户关闭 Fushi 后重试。'
+        }
+        [System.IO.Compression.ZipFile]::CreateFromDirectory($staging, $zip, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+        Test-FlowBackupArchive $zip @($manifestFiles)
+    }
+    catch {
+        # 半成品 zip 的名字符合保留规则，留着会把好的旧备份挤掉。上面已确认这个名字事先不存在，
+        # 所以这里删掉的只会是本次运行自己写出的文件。
+        Remove-Item -LiteralPath $zip -Force -ErrorAction SilentlyContinue
+        throw
+    }
+    finally {
+        Remove-Item -LiteralPath $staging -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    $size = (Get-Item -LiteralPath $zip).Length
+    Write-Output ("已备份 {0} 个文件到 {1}（{2:N1}MB）。数据位置：{3}" -f $sources.Count, $zip, ($size / 1MB), $paths.Source)
+    $old = @(Get-FlowBackups $backupRoot | Select-Object -Skip $script:BackupKeepCount)
+    foreach ($file in $old) {
+        Remove-Item -LiteralPath $file.FullName -Force
+        Write-Output "按保留策略删除旧备份：$($file.Name)"
+    }
+}
+
+function Show-FlowBackups {
+    [OutputType([void])]
+    param([string]$BackupRootOverride)
+    $root = Get-FlowBackupRoot $BackupRootOverride
+    $backups = @(Get-FlowBackups $root)
+    Write-Output "备份目录：$root（保留最近 $script:BackupKeepCount 份）"
+    if ($backups.Count -eq 0) { Write-Output '（无）'; return }
+    foreach ($file in $backups) {
+        $reason = ''
+        $archive = [System.IO.Compression.ZipFile]::OpenRead($file.FullName)
+        try {
+            $entry = $archive.GetEntry('manifest.json')
+            if ($entry) {
+                $reader = [System.IO.StreamReader]::new($entry.Open())
+                try { $reason = ($reader.ReadToEnd() | ConvertFrom-Json).reason } finally { $reader.Dispose() }
+            }
+        }
+        finally { $archive.Dispose() }
+        Write-Output ("{0}  {1:N1}MB  {2}" -f $file.Name, ($file.Length / 1MB), $reason)
+    }
+}
