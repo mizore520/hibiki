@@ -314,10 +314,18 @@ function Get-FlowCleanupItems {
             }
             elseif ($state.NoOwnCommits) {
                 # 刚开始、或已放弃的任务（例如放弃的同步、cherry-pick 后 --abort 的 PR）：不归档就会一直挡住清理和重开。
-                $items.Add((New-FlowCleanupItem 'claim' $claim.Name "分支上没有自己的提交（刚开始或已放弃）；原状态：$($claim.Status)" $true @('只在用户确认任务已放弃时归档；归档后分支和 worktree 才会变成可清理') $claim.Branch $claim.Name))
+                # worktree 里还有未提交改动或进行中的合并 / cherry-pick，说明任务还在做，只报告。
+                $claimWt = $worktrees | Where-Object { $_.Branch -eq $claim.Branch } | Select-Object -First 1
+                $busy = $claimWt -and (Test-FlowWorktreeBusy $claimWt.Path)
+                $notes = if ($busy) { @('worktree 里有未提交改动或进行中的合并 / cherry-pick，任务还在做，不能归档') } else { @('只在用户确认任务已放弃时归档；归档后分支和 worktree 才会变成可清理') }
+                $item = New-FlowCleanupItem 'claim' $claim.Name "分支上没有自己的提交（刚开始或已放弃）；原状态：$($claim.Status)" (-not $busy) $notes $claim.Branch $claim.Name
+                $item | Add-Member -NotePropertyName Abandon -NotePropertyValue $true
+                $items.Add($item)
             }
             elseif (-not $hasWorktree) {
-                $items.Add((New-FlowCleanupItem 'claim' $claim.Name "worktree 已不存在，分支还在（$($state.Label)）；原状态：$($claim.Status)" $true @('只在用户确认任务已放弃时归档；归档不会删除分支，分支上的提交仍在') $claim.Branch $claim.Name))
+                $item = New-FlowCleanupItem 'claim' $claim.Name "worktree 已不存在，分支还在（$($state.Label)）；原状态：$($claim.Status)" $true @('只在用户确认任务已放弃时归档；归档不会删除分支，分支上的提交仍在') $claim.Branch $claim.Name
+                $item | Add-Member -NotePropertyName Abandon -NotePropertyValue $true
+                $items.Add($item)
             }
         }
     }
@@ -363,7 +371,8 @@ function Show-FlowCleanupItems {
             foreach ($note in $item.Notes) { Write-Output "        ⚠ $note" }
         }
     }
-    $example = $Items | Where-Object { $_.Selectable } | Select-Object -First 1
+    # 示例命令不选「放弃任务」类的 claim：那类必须由用户明确确认放弃。
+    $example = $Items | Where-Object { $_.Selectable -and -not $_.PSObject.Properties['Abandon'] } | Select-Object -First 1
     Write-Output ''
     Write-Output '把清单给用户看，按用户确认的项执行。每项写成「编号=目标」，编号与目标对不上会被拒绝；'
     Write-Output '删除 worktree / 分支 / 目录需要 cleanup 同意，只归档 claim 不需要：'

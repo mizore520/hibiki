@@ -89,6 +89,7 @@ $patches = @'
 |:---|:---|:---|:---|:---|
 | 个人规则 | 规则 | 仅个人 | 保留个人版 | `docs/personal/` `CLAUDE.md` |
 | 查词 | 功能 | 已被作者收录-待退役 | 以作者版为准 | `fushi/lib/src/lookup/gal_*` |
+| 规则误登记 | 规则 | 仅个人 | 保留个人版 | `src/leak.txt` |
 | 坏行 | 功能 | 仅个人 | 写了 | 竖线 | `broken/` |
 
 ## 其他
@@ -146,10 +147,11 @@ try {
     Write-Host 'patches'
     $patchesOut = Invoke-Flow @('patches')
     Assert-Check 'patches 统计各条目覆盖的文件数' ($patchesOut.Code -eq 0 -and $patchesOut.Output -match '个人规则  \[[^\]]+\]  4 个文件' -and $patchesOut.Output -match '查词  \[[^\]]+\]  1 个文件') $patchesOut.Output
-    Assert-Check 'patches 只读「补丁条目」一节，并列出未登记的改动' ($patchesOut.Output -match '未登记的个人改动（3 个文件）' -and $patchesOut.Output -notmatch '不应被读取' -and $patchesOut.Output -match '待退役') $patchesOut.Output
+    Assert-Check 'patches 只读「补丁条目」一节，并列出未登记的改动' ($patchesOut.Output -match '未登记的个人改动（2 个文件）' -and $patchesOut.Output -notmatch '不应被读取' -and $patchesOut.Output -match '待退役') $patchesOut.Output
+    Assert-Check '「规则」类条目覆盖非 .md 文件时报警' ($patchesOut.Output -match '类型是「规则」，但覆盖了 1 个非 \.md 文件') $patchesOut.Output
     Assert-Check '列数不对的行报警、对齐分隔行不被当成条目' ($patchesOut.Output -match '有 6 列（应为 5 列' -and $patchesOut.Output -notmatch ':---') $patchesOut.Output
     $patchesAll = Invoke-Flow @('patches', '-All')
-    Assert-Check 'patches -All 列出每个未登记文件' ($patchesAll.Output -match 'src/feature\.txt' -and $patchesAll.Output -match 'src/leak\.txt' -and $patchesAll.Output -match 'src/shared\.txt') $patchesAll.Output
+    Assert-Check 'patches -All 列出每个未登记文件' ($patchesAll.Output -match '(?m)^  src/feature\.txt$' -and $patchesAll.Output -match '(?m)^  src/shared\.txt$' -and $patchesAll.Output -notmatch '(?m)^  src/leak\.txt$') $patchesAll.Output
 
     # 作者：改规则文件同一行、改查词、升数据库版本、改共享文件另一段、加新文件。
     $author = Join-Path $script:Root 'author'
@@ -192,6 +194,7 @@ try {
     Assert-Check 'worktree 已删除的旧同步不再挡路：提醒归档并换名重开' ($reopen.Code -eq 0 -and $reopen.Output -match "发现 worktree 已不存在的同步 claim $firstSyncClaim" -and $syncDirs.Count -eq 1 -and $syncDirs[0].Name -eq "$firstSyncClaim-2") $reopen.Output
     $cleanupList = (Invoke-Flow @('cleanup', '-Offline')).Output
     Assert-Check 'cleanup 为放弃的同步提供「归档 claim」项' ($cleanupList -match "(?m)^\[C\d+\] 可清理  $([regex]::Escape($firstSyncClaim))  —  分支上没有自己的提交") $cleanupList
+    Assert-Check '正在解冲突的同步不能被归档，示例命令也不选放弃类项' ($cleanupList -match "(?m)^\[C\d+\] 只报告  $([regex]::Escape($firstSyncClaim))-2  —" -and $cleanupList -notmatch "-Items '[^']*sync-upstream") $cleanupList
 
     Write-Host 'pr-branch'
     $upstreamTip = (Invoke-TestGit $script:Work @('rev-parse', 'refs/remotes/upstream/develop')).Trim()
@@ -208,13 +211,20 @@ try {
     Assert-Check '夹带个人文件的提交会被标出' ($leak.Code -eq 0 -and $leak.Output -match '个人专属路径' -and $leak.Output -match 'docs/personal/leak\.md') $leak.Output
     $dup = Invoke-Flow @('pr-branch', 'dup', '-Commits', $dupSha)
     Assert-Check '作者已有的改动自动跳过，不当成冲突' ($dup.Code -eq 0 -and $dup.Output -match '已跳过' -and $dup.Output -notmatch '冲突，停在进行中') $dup.Output
+    # 让 prepare-commit-msg 钩子失败：cherry-pick 在改动已进暂存区之后失败，不是空提交，不能当成「作者已有」跳过。
+    $failHook = Join-Path $script:Work '.git\hooks\prepare-commit-msg'
+    [System.IO.File]::WriteAllText($failHook, "#!/bin/sh`n[ -n `"`$FUSHI_TEST_FAIL_PICK`" ] && { echo injected-failure >&2; exit 1; }`nexit 0`n")
+    $env:FUSHI_TEST_FAIL_PICK = '1'
+    try { $broken = Invoke-Flow @('pr-branch', 'broken', '-Commits', $featureSha) }
+    finally { Remove-Item Env:FUSHI_TEST_FAIL_PICK -ErrorAction SilentlyContinue; Remove-Item -LiteralPath $failHook -Force }
+    Assert-Check '非冲突的 cherry-pick 失败会停下报错，不当成作者已有跳过' ($broken.Code -eq 0 -and $broken.Output -match '失败（不是冲突' -and $broken.Output -notmatch '已跳过') $broken.Output
     $reversed = Invoke-Flow @('pr-branch', 'reversed', '-Commits', "$leakSha,$featureSha")
     Assert-Check '-Commits 顺序颠倒时拒绝，且不建分支' ($reversed.Code -ne 0 -and $reversed.Output -match '顺序颠倒' -and -not (Test-Path (Join-Path $script:Work '.worktrees\pr-reversed'))) $reversed.Output
     $conflict = Invoke-Flow @('pr-branch', 'clash', '-Commits', $lookupSha)
     $clashPath = Join-Path $script:Work '.worktrees\pr-clash'
     Assert-Check 'cherry-pick 冲突时停下并说明怎么继续' ($conflict.Code -eq 0 -and $conflict.Output -match '冲突，停在进行中' -and $conflict.Output -match 'gal_feature\.dart' -and $conflict.Output -match '-Resume' -and (Test-Path (Join-Path $script:Work '.git\worktrees\pr-clash\CHERRY_PICK_HEAD'))) $conflict.Output
     $clashHandoff = Join-Path $script:Work '.worktrees\coordination\handoffs\pr-clash.md'
-    Assert-Check '冲突情况写进 PR 交接单' ((Get-Content $clashHandoff -Raw) -match 'cherry-pick 停在冲突') ''
+    Assert-Check '冲突情况写进 PR 交接单' ((Get-Content $clashHandoff -Raw) -match 'cherry-pick 停下') ''
     $early = Invoke-Flow @('pr-branch', 'clash', '-Resume')
     Assert-Check '冲突没解完时 -Resume 拒绝' ($early.Code -ne 0 -and $early.Output -match '还没完成') $early.Output
     Write-TestFile (Join-Path $clashPath 'fushi/lib/src/lookup/gal_feature.dart') "// lookup v2 by author, plus personal tweak`n"

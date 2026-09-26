@@ -158,6 +158,19 @@ function Get-FlowIgnoredItems {
     return @($result.Lines | Where-Object { $_ -and $_ -notmatch $script:BuildArtifactPattern })
 }
 
+# worktree 是否还在用：有未提交改动，或有进行中的 merge / cherry-pick / revert / rebase。
+function Test-FlowWorktreeBusy {
+    [OutputType([bool])]
+    param([string]$Path)
+    if ((Get-FlowDirtyCount $Path) -ne 0) { return $true }
+    $gitDir = Invoke-FlowGit -Dir $Path -Arguments @('rev-parse', '--path-format=absolute', '--git-dir') -AllowFail
+    if ($gitDir.Code -ne 0) { return $true }
+    foreach ($marker in @('MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply')) {
+        if (Test-Path -LiteralPath (Join-Path $gitDir.Lines[0].Trim() $marker)) { return $true }
+    }
+    return $false
+}
+
 function Read-FlowClaims {
     [OutputType([pscustomobject[]])]
     param([pscustomobject]$Context)

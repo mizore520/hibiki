@@ -84,6 +84,10 @@ function Show-FlowPatches {
         $hits = @($files | Where-Object { Test-FlowPathMatch $_ $entry.Patterns })
         foreach ($hit in $hits) { [void]$covered.Add($hit) }
         Write-Output ("  {0}  [{1}｜{2}｜同步冲突时：{3}]  {4} 个文件" -f $entry.Name, $entry.Type, $entry.Status, $entry.Policy, $hits.Count)
+        $nonMarkdown = @($hits | Where-Object { $_ -notmatch '\.md$' })
+        if ($entry.Type -eq '规则' -and $nonMarkdown.Count -gt 0) {
+            Write-Output "      ⚠ 类型是「规则」，但覆盖了 $($nonMarkdown.Count) 个非 .md 文件（如 $($nonMarkdown[0])）。「规则」只对 .md 生效：同步时这些文件仍按代码冲突处理，建议拆成别的类型。"
+        }
         if ($entry.Status -match '待退役' -and $hits.Count -gt 0) {
             Write-Output '      ⚠ 已被作者收录，但相对上次同步时的作者版本仍有改动：下次同步时核对个人重复实现能否退役。'
         }
@@ -119,7 +123,7 @@ function Get-FlowConflictCategory {
     [OutputType([pscustomobject])]
     param([string]$Path, [pscustomobject[]]$Entries)
     $entry = Get-FlowPatchEntryFor $Path $Entries
-    $category = if ($Path -match '^(CLAUDE|AGENTS)\.md$' -or ($entry -and $entry.Type -eq '规则')) { '规则文件' }
+    $category = if ($Path -match '^(CLAUDE|AGENTS)\.md$' -or ($entry -and $entry.Type -eq '规则' -and $Path -match '\.md$')) { '规则文件' }
     elseif ($Path -match '^docs/agent/|/(CLAUDE|AGENTS)\.md$') { '技术文档' }
     elseif ($Path -match '\.(g|freezed)\.dart$|(^|/)pubspec\.lock$') { '生成文件' }
     elseif ($Path -match '^fushi/lib/i18n/.*\.i18n\.json$') { 'i18n 源' }
@@ -365,21 +369,32 @@ function Invoke-FlowPrBranch {
         $pick = Invoke-FlowGit -Dir $task.Path -Arguments @('cherry-pick', $sha) -AllowFail
         if ($pick.Code -eq 0) { $applied++; continue }
         $conflicts = @(Get-FlowGitLines -Dir $task.Path -Arguments @('-c', 'core.quotepath=false', 'diff', '--name-only', '--diff-filter=U'))
-        if ($conflicts.Count -eq 0) {
-            # 改动在作者仓库里已经有了，cherry-pick 结果为空。
+        $gitDir = @(Get-FlowGitLines -Dir $task.Path -Arguments @('rev-parse', '--path-format=absolute', '--git-dir'))[0]
+        $inProgress = Test-Path -LiteralPath (Join-Path $gitDir 'CHERRY_PICK_HEAD')
+        # 只有确实是空提交（cherry-pick 停在进行中、暂存区与 HEAD 完全相同）才跳过；
+        # 其他失败（身份配置、钩子、磁盘等）一律停下报错，不能把真实改动当成「作者已有」丢掉。
+        $emptyPick = $conflicts.Count -eq 0 -and $inProgress -and
+            (Invoke-FlowGit -Dir $task.Path -Arguments @('diff', '--cached', '--quiet', 'HEAD') -AllowFail).Code -eq 0
+        if ($emptyPick) {
             $skip = Invoke-FlowGit -Dir $task.Path -Arguments @('cherry-pick', '--skip') -AllowFail
-            if ($skip.Code -ne 0) { throw "cherry-pick $($sha.Substring(0, 10)) 失败且无法跳过：$($pick.Error)" }
+            if ($skip.Code -ne 0) { throw "cherry-pick $($sha.Substring(0, 10)) 为空但无法跳过：$($skip.Error)" }
             Write-Output "已跳过 $($sha.Substring(0, 10))：它的改动作者仓库里已经有了。"
             $skipped++
             continue
         }
         $rest = @($resolved | Select-Object -Skip ($i + 1) | ForEach-Object { $_.Substring(0, 10) })
-        $message = @("⚠ cherry-pick $($sha.Substring(0, 10)) 冲突，停在进行中（已应用 $applied 个）：") + @($conflicts | ForEach-Object { "      $_" }) +
-            @("   在 $($task.Path) 解决后 git add 并 git cherry-pick --continue；放弃这个提交用 git cherry-pick --abort。")
+        if ($conflicts.Count -gt 0) {
+            $message = @("⚠ cherry-pick $($sha.Substring(0, 10)) 冲突，停在进行中（已应用 $applied 个）：") + @($conflicts | ForEach-Object { "      $_" }) +
+                @("   在 $($task.Path) 解决后 git add 并 git cherry-pick --continue；放弃这个提交用 git cherry-pick --abort。")
+        }
+        else {
+            $message = @("⚠ cherry-pick $($sha.Substring(0, 10)) 失败（不是冲突，已应用 $applied 个）：", "      $($pick.Error)",
+                "   先查明原因再继续：修好后在 $($task.Path) 里 git cherry-pick --continue 或重新 git cherry-pick $($sha.Substring(0, 10))。不要当成「作者已有」跳过。")
+        }
         if ($rest.Count -gt 0) { $message += "   剩下还没应用的提交（解决后依次 git cherry-pick）：$($rest -join ', ')" }
         $message += "   全部应用完后运行 flow.ps1 pr-branch $Topic -Resume 重新检查个人路径并给出下一步。"
         $message | ForEach-Object { Write-Output $_ }
-        [System.IO.File]::AppendAllText($task.Handoff, "`n## cherry-pick 停在冲突（$(Get-Date -Format 'yyyy-MM-dd HH:mm')）`n`n" + (($message | ForEach-Object { "    $_" }) -join "`n") + "`n", $script:Utf8NoBom)
+        [System.IO.File]::AppendAllText($task.Handoff, "`n## cherry-pick 停下（冲突或失败）（$(Get-Date -Format 'yyyy-MM-dd HH:mm')）`n`n" + (($message | ForEach-Object { "    $_" }) -join "`n") + "`n", $script:Utf8NoBom)
         return
     }
     Write-Output "已 cherry-pick $applied 个提交$(if ($skipped) { "，跳过 $skipped 个（作者已有）" })。"
