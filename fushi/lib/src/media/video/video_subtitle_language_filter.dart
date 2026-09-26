@@ -47,8 +47,9 @@ List<AudioCue> filterVideoSubtitleCues(
   // 为中文；反向同理。只在恰好两条正文时补证据，避免片尾特效的 3/5 层同时间组误配。
   final Map<(int, int), List<int>> byWindow = <(int, int), List<int>>{};
   for (int i = 0; i < source.length; i++) {
-    byWindow.putIfAbsent(
-        (source[i].startMs, source[i].endMs), () => <int>[]).add(i);
+    byWindow
+        .putIfAbsent((source[i].startMs, source[i].endMs), () => <int>[])
+        .add(i);
   }
   for (final List<int> indices in byWindow.values) {
     if (indices.length != 2) continue;
@@ -130,36 +131,40 @@ _CueLanguage _languageFromMetadata(String raw) {
       .split(RegExp(r'[^a-z0-9\u4e00-\u9fff]+'))
       .where((String token) => token.isNotEmpty)
       .toSet();
-  if (tokens.any(const <String>{
-    'ja',
-    'jp',
-    'jpn',
-    'japanese',
-    'nihongo',
-    '日',
-    '日文',
-    '日语',
-    '日語'
-  }.contains)) {
+  if (tokens.any(
+    const <String>{
+      'ja',
+      'jp',
+      'jpn',
+      'japanese',
+      'nihongo',
+      '日',
+      '日文',
+      '日语',
+      '日語',
+    }.contains,
+  )) {
     return _CueLanguage.japanese;
   }
-  if (tokens.any(const <String>{
-    'zh',
-    'zho',
-    'chi',
-    'ch',
-    'chs',
-    'cht',
-    'sc',
-    'tc',
-    'cn',
-    'chinese',
-    '中文',
-    '中',
-    '简',
-    '簡',
-    '繁'
-  }.contains)) {
+  if (tokens.any(
+    const <String>{
+      'zh',
+      'zho',
+      'chi',
+      'ch',
+      'chs',
+      'cht',
+      'sc',
+      'tc',
+      'cn',
+      'chinese',
+      '中文',
+      '中',
+      '简',
+      '簡',
+      '繁',
+    }.contains,
+  )) {
     return _CueLanguage.chinese;
   }
   return _CueLanguage.unknown;
@@ -171,9 +176,23 @@ _CueLanguage _languageFromText(String text) {
   return _CueLanguage.unknown;
 }
 
+/// 行分隔符所在的 grapheme 下标。有 markup 时以解析器给的换行为准；没有 markup 的
+/// 纯文本 cue（mpv 解码内嵌文本轨的回流句）只能按文本里的 `\n` 分行。
+List<int> _lineBreaks(AudioCue cue) {
+  final SubtitleMarkup? markup = cue.markup;
+  if (markup != null) return markup.lineBreakGraphemes;
+  final List<int> breaks = <int>[];
+  int index = 0;
+  for (final String grapheme in cue.text.characters) {
+    if (grapheme == '\n' || grapheme == '\r\n') breaks.add(index);
+    index++;
+  }
+  return breaks;
+}
+
 List<String> _cueLines(AudioCue cue) {
   final List<String> graphemes = cue.text.characters.toList();
-  final List<int> breaks = cue.markup?.lineBreakGraphemes ?? const <int>[];
+  final List<int> breaks = _lineBreaks(cue);
   if (breaks.isEmpty) return <String>[cue.text];
   final List<String> lines = <String>[];
   int start = 0;
@@ -189,8 +208,8 @@ List<String> _cueLines(AudioCue cue) {
 
 AudioCue? _filterMultilineCue(AudioCue cue, _CueLanguage wanted) {
   final SubtitleMarkup? markup = cue.markup;
-  final List<int> breaks = markup?.lineBreakGraphemes ?? const <int>[];
-  if (markup == null || breaks.isEmpty) {
+  final List<int> breaks = _lineBreaks(cue);
+  if (breaks.isEmpty) {
     final _CueLanguage language = _classifyCueDirect(cue);
     return language == wanted || language == _CueLanguage.unknown ? cue : null;
   }
@@ -204,22 +223,45 @@ AudioCue? _filterMultilineCue(AudioCue cue, _CueLanguage wanted) {
   }
   ranges.add((start.clamp(0, chars.length), chars.length));
 
-  final _CueLanguage metadata = _languageFromMetadata(
-    '${markup.assStyleName ?? ''} ${markup.assActorName ?? ''}',
-  );
+  final _CueLanguage metadata = markup == null
+      ? _CueLanguage.unknown
+      : _languageFromMetadata(
+          '${markup.assStyleName ?? ''} ${markup.assActorName ?? ''}',
+        );
   final List<(int, int)> kept = <(int, int)>[];
   for (final (int lineStart, int lineEnd) in ranges) {
-    final _CueLanguage direct =
-        _languageFromText(chars.sublist(lineStart, lineEnd).join());
-    final _CueLanguage lineLanguage =
-        direct == _CueLanguage.unknown ? metadata : direct;
+    final _CueLanguage direct = _languageFromText(
+      chars.sublist(lineStart, lineEnd).join(),
+    );
+    final _CueLanguage lineLanguage = direct == _CueLanguage.unknown
+        ? metadata
+        : direct;
     if (lineLanguage == wanted || lineLanguage == _CueLanguage.unknown) {
       kept.add((lineStart, lineEnd));
     }
   }
   if (kept.isEmpty) return null;
   if (kept.length == ranges.length) return cue;
-  return _copyCueWithRanges(cue, kept);
+  return markup == null
+      ? _copyPlainCueWithRanges(cue, kept)
+      : _copyCueWithRanges(cue, kept);
+}
+
+AudioCue _copyPlainCueWithRanges(AudioCue cue, List<(int, int)> ranges) {
+  final List<String> chars = cue.text.characters.toList();
+  return AudioCue()
+    ..id = cue.id
+    ..bookKey = cue.bookKey
+    ..chapterHref = cue.chapterHref
+    ..sentenceIndex = cue.sentenceIndex
+    ..textFragmentId = cue.textFragmentId
+    ..text = <String>[
+      for (final (int start, int end) in ranges)
+        chars.sublist(start, end).join(),
+    ].join('\n')
+    ..startMs = cue.startMs
+    ..endMs = cue.endMs
+    ..audioFileIndex = cue.audioFileIndex;
 }
 
 AudioCue _copyCueWithRanges(AudioCue cue, List<(int, int)> ranges) {
@@ -248,29 +290,31 @@ AudioCue _copyCueWithRanges(AudioCue cue, List<(int, int)> ranges) {
       final int from = start > span.startGrapheme ? start : span.startGrapheme;
       final int to = end < span.endGrapheme ? end : span.endGrapheme;
       if (from >= to) continue;
-      spans.add(SubtitleSpan(
-        startGrapheme: oldToNew[from]!,
-        endGrapheme: oldToNew[to - 1]! + 1,
-        italic: span.italic,
-        bold: span.bold,
-        underline: span.underline,
-        strike: span.strike,
-        colorArgb: span.colorArgb,
-        fontSizePx: span.fontSizePx,
-        fontName: span.fontName,
-        outlineColorArgb: span.outlineColorArgb,
-        shadowColorArgb: span.shadowColorArgb,
-        outlineWidthPx: span.outlineWidthPx,
-        shadowDepthPx: span.shadowDepthPx,
-        blur: span.blur,
-        fillOpacity: span.fillOpacity,
-        letterSpacingPx: span.letterSpacingPx,
-        scaleX: span.scaleX,
-        scaleY: span.scaleY,
-        kMode: span.kMode,
-        kStartCs: span.kStartCs,
-        kDurCs: span.kDurCs,
-      ));
+      spans.add(
+        SubtitleSpan(
+          startGrapheme: oldToNew[from]!,
+          endGrapheme: oldToNew[to - 1]! + 1,
+          italic: span.italic,
+          bold: span.bold,
+          underline: span.underline,
+          strike: span.strike,
+          colorArgb: span.colorArgb,
+          fontSizePx: span.fontSizePx,
+          fontName: span.fontName,
+          outlineColorArgb: span.outlineColorArgb,
+          shadowColorArgb: span.shadowColorArgb,
+          outlineWidthPx: span.outlineWidthPx,
+          shadowDepthPx: span.shadowDepthPx,
+          blur: span.blur,
+          fillOpacity: span.fillOpacity,
+          letterSpacingPx: span.letterSpacingPx,
+          scaleX: span.scaleX,
+          scaleY: span.scaleY,
+          kMode: span.kMode,
+          kStartCs: span.kStartCs,
+          kDurCs: span.kDurCs,
+        ),
+      );
     }
   }
 

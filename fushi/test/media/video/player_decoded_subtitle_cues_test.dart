@@ -97,6 +97,15 @@ void main() {
       mergePlayerDecodedCue(original, _cue('b', 3000, 4000));
       expect(original, hasLength(1));
     });
+    // 原始列表与显示列表共用 cue 对象：合进原始列表时不能按原始位置改写编号。
+    test('renumberSentences: false 时保留已有编号', () {
+      final AudioCue a = _cue('a', 1000, 2000)..sentenceIndex = 7;
+      final AudioCue b = _cue('b', 3000, 4000)..sentenceIndex = 9;
+      final ({List<AudioCue> cues, int index, bool inserted}) merged =
+          mergePlayerDecodedCue(<AudioCue>[b], a, renumberSentences: false);
+      expect(merged.index, 0);
+      expect(merged.cues.map((AudioCue c) => c.sentenceIndex), <int>[7, 9]);
+    });
   });
 
   // 「重播本句」的单句停、「字幕结束暂停」、当前句高亮都是**下标**：一句插进来

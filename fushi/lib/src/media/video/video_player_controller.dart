@@ -1224,7 +1224,15 @@ class VideoPlayerController extends ChangeNotifier
     final AudioCue? provisional = _playerDecodedProvisionalCue;
     if (provisional != null) {
       _playerDecodedProvisionalCue = null;
-      closePlayerDecodedCue(provisional, positionAtEvent);
+      final bool closed = closePlayerDecodedCue(provisional, positionAtEvent);
+      // 过滤开启时显示列表里可能是逐行过滤出的副本，收尾只改了原始对象，需重算。
+      if (closed &&
+          text.trim().isEmpty &&
+          _subtitleLanguageFilter != VideoSubtitleLanguageFilter.all) {
+        _refilterDecodedCues();
+        _syncCueForPosition(positionAtEvent, persistPosition: false);
+        notifyListeners();
+      }
     }
     if (text.trim().isEmpty) return;
     final int? startMs = parseMpvSecondsToMs(
@@ -1252,10 +1260,18 @@ class VideoPlayerController extends ChangeNotifier
       _playerDecodedProvisionalCue = cue;
     }
     // 回流句子也进原始列表：切换语言过滤会从 [_rawCues] 重算 [_cues]，不能丢句。
-    _rawCues = mergePlayerDecodedCue(_rawCues, cue).cues;
-    if (filterVideoSubtitleCues(<AudioCue>[
+    _rawCues = mergePlayerDecodedCue(
+      _rawCues,
       cue,
-    ], _subtitleLanguageFilter).isEmpty) {
+      renumberSentences: false,
+    ).cues;
+    if (_subtitleLanguageFilter != VideoSubtitleLanguageFilter.all) {
+      _refilterDecodedCues();
+      _syncCueForPosition(
+        player.state.position.inMilliseconds,
+        persistPosition: false,
+      );
+      notifyListeners();
       return;
     }
     final ({List<AudioCue> cues, int index, bool inserted}) merged =
@@ -1283,6 +1299,53 @@ class VideoPlayerController extends ChangeNotifier
       persistPosition: false,
     );
     notifyListeners();
+  }
+
+  /// 语言过滤开启时，解码回流的新句按整轨证据从 [_rawCues] 重算 [_cues]，结果与
+  /// [setSubtitleLanguageFilter] 一致（逐句判定会丢掉同时间窗互证与单语轨继承，
+  /// 也拿不到逐行改写后的句子）。下标类播放态按句子身份映射到新列表，理由同
+  /// [_onPlayerDecodedText] 的快速路径：「重播本句」与「字幕结束暂停」依赖它们
+  /// 继续指向同一句。
+  void _refilterDecodedCues() {
+    final List<AudioCue> previous = _cues;
+    final List<AudioCue> next = filterVideoSubtitleCues(
+      _readableCues(_rawCues),
+      _subtitleLanguageFilter,
+    );
+    for (int i = 0; i < next.length; i++) {
+      next[i].sentenceIndex = i;
+    }
+    // 同一对象优先；逐行过滤会生成新副本、同起点替换会换对象，退回按起点匹配
+    // （[mergePlayerDecodedCue] 保证回流列表里起点唯一）。
+    int? remap(int? index) {
+      if (index == null || index < 0 || index >= previous.length) return index;
+      final AudioCue old = previous[index];
+      final int same = next.indexWhere((AudioCue c) => identical(c, old));
+      if (same >= 0) return same;
+      return next.indexWhere((AudioCue c) => c.startMs == old.startMs);
+    }
+
+    int? nullableRemap(int? index) {
+      final int? mapped = remap(index);
+      return mapped == null || mapped < 0 ? null : mapped;
+    }
+
+    _cues = next;
+    _currentCueIndex = remap(_currentCueIndex)!;
+    _currentCue = _currentCueIndex >= 0 ? next[_currentCueIndex] : null;
+    _oneShotHoldCueIndex = nullableRemap(_oneShotHoldCueIndex);
+    _lastSubtitleEndPauseCueIndex = nullableRemap(
+      _lastSubtitleEndPauseCueIndex,
+    );
+    if (_seekTargetCueIndex != null) {
+      _seekTargetCueIndex = nullableRemap(_seekTargetCueIndex);
+      // 目标句已不在显示列表里：快照整体失效，不留孤立的宽限计数。
+      if (_seekTargetCueIndex == null) _seekSnapGraceTicksLeft = 0;
+    }
+    _activeCueIndices = <int>[
+      for (final int index in _activeCueIndices)
+        if (remap(index)! >= 0) remap(index)!,
+    ];
   }
 
   /// 真实字幕轨（去掉 libmpv 的 `auto`/`no` 伪轨）条数。按 ffmpeg `0:s:N` 的

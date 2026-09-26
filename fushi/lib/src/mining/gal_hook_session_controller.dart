@@ -6018,7 +6018,7 @@ class GalHookSessionController extends ChangeNotifier {
                   bool selected,
                 ) {
                   if (selected ||
-                      engine != _engineSource ||
+                      !_isCurrentPoll(engine, pollGeneration) ||
                       _selectedNativeTextThreadId != _softpalTextThreadId ||
                       _selectedTextThreadKey != threadKey) {
                     return;
