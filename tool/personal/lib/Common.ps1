@@ -22,7 +22,10 @@ function Invoke-FlowGit {
         $ErrorActionPreference = $previous
     }
     $stdout = @($raw | Where-Object { $_ -isnot [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" })
-    $stderr = (@($raw | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } | ForEach-Object { "$_" }) -join "`n")
+    # stderr 的空行会被包装成占位异常文本，过滤掉，只留真实的错误行。
+    $stderr = (@($raw | Where-Object { $_ -is [System.Management.Automation.ErrorRecord] } |
+            ForEach-Object { $_.Exception.Message } |
+            Where-Object { $_ -and $_ -ne 'System.Management.Automation.RemoteException' }) -join "`n")
     if ($code -ne 0 -and -not $AllowFail) {
         throw "git $($Arguments -join ' ') 失败（退出码 $code）：`n$stderr`n$($stdout -join "`n")"
     }
@@ -158,6 +161,19 @@ function Get-FlowIgnoredItems {
     return @($result.Lines | Where-Object { $_ -and $_ -notmatch $script:BuildArtifactPattern })
 }
 
+# worktree 是否还在用：有未提交改动，或有进行中的 merge / cherry-pick / revert / rebase。
+function Test-FlowWorktreeBusy {
+    [OutputType([bool])]
+    param([string]$Path)
+    if ((Get-FlowDirtyCount $Path) -ne 0) { return $true }
+    $gitDir = Invoke-FlowGit -Dir $Path -Arguments @('rev-parse', '--path-format=absolute', '--git-dir') -AllowFail
+    if ($gitDir.Code -ne 0) { return $true }
+    foreach ($marker in @('MERGE_HEAD', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'rebase-merge', 'rebase-apply')) {
+        if (Test-Path -LiteralPath (Join-Path $gitDir.Lines[0].Trim() $marker)) { return $true }
+    }
+    return $false
+}
+
 function Read-FlowClaims {
     [OutputType([pscustomobject[]])]
     param([pscustomobject]$Context)
@@ -216,6 +232,26 @@ function Get-FlowClaimForBranch {
     [OutputType([pscustomobject])]
     param([pscustomobject]$Context, [string]$Branch)
     return (Read-FlowClaims $Context | Where-Object { $_.Branch -eq $Branch } | Select-Object -First 1)
+}
+
+# 路径模式（相对仓库根，/ 分隔）：以 / 结尾表示目录前缀；* 匹配一段内任意字符；
+# **/ 匹配零层或多层目录（a/**/b 也匹配 a/b），其余位置的 ** 匹配任意字符；其余精确匹配。
+function ConvertTo-FlowPathRegex {
+    [OutputType([string])]
+    param([string]$Pattern)
+    if ($Pattern.EndsWith('/')) { return '^' + [regex]::Escape($Pattern) }
+    $escaped = [regex]::Escape($Pattern).Replace('\*\*/', '<ANYDIRS>').Replace('\*\*', '<ANY>').Replace('\*', '[^/]*')
+    $escaped = $escaped.Replace('<ANYDIRS>', '(.*/)?').Replace('<ANY>', '.*')
+    return "^$escaped$"
+}
+
+function Test-FlowPathMatch {
+    [OutputType([bool])]
+    param([string]$Path, [string[]]$Patterns)
+    foreach ($pattern in $Patterns) {
+        if ($Path -cmatch (ConvertTo-FlowPathRegex $pattern)) { return $true }
+    }
+    return $false
 }
 
 function Write-FlowSection {

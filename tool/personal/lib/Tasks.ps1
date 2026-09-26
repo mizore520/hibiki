@@ -3,38 +3,44 @@
 
 # ---- start ----------------------------------------------------------------
 
-function Start-FlowTask {
-    [OutputType([void])]
+# 建 worktree、分支、claim 和交接单，返回 { Name, Branch, Path, Base, ClaimFile, Handoff }。
+# 默认基于 custom 建 codex/<名>；pr-branch 传入 -BranchPrefix 'pr' 和作者提交作为基线。
+function New-FlowTask {
+    [OutputType([pscustomobject])]
     param(
         [pscustomobject]$Context,
         [string]$Name,
         [string]$Description,
         [string]$Agent,
-        [switch]$Setup
+        [string]$BranchPrefix = 'codex',
+        [string]$BaseRef = 'refs/heads/custom',
+        [string]$BaseLabel = 'custom'
     )
     if ($Name -notmatch '^[a-z0-9][a-z0-9-]*$') {
         throw '任务名只能用小写字母、数字和连字符，例如 gal-lookup-fix。'
     }
-    if ($Name -notmatch '-\d{8}$') { $Name = "$Name-$(Get-Date -Format 'yyyyMMdd')" }
-    $branch = "codex/$Name"
-    $path = Join-Path $Context.WorktreesDir $Name
-    $claimFile = Join-Path $Context.ClaimsDir "$Name.json"
+    if ($BranchPrefix -eq 'codex' -and $Name -notmatch '-\d{8}(-\d+)?$') { $Name = "$Name-$(Get-Date -Format 'yyyyMMdd')" }
+    $branch = "$BranchPrefix/$Name"
+    $dirName = if ($BranchPrefix -eq 'codex') { $Name } else { "$BranchPrefix-$Name" }
+    $path = Join-Path $Context.WorktreesDir $dirName
+    $claimFile = Join-Path $Context.ClaimsDir "$dirName.json"
     if (Test-FlowRef $Context "refs/heads/$branch") { throw "分支 $branch 已存在；接手已有任务请先看它的 claim 和交接单。" }
     if (Test-Path -LiteralPath $path) { throw "目录已存在：$path" }
     if (Test-Path -LiteralPath $claimFile) { throw "claim 已存在：$claimFile" }
 
-    $base = Get-FlowRefSha $Context 'refs/heads/custom'
-    if (-not $base) { throw '找不到 custom 分支。' }
-    Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('worktree', 'add', '-q', '-b', $branch, $path, 'refs/heads/custom') | Out-Null
+    $base = Get-FlowRefSha $Context $BaseRef
+    if (-not $base) { throw "找不到基线 $BaseRef。" }
+    Invoke-FlowGit -Dir $Context.MainRoot -Arguments @('worktree', 'add', '-q', '-b', $branch, $path, $base) | Out-Null
 
     [void](New-Item -ItemType Directory -Force -Path $Context.ClaimsDir, $Context.HandoffsDir)
-    $handoff = Join-Path $Context.HandoffsDir "$Name.md"
+    $handoff = Join-Path $Context.HandoffsDir "$dirName.md"
     $claim = [ordered]@{
         task              = $Description
         agent             = $Agent
         branch            = $branch
         worktree          = ($path -replace '\\', '/')
         baseSha           = $base
+        baseRef           = $BaseLabel
         createdAt         = (Get-Date).ToString('s')
         status            = 'active'
         handoff           = ($handoff -replace '\\', '/')
@@ -43,11 +49,11 @@ function Start-FlowTask {
     }
     Save-FlowJson -Path $claimFile -Data $claim
     $template = @"
-# 交接单：$Name
+# 交接单：$dirName
 
 - 任务：$Description
 - 分支 / worktree：``$branch`` / ``$path``
-- 基线：custom ``$base``（$(Get-Date -Format 'yyyy-MM-dd')）
+- 基线：$BaseLabel ``$base``（$(Get-Date -Format 'yyyy-MM-dd')）
 
 ## 阶段
 
@@ -62,6 +68,25 @@ function Start-FlowTask {
 ## 下一步
 "@
     [System.IO.File]::WriteAllText($handoff, $template, $script:Utf8NoBom)
+    return [pscustomobject]@{ Name = $dirName; Branch = $branch; Path = $path; Base = $base; ClaimFile = $claimFile; Handoff = $handoff }
+}
+
+function Start-FlowTask {
+    [OutputType([void])]
+    param(
+        [pscustomobject]$Context,
+        [string]$Name,
+        [string]$Description,
+        [string]$Agent,
+        [switch]$Setup
+    )
+    $task = New-FlowTask $Context $Name $Description $Agent
+    $Name = $task.Name
+    $branch = $task.Branch
+    $path = $task.Path
+    $base = $task.Base
+    $claimFile = $task.ClaimFile
+    $handoff = $task.Handoff
 
     Write-Output "已创建任务 $Name"
     Write-Output "  分支：$branch（基于 custom $($base.Substring(0, 10))）"
@@ -287,6 +312,21 @@ function Get-FlowCleanupItems {
             if ($state.Landed) {
                 $items.Add((New-FlowCleanupItem 'claim' $claim.Name "分支内容已合入（$($state.Label)）；原状态：$($claim.Status)" $true @('只在任务确实结束时归档；任务还要继续就不要选') $claim.Branch $claim.Name))
             }
+            elseif ($state.NoOwnCommits) {
+                # 刚开始、或已放弃的任务（例如放弃的同步、cherry-pick 后 --abort 的 PR）：不归档就会一直挡住清理和重开。
+                # worktree 里还有未提交改动或进行中的合并 / cherry-pick，说明任务还在做，只报告。
+                $claimWt = $worktrees | Where-Object { $_.Branch -eq $claim.Branch } | Select-Object -First 1
+                $busy = $claimWt -and (Test-FlowWorktreeBusy $claimWt.Path)
+                $notes = if ($busy) { @('worktree 里有未提交改动或进行中的合并 / cherry-pick，任务还在做，不能归档') } else { @('只在用户确认任务已放弃时归档；归档后分支和 worktree 才会变成可清理') }
+                $item = New-FlowCleanupItem 'claim' $claim.Name "分支上没有自己的提交（刚开始或已放弃）；原状态：$($claim.Status)" (-not $busy) $notes $claim.Branch $claim.Name
+                $item | Add-Member -NotePropertyName Abandon -NotePropertyValue $true
+                $items.Add($item)
+            }
+            elseif (-not $hasWorktree) {
+                $item = New-FlowCleanupItem 'claim' $claim.Name "worktree 已不存在，分支还在（$($state.Label)）；原状态：$($claim.Status)" $true @('只在用户确认任务已放弃时归档；归档不会删除分支，分支上的提交仍在') $claim.Branch $claim.Name
+                $item | Add-Member -NotePropertyName Abandon -NotePropertyValue $true
+                $items.Add($item)
+            }
         }
     }
 
@@ -331,7 +371,8 @@ function Show-FlowCleanupItems {
             foreach ($note in $item.Notes) { Write-Output "        ⚠ $note" }
         }
     }
-    $example = $Items | Where-Object { $_.Selectable } | Select-Object -First 1
+    # 示例命令不选「放弃任务」类的 claim：那类必须由用户明确确认放弃。
+    $example = $Items | Where-Object { $_.Selectable -and -not $_.PSObject.Properties['Abandon'] } | Select-Object -First 1
     Write-Output ''
     Write-Output '把清单给用户看，按用户确认的项执行。每项写成「编号=目标」，编号与目标对不上会被拒绝；'
     Write-Output '删除 worktree / 分支 / 目录需要 cleanup 同意，只归档 claim 不需要：'
