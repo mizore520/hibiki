@@ -218,6 +218,27 @@ void main() {
   });
 
   group('GalHookedLine event-owned resources', () {
+    test('Softpal TextShow owns exact resource events', () {
+      const line = GalHookedLine(
+        seq: 701,
+        timestampMs: 2000,
+        text: 'dialogue only',
+        threadId: 0x534f465450414c01,
+        sourceKind: 7,
+        hookName: 'Softpal TextShow',
+      );
+      expect(line.eventOwnedVoice, isTrue);
+      expect(line.textThreadKey, 'softpal:534f465450414c01');
+      expect(line.textThreadLabel, 'Softpal TextShow');
+      expect(
+        const GalHookedLine(
+          seq: 702, timestampMs: 2001, text: 'untrusted',
+          threadId: 1, sourceKind: 7, hookName: 'Other',
+        ).eventOwnedVoice,
+        isFalse,
+      );
+    });
+
     test('Little Busters exact Luca hook owns only line resource events', () {
       const GalHookedLine line = GalHookedLine(
         seq: 638,

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "softpal",
+  "status": "implemented_unverified",
+  "detection": {
+    "executable_sha256": [
+      "a2d14820e5c63520084565768ab8f14f7c356aad623de2e313b12c14bae83688"
+    ],
+    "module_sha256": [
+      "bd9360c130e366759b1b5b7d37c103dc0d064f0cded2545252f504c18d9ff235"
+    ]
+  },
+  "capabilities": {
+    "text": true,
+    "resource_audio": true,
+    "pcm_audio": false
+  },
+  "evidence": [
+    "Measured local PE and archive metadata 2026-09-26; 39,831 literal TextShow rows decoded, 22,127 voice keys, 14 referenced OGG members absent from all PAC indexes. No runtime candidate injection performed."
+  ],
+  "profile_metadata": {
+    "sample_title": "ディメンション凸ラバース!!",
+    "sample_date": "2026-09-26",
+    "architecture": "x86",
+    "data_pac_sha256": "24dede3a318a49d4f5013529155d5e5283a5a79d06f7d24a77b98d115a81a757",
+    "text_show_rva": "0x6fb90",
+    "text_source_kind": 7,
+    "voice_binding": "TextShow stack body/name/voice operands; FILE.DAT direct index; patch.pac then voice.pac OGG; same text event id",
+    "limitations": "Exact executable hash only; no current-process runtime event or card E2E proof.",
+    "pal_dll_sha256": "bd9360c130e366759b1b5b7d37c103dc0d064f0cded2545252f504c18d9ff235",
+    "admission": "EXE, data.pac and dll/Pal.dll exact SHA-256 plus TextShow prologue"
+  }
+}

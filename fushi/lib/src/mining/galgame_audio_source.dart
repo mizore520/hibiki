@@ -2915,6 +2915,7 @@ class GalHookedLine {
   /// This writer commits a seq before publishing its frozen voice binding.
   bool get eventOwnedVoice =>
       (sourceKind == 4 && hookName == 'SiglusEngine message') ||
+      (sourceKind == 7 && hookName == 'Softpal TextShow') ||
       (sourceKind == 2 &&
           eventKind == GalTextEventKind.line &&
           hookCode == 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe');
@@ -2946,6 +2947,7 @@ class GalHookedLine {
       4 => 'siglus',
       5 => 'sgre',
       6 => 'smash',
+      7 => 'softpal',
       _ => 'hook',
     };
     return '$source:${threadId.toUnsigned(64).toRadixString(16)}';
@@ -2962,6 +2964,7 @@ class GalHookedLine {
             4 => 'Siglus exact',
             5 => 'SGRE exact',
             6 => 'smash exact',
+            7 => 'Softpal TextShow',
             _ => 'Text hook',
           };
     if (threadAddress == 0) return source;
