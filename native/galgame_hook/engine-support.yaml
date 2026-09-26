@@ -3177,8 +3177,8 @@
         "attach": "generic_attach_available",
         "follow_child_processes": false,
         "notes": [
-          "The installed game was observed running on 2026-09-26; this source candidate has not been injected into that process.",
-          "Adapter hooks only the measured x86 TextShow RVA after SHA-256 and prologue checks."
+          "A prior candidate was shown attached to the running game in user screenshots on 2026-09-26; the call-15 fix in this revision has not been run.",
+          "Adapter hooks the two measured x86 text-display RVAs after SHA-256 and prologue checks."
         ]
       },
       "text": {
@@ -3186,7 +3186,7 @@
           {
             "kind": "native_text_show",
             "status": "implemented_unverified",
-            "verification": "Static script scan found 39,831 literal TextShow records. Each body is separate from speaker and decodes as CP932; no candidate runtime line has been observed."
+            "verification": "Static script inspection found distinct call-2 and call-15 dialogue paths. A user screenshot shows the previous candidate's dedicated thread capturing call-2 text; call-15 capture in this revision is not yet runtime verified."
           }
         ],
         "codepage": "932",
@@ -3199,16 +3199,16 @@
             "format": "ogg_vorbis",
             "status": "implemented_unverified",
             "clean_voice": true,
-            "verification": "FILE.DAT voice operand directly names an OGG member; patch.pac wins over voice.pac. A bounded worker exports complete OGG with the committed text event ID; live export unverified."
+            "verification": "FILE.DAT voice operand directly names an OGG member; patch.pac wins over voice.pac. A user screenshot shows a previous call-2 line reporting game_resource audio ready; call-15 export and matching playback remain unverified."
           }
         ]
       },
       "verified_games": [],
       "current_status": "implemented_unverified",
       "known_limitations": [
-        "No live candidate injection, selected Softpal thread, matching playback, screenshot, or Anki card E2E has been recorded.",
+        "The prior candidate has user screenshots of selected Softpal text and one ready resource-audio line; this call-15 revision, matching playback, and Anki card E2E remain unverified.",
         "14 script voice keys reference OGG members absent from all PAC indexes in this measured install; those lines remain without audio.",
-        "Only the exact measured executable, data.pac, Pal.dll SHA-256 values and TextShow prologue are admitted; other Softpal versions are not covered.",
+        "Only the exact measured executable, data.pac, Pal.dll SHA-256 values and both text-display prologues are admitted; other Softpal versions are not covered.",
         "In-game word geometry is not implemented."
       ],
       "adapter_path": "hook/adapters/softpal_adapter.inc",

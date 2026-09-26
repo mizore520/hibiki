@@ -1,6 +1,6 @@
 // Exact, build-pinned TextShow bridge for totsulover.exe.
-// The script interpreter passes body offset, speaker offset and voice key in
-// one invocation. The detour only copies four scalars; worker resolves PAC
+// Script calls 2 and 15 pass body offset, speaker offset and voice key. Call 2
+// also has a leading mode. The detours only copy scalars; worker resolves PAC
 // members and publishes the body/OGG with the same committed text event ID.
 #include "softpal_profile.h"
 
@@ -18,7 +18,6 @@ struct SoftpalTextTask {
   uint64_t tick_ms = 0;
 };
 
-constexpr uint32_t kSoftpalNoVoice = 0x0fffffffu;
 constexpr size_t kSoftpalTaskSlots = 64;
 constexpr uint32_t kSoftpalMaxOggBytes = 1024 * 1024;
 SoftpalArchive g_softpal_voice, g_softpal_patch;
@@ -28,11 +27,13 @@ SoftpalTextTask g_softpal_tasks[kSoftpalTaskSlots] = {};
 size_t g_softpal_head = 0, g_softpal_tail = 0;
 CRITICAL_SECTION g_softpal_task_cs;
 std::atomic<bool> g_softpal_task_cs_ready{false};
+bool g_softpal_task_cs_initialized = false;
 bool g_softpal_hook_installed = false;
 int g_softpal_profile_state = 0;
 uint32_t g_softpal_install_flags = 0;
 using SoftpalTextShowFn = int(__cdecl*)(void*);
 SoftpalTextShowFn g_softpal_original_text_show = nullptr;
+SoftpalTextShowFn g_softpal_original_text_show_15 = nullptr;
 
 HANDLE SoftpalOpenRead(const wchar_t* path) {
   const auto open = g_orig_CreateFileW != nullptr ? g_orig_CreateFileW : &CreateFileW;
@@ -186,7 +187,7 @@ bool SoftpalMeasuredBuild() {
   return g_softpal_profile_state > 0;
 }
 
-int __cdecl SoftpalTextShowDetour(void* context) {
+void SoftpalQueueTextShow(void* context, bool has_mode) {
   if (g_capture_enabled &&
       g_softpal_task_cs_ready.load(std::memory_order_acquire) && context) {
     SoftpalTextTask task;
@@ -194,23 +195,25 @@ int __cdecl SoftpalTextShowDetour(void* context) {
     __try {
       const auto* bytes = static_cast<const uint8_t*>(context);
       const uint32_t count = *reinterpret_cast<const uint32_t*>(bytes + 0x45e90);
-      if (count >= 4 && count <= 4096) {
-        const auto* values = reinterpret_cast<const uint32_t*>(bytes + 0x3f178);
-        const uint32_t* args = values + count - 4;
-        task.body_offset = args[1];
-        task.speaker_offset = args[2];
-        task.voice_key = args[3];
+      const auto* values = reinterpret_cast<const uint32_t*>(bytes + 0x3f178);
+      fushi_voice_hook::SoftpalTextShowOperands args;
+      valid = fushi_voice_hook::ReadSoftpalTextShowOperands(
+          values, count, has_mode,
+          static_cast<uint32_t>(g_softpal_text.size()),
+          fushi_voice_hook::SoftpalLe32(g_softpal_files.data() + 12), &args);
+      if (valid) {
+        task.body_offset = args.body_offset;
+        task.speaker_offset = args.speaker_offset;
+        task.voice_key = args.voice_key;
         task.tick_ms = GetTickCount64();
-        valid = args[0] == 0 && task.body_offset >= 16 &&
-                task.body_offset < g_softpal_text.size() &&
-                (task.voice_key == kSoftpalNoVoice ||
-                 task.voice_key <
-                     fushi_voice_hook::SoftpalLe32(g_softpal_files.data() + 12));
       }
     } __except (EXCEPTION_EXECUTE_HANDLER) {
       valid = false;
     }
-    if (valid && TryEnterCriticalSection(&g_softpal_task_cs)) {
+    if (valid) {
+      // The worker only holds this lock while popping a scalar task. Do not
+      // lose a displayed line just because that brief pop overlapped us.
+      EnterCriticalSection(&g_softpal_task_cs);
       const size_t next = (g_softpal_tail + 1) % kSoftpalTaskSlots;
       if (next != g_softpal_head) {
         g_softpal_tasks[g_softpal_tail] = task;
@@ -219,8 +222,65 @@ int __cdecl SoftpalTextShowDetour(void* context) {
       LeaveCriticalSection(&g_softpal_task_cs);
     }
   }
+}
+
+int __cdecl SoftpalTextShowDetour(void* context) {
+  SoftpalQueueTextShow(context, true);
   return g_softpal_original_text_show
       ? g_softpal_original_text_show(context) : 0;
+}
+
+int __cdecl SoftpalTextShow15Detour(void* context) {
+  SoftpalQueueTextShow(context, false);
+  return g_softpal_original_text_show_15
+      ? g_softpal_original_text_show_15(context) : 0;
+}
+
+bool SoftpalInstallHookGroup(void* text_show, void* text_show_15) {
+  if (!g_cs_ready || !text_show || !text_show_15) return false;
+  void* targets[2] = {text_show, text_show_15};
+  void* detours[2] = {reinterpret_cast<void*>(&SoftpalTextShowDetour),
+                      reinterpret_cast<void*>(&SoftpalTextShow15Detour)};
+  void** originals[2] = {
+      reinterpret_cast<void**>(&g_softpal_original_text_show),
+      reinterpret_cast<void**>(&g_softpal_original_text_show_15)};
+  EnterCriticalSection(&g_cs);
+  bool available = g_hooked_count >= 0 && g_hooked_count <= 62;
+  for (int i = 0; available && i < g_hooked_count; ++i) {
+    if (g_hooked_fns[i] == text_show || g_hooked_fns[i] == text_show_15)
+      available = false;
+  }
+  size_t created = 0;
+  if (available) {
+    for (; created < 2; ++created) {
+      const MH_STATUS result = MH_CreateHook(
+          targets[created], detours[created], originals[created]);
+      if (result != MH_OK ||
+          *originals[created] == nullptr) {
+        if (result == MH_OK)
+          (void)MH_RemoveHook(targets[created]);
+        *originals[created] = nullptr;
+        break;
+      }
+    }
+  }
+  bool installed = false;
+  if (created == 2 && MH_EnableHook(text_show) == MH_OK &&
+      MH_EnableHook(text_show_15) == MH_OK) {
+    g_hooked_fns[g_hooked_count++] = text_show;
+    g_hooked_fns[g_hooked_count++] = text_show_15;
+    installed = true;
+  }
+  if (!installed) {
+    for (size_t i = 0; i < created; ++i)
+      (void)MH_DisableHook(targets[i]);
+    for (size_t i = 0; i < created; ++i) {
+      (void)MH_RemoveHook(targets[i]);
+      *originals[i] = nullptr;
+    }
+  }
+  LeaveCriticalSection(&g_cs);
+  return installed;
 }
 
 bool SoftpalInstallTextShow() {
@@ -232,20 +292,25 @@ bool SoftpalInstallTextShow() {
   auto* target = reinterpret_cast<uint8_t*>(
       reinterpret_cast<uintptr_t>(host) +
       fushi_voice_hook::kTotsuloverTextShowRva);
+  auto* target_15 = reinterpret_cast<uint8_t*>(
+      reinterpret_cast<uintptr_t>(host) +
+      fushi_voice_hook::kTotsuloverTextShow15Rva);
   if (std::memcmp(target,
                   fushi_voice_hook::kTotsuloverTextShowPrologue.data(),
-                  fushi_voice_hook::kTotsuloverTextShowPrologue.size()) != 0)
+                  fushi_voice_hook::kTotsuloverTextShowPrologue.size()) != 0 ||
+      std::memcmp(target_15,
+                  fushi_voice_hook::kTotsuloverTextShow15Prologue.data(),
+                  fushi_voice_hook::kTotsuloverTextShow15Prologue.size()) != 0)
     return false;
   g_softpal_install_flags |= 4u;
-  InitializeCriticalSection(&g_softpal_task_cs);
-  g_softpal_task_cs_ready.store(true, std::memory_order_release);
-  g_softpal_hook_installed = HookFn(
-      target, reinterpret_cast<void*>(&SoftpalTextShowDetour),
-      reinterpret_cast<void**>(&g_softpal_original_text_show));
-  if (g_softpal_hook_installed) g_softpal_install_flags |= 8u;
-  if (!g_softpal_hook_installed) {
-    g_softpal_task_cs_ready.store(false, std::memory_order_release);
-    DeleteCriticalSection(&g_softpal_task_cs);
+  if (!g_softpal_task_cs_initialized) {
+    InitializeCriticalSection(&g_softpal_task_cs);
+    g_softpal_task_cs_initialized = true;
+  }
+  g_softpal_hook_installed = SoftpalInstallHookGroup(target, target_15);
+  if (g_softpal_hook_installed) {
+    g_softpal_task_cs_ready.store(true, std::memory_order_release);
+    g_softpal_install_flags |= 8u;
   }
   return g_softpal_hook_installed;
 }
@@ -286,7 +351,8 @@ void ProcessSoftpalTextTasks() {
         &committed_tick);
     if (event_id && g_header) g_header->luna_active = 1;
     LeaveCriticalSection(&g_text_cs);
-    if (!event_id || task.voice_key == kSoftpalNoVoice) continue;
+    if (!event_id || task.voice_key == fushi_voice_hook::kSoftpalNoVoice)
+      continue;
 
     char member[33] = {};
     if (!fushi_voice_hook::SoftpalVoiceMemberName(

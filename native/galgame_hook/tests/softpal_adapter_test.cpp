@@ -19,6 +19,27 @@ int main() {
   wrong[0] ^= 1;
   assert(!MatchesSoftpalProfile(wrong));
 
+  SoftpalTextShowOperands operands;
+  const uint32_t regular[] = {0, 54435, kSoftpalNoVoice, kSoftpalNoVoice};
+  assert(ReadSoftpalTextShowOperands(regular, 4, true, 2150000, 28426,
+                                      &operands));
+  assert(operands.body_offset == 54435 &&
+         operands.voice_key == kSoftpalNoVoice);
+  const uint32_t alternate[] = {54490, 54533, 16558};
+  assert(ReadSoftpalTextShowOperands(alternate, 3, false, 2150000, 28426,
+                                      &operands));
+  assert(operands.body_offset == 54490 && operands.speaker_offset == 54533 &&
+         operands.voice_key == 16558);
+  assert(!ReadSoftpalTextShowOperands(alternate, 3, true, 2150000, 28426,
+                                       &operands));
+  const uint32_t wrong_mode[] = {1, 54435, kSoftpalNoVoice,
+                                 kSoftpalNoVoice};
+  assert(!ReadSoftpalTextShowOperands(wrong_mode, 4, true, 2150000, 28426,
+                                       &operands));
+  const uint32_t wrong_voice[] = {54490, 54533, 28426};
+  assert(!ReadSoftpalTextShowOperands(wrong_voice, 3, false, 2150000, 28426,
+                                       &operands));
+
   std::vector<uint8_t> pac(0x804 + 40);
   std::memcpy(pac.data(), "PAC ", 4);
   Put32(pac, 8, 1);
