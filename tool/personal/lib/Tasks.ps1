@@ -171,7 +171,7 @@ function Show-FlowAdoptPlan {
     }
     Write-Output ''
     Write-Output '把以上摘要给用户看；用户明确同意后执行（-Expect 锁定这次预览的提交，分支之后有变化会被拒绝）：'
-    Write-Output "  `$env:FUSHI_APPROVE='adopt'; pwsh -NoProfile -File tool/personal/flow.ps1 adopt $($Plan.Branch) -Apply -Expect $($Plan.Tip); Remove-Item Env:FUSHI_APPROVE"
+    Write-Output "  `$env:FUSHI_APPROVE='adopt'; pwsh -NoProfile -File tool/personal/flow.ps1 adopt $($Plan.Branch) -Apply -Expect $($Plan.Tip); `$env:FUSHI_APPROVE = `$null"
 }
 
 function Invoke-FlowAdopt {
@@ -231,7 +231,7 @@ function Invoke-FlowAdopt {
     Write-Output ''
     Write-Output '收尾：'
     if ($plan.Worktree -and -not $KeepClaim) { Write-Output "  - worktree $($plan.Worktree.Path) 可用 flow.ps1 cleanup 列出后，经用户确认删除。" }
-    Write-Output '  - 问用户是否推送备份：$env:FUSHI_APPROVE=''push''; git push origin custom; Remove-Item Env:FUSHI_APPROVE'
+    Write-Output '  - 问用户是否推送备份：$env:FUSHI_APPROVE=''push''; git push origin custom; $env:FUSHI_APPROVE = $null'
 }
 
 # ---- cleanup --------------------------------------------------------------
@@ -377,7 +377,7 @@ function Show-FlowCleanupItems {
     Write-Output '把清单给用户看，按用户确认的项执行。每项写成「编号=目标」，编号与目标对不上会被拒绝；'
     Write-Output '删除 worktree / 分支 / 目录需要 cleanup 同意，只归档 claim 不需要：'
     if ($example) {
-        Write-Output "  `$env:FUSHI_APPROVE='cleanup'; pwsh -NoProfile -File tool/personal/flow.ps1 cleanup -Apply -Items '$($example.Id)=$($example.Target)'; Remove-Item Env:FUSHI_APPROVE"
+        Write-Output "  `$env:FUSHI_APPROVE='cleanup'; pwsh -NoProfile -File tool/personal/flow.ps1 cleanup -Apply -Items '$($example.Id)=$($example.Target)'; `$env:FUSHI_APPROVE = `$null"
     }
 }
 

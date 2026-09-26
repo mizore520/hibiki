@@ -284,6 +284,18 @@ P3 实施结果（2026-09-26）：
 
 `_candidate-build` 是编译缓存，不在清理范围内。
 
+P4 实施结果（2026-09-26，按用户确认执行）：
+
+- **claim**：38 个已归档到 `done/`，其中 35 个过期、3 个已完成（查词优化、王様语音的两个任务）。现在进行中的只剩本任务和另一个任务新开的 `totsulover-pal-20260926`，后者没有动。
+- **worktree 和本地分支**：
+  - 删除了 `gal-lookup-integration`、`gal-lookup-optimize`、`ousama-opus-voice-upstream`、`ousama-voice` 这 4 个 worktree，以及它们的本地分支。`gal-lookup-optimize` 里的 `.codex-test` 证据按用户选择一并删除。
+  - `gal-lookup-pr1625` 的 worktree 和本地分支手动删除。删除前核实过，唯一没进作者仓库的提交 `0f74a46995`，内容已经在 `custom` 里。GitHub 上的旧 PR 分支按用户选择保留。
+- **空目录**：删除了 2 个。
+- **文档**：4 份已结束任务的交接单移到 `docs/personal/archive/`。文件里的相对链接，以及 `docs/bugs/`、`LOOKUP_CALIBRATION_SAMPLES.md` 里指向它们的链接都已更新。
+- **`hibiki/` 改名遗留目录**：57 个 Flutter 构建临时文件，作者早已删除，没有任何地方引用，经用户确认后删除。
+- **`date\` 里的旧手工备份**：按用户选择保留。
+- **清除同意标记的写法**：统一改为 `$env:FUSHI_APPROVE = $null`。Claude 的权限检查曾把 `Remove-Item Env:FUSHI_APPROVE` 误判为删除根目录，而把命令拦下。
+
 ## 10. 需要你决定的
 
 1. **GitHub 分支保护**：要不要给 `origin/custom` 开启“禁止强推、禁止删除”？推荐开启。操作可以你自己点，也可以同意后由我用 `gh` 设置。

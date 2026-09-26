@@ -318,7 +318,7 @@ function Show-FlowPrBranchChecks {
     Write-Output ''
     Write-Output '下一步（S4）：'
     Write-Output "  1. 在 $Path 里按个人规则第 5 节验证。"
-    Write-Output "  2. 用户同意推送后：`$env:FUSHI_APPROVE='push'; git -C '$Path' push -u origin $Branch; Remove-Item Env:FUSHI_APPROVE"
+    Write-Output "  2. 用户同意推送后：`$env:FUSHI_APPROVE='push'; git -C '$Path' push -u origin $Branch; `$env:FUSHI_APPROVE = `$null"
     Write-Output "  3. 把 PR 标题和描述给用户看，同意后：gh pr create -R $slug --base develop --head ${owner}:$Branch --title '<标题>' --body '<描述>'"
 }
 

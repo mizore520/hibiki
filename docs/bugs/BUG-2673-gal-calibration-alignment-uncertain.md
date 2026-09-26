@@ -17,7 +17,7 @@
 - 画面为浅底深色字，两行都在橙框内。现有证据不足以把失败归因于人工拖框误差，也不应让用户继续靠逐字点中心补偿。
 - 候选 `fa5cf81e23` 的 `fushi/lib/src/lookup/gal_lookup_calibration_image_fit.dart:355` 起依次尝试亮字和暗字检测；亮字路径若将所有训练样本测为一行，会记下 `onlySingleLines`。最后第 481 行在拟合失败时优先返回 `multiline_required`，暗字路径失败的原因可能被这条提示覆盖。
 - 这确认了提示的产生条件，尚未复现该截图的像素输入。不能把“算法检测为单行”写成“用户采集的是单行”，也不能断言浅色背景就是本次唯一根因。
-- 后续统一记录入口见 [本轮反馈汇总](../personal/gal-lookup-feedback-20260918.md)。
+- 后续统一记录入口见 [本轮反馈汇总](../personal/archive/gal-lookup-feedback-20260918.md)。
 
 ### 预期与后续调查
 

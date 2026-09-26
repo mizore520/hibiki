@@ -142,6 +142,7 @@ try {
     $preview = Invoke-Flow @('adopt', "codex/demo-$today")
     $tip = Get-PreviewTip $preview.Output
     Assert-Check 'adopt 预览列出提交、尖端与同意提示，且不改 custom' ($preview.Code -eq 0 -and $tip -and $preview.Output -match 'demo feature' -and $preview.Output -match '用户明确同意后执行' -and (Get-CustomSha) -eq $before) $preview.Output
+    Assert-Check '预览给出的命令用 $env:FUSHI_APPROVE = $null 清除标记（不用会被误判的 Remove-Item）' ($preview.Output.Contains('; $env:FUSHI_APPROVE = $null') -and $preview.Output -notmatch 'Remove-Item Env:') $preview.Output
     $noApproval = Invoke-Flow @('adopt', "codex/demo-$today", '-Apply', '-Expect', $tip)
     Assert-Check '未同意时 adopt -Apply 被拒绝' ($noApproval.Code -ne 0 -and (Get-CustomSha) -eq $before) $noApproval.Output
     $noExpect = Invoke-Flow @('adopt', "codex/demo-$today", '-Apply') -Approve 'adopt'

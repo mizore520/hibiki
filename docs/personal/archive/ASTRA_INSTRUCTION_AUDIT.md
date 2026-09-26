@@ -26,7 +26,7 @@
 ## 删除、调整与保留
 
 - 删除固定 S/A/B/C 并行时间线、30 秒“一律后台”、疑点数量触发派发、强制自动 push/PR、每次审查写持续日报，以及追踪历史测试数量变化的通用要求。搜索、拆分、复核方式交给模型按当前目标判断。
-- 将技术/模块地图与 develop 合并守卫拆为 [repository-map.md](../agent/repository-map.md) 和 [merge-guards.md](../agent/merge-guards.md)，相关任务才读取；合并守卫表原样迁移，纯文档不触发。
+- 将技术/模块地图与 develop 合并守卫拆为 [repository-map.md](../../agent/repository-map.md) 和 [merge-guards.md](../../agent/merge-guards.md)，相关任务才读取；合并守卫表原样迁移，纯文档不触发。
 - 委派保留 Luna max、服务不可用时 Terra 的偏好，增加收益/独立性条件；不要求一定派发，也不重复执行子代理完成的验证。
 - 测试按真实变更面与目标阶段选取，保留结果复用和明确停止条件。删除 Hook SOP 中与根规则冲突的本地完整 Flutter 测试，Android 本地集成示例使用 `--only`。
 - 初始化改为实际需要依赖或真值时执行；纯文档不复制密钥。技能移除其他机器的 SDK/代理路径、通用强制终止应用命令，并按当前 runner 修正“退出码恒为 0”和“清理先前进程”的旧描述。
