@@ -18,6 +18,7 @@
   sync-upstream               fetch 作者更新，在新 worktree 里合并，按类别列出冲突、受影响的补丁条目和数据库迁移
   pr-branch <主题> -Commits <提交,...> [-Description 说明]
                               从作者 upstream/develop 建 pr/<主题> worktree，cherry-pick 提交并检查个人内容（不推送）
+  pr-branch <主题> -Resume    解完 cherry-pick 冲突后，重新检查个人路径、列出提交说明并给出下一步
   install-hooks / check-hooks 安装、检查护栏钩子（G1–G5）
 
 .EXAMPLE
@@ -30,7 +31,7 @@ param(
     [ValidateSet('status', 'start', 'adopt', 'cleanup', 'backup', 'sync-upstream', 'pr-branch', 'patches', 'install-hooks', 'check-hooks')]
     [string]$Command,
 
-    # start 的任务名；adopt 的分支名。
+    # start 的任务名；adopt 的分支名；pr-branch 的主题。
     [Parameter(Position = 1)]
     [string]$Name = '',
 
@@ -47,6 +48,8 @@ param(
     [switch]$List,
     # pr-branch：要带进 PR 的提交（从旧到新，逗号分隔）。
     [string[]]$Commits = @(),
+    # pr-branch：解完 cherry-pick 冲突后，重新检查个人路径并给出下一步。
+    [switch]$Resume,
     # patches：列出全部未登记文件。
     [switch]$All,
     [string]$Reason = '',
@@ -126,7 +129,7 @@ switch ($Command) {
         Invoke-FlowSyncUpstream (Get-FlowContext $Repo) $Agent
     }
     'pr-branch' {
-        Invoke-FlowPrBranch (Get-FlowContext $Repo) $Name $Commits $Description $Agent
+        Invoke-FlowPrBranch (Get-FlowContext $Repo) $Name $Commits $Description $Agent -Resume:$Resume
     }
     'backup' {
         if ($List) {

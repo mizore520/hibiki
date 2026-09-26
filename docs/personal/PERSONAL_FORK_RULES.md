@@ -54,7 +54,7 @@
 ## 6. 分支、提交与采用
 
 - `upstream/develop` 只读；`custom` 是个人正式线（远端 `origin/custom`）；候选分支用 `codex/<任务名>`；给作者的 PR 分支用 `pr/<主题>`，从 `upstream/develop` 新建。不向 upstream 推送，不改写 `custom` 历史，`custom` 永不 force-push；`pr/*` 在 rebase 后可经推送同意强推。
-- 每个任务一个 worktree，用 `flow.ps1 start` 建立（同时生成 `.worktrees/coordination/claims/` 下的 claim 和 `handoffs/` 下的交接单）；只改自己的 claim。本地提交只暂存本轮文件，不用 `git add -A`。
+- 每个任务一个 worktree，用 `flow.ps1 start`、`sync-upstream` 或 `pr-branch` 建立（同时生成 `.worktrees/coordination/claims/` 下的 claim 和 `handoffs/` 下的交接单）；只改自己的 claim。本地提交只暂存本轮文件，不用 `git add -A`。
 - **合入 `custom` 需要用户明确同意；推送、正式构建、发布、向上游贡献各自单独授权。**“继续改”“测试绿了”都不算同意。请求批准前先准备好可审阅的实际差异。
 - 采用用 `flow.ps1 adopt`：先预览给用户看，同意后带预览里的尖端提交号 `-Apply -Expect <提交>`。清理用 `flow.ps1 cleanup`：清单给用户看，按用户确认的项以“编号=目标”执行；有未合入内容、未提交改动或进行中 claim 的只报告不删，`_candidate-build` 是编译缓存，不在清理范围。
 - 回复用中文，先讲结果、用户下一步和重要限制；简单任务几句话。没有必须由用户决定的事就把活做完，不以“要不要我继续”收尾。

@@ -19,7 +19,7 @@ function New-FlowTask {
     if ($Name -notmatch '^[a-z0-9][a-z0-9-]*$') {
         throw '任务名只能用小写字母、数字和连字符，例如 gal-lookup-fix。'
     }
-    if ($BranchPrefix -eq 'codex' -and $Name -notmatch '-\d{8}$') { $Name = "$Name-$(Get-Date -Format 'yyyyMMdd')" }
+    if ($BranchPrefix -eq 'codex' -and $Name -notmatch '-\d{8}(-\d+)?$') { $Name = "$Name-$(Get-Date -Format 'yyyyMMdd')" }
     $branch = "$BranchPrefix/$Name"
     $dirName = if ($BranchPrefix -eq 'codex') { $Name } else { "$BranchPrefix-$Name" }
     $path = Join-Path $Context.WorktreesDir $dirName
@@ -311,6 +311,13 @@ function Get-FlowCleanupItems {
             $state = Get-FlowBranchState $Context $claim.Branch $PullRequests $cache
             if ($state.Landed) {
                 $items.Add((New-FlowCleanupItem 'claim' $claim.Name "分支内容已合入（$($state.Label)）；原状态：$($claim.Status)" $true @('只在任务确实结束时归档；任务还要继续就不要选') $claim.Branch $claim.Name))
+            }
+            elseif ($state.NoOwnCommits) {
+                # 刚开始、或已放弃的任务（例如放弃的同步、cherry-pick 后 --abort 的 PR）：不归档就会一直挡住清理和重开。
+                $items.Add((New-FlowCleanupItem 'claim' $claim.Name "分支上没有自己的提交（刚开始或已放弃）；原状态：$($claim.Status)" $true @('只在用户确认任务已放弃时归档；归档后分支和 worktree 才会变成可清理') $claim.Branch $claim.Name))
+            }
+            elseif (-not $hasWorktree) {
+                $items.Add((New-FlowCleanupItem 'claim' $claim.Name "worktree 已不存在，分支还在（$($state.Label)）；原状态：$($claim.Status)" $true @('只在用户确认任务已放弃时归档；归档不会删除分支，分支上的提交仍在') $claim.Branch $claim.Name))
             }
         }
     }

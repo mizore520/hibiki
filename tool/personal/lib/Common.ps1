@@ -218,12 +218,14 @@ function Get-FlowClaimForBranch {
     return (Read-FlowClaims $Context | Where-Object { $_.Branch -eq $Branch } | Select-Object -First 1)
 }
 
-# 路径模式（相对仓库根，/ 分隔）：以 / 结尾表示目录前缀；* 匹配一段内任意字符，** 跨目录；其余精确匹配。
+# 路径模式（相对仓库根，/ 分隔）：以 / 结尾表示目录前缀；* 匹配一段内任意字符；
+# **/ 匹配零层或多层目录（a/**/b 也匹配 a/b），其余位置的 ** 匹配任意字符；其余精确匹配。
 function ConvertTo-FlowPathRegex {
     [OutputType([string])]
     param([string]$Pattern)
     if ($Pattern.EndsWith('/')) { return '^' + [regex]::Escape($Pattern) }
-    $escaped = [regex]::Escape($Pattern).Replace('\*\*', '.*').Replace('\*', '[^/]*')
+    $escaped = [regex]::Escape($Pattern).Replace('\*\*/', '<ANYDIRS>').Replace('\*\*', '<ANY>').Replace('\*', '[^/]*')
+    $escaped = $escaped.Replace('<ANYDIRS>', '(.*/)?').Replace('<ANY>', '.*')
     return "^$escaped$"
 }
 
