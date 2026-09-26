@@ -1582,6 +1582,7 @@ class RemoteVideoEmbeddedSubtitleTrack {
     this.url,
     this.fileName,
     this.containerTrackOrdinal,
+    this.isExternalFile = false,
   });
 
   /// 服务端定位该轨用的流号：Fushi host 是 ffmpeg `-map 0:s:N` 的字幕相对序号，
@@ -1601,6 +1602,12 @@ class RemoteVideoEmbeddedSubtitleTrack {
   /// null = 旧 host / 未换算，调用方按 [streamIndex] 兜底（Fushi host 两者同值）。
   final int? containerTrackOrdinal;
 
+  /// 该轨是独立的字幕文件、**不在**播放流的容器里（Jellyfin/Emby 的外挂字幕、
+  /// 在线源扩展 `Video.subtitleTracks` 的 WebVTT 链接）。true 时服务器/站点下载失败
+  /// 不得回落到「交给 libmpv 自绘」（BUG-2590）：libmpv 正在 demux 的流里没有这条轨，
+  /// 按 [streamIndex] 去选只会选中另一条不相干的内嵌轨。
+  final bool isExternalFile;
+
   Map<String, Object?> toJson() => <String, Object?>{
         'streamIndex': streamIndex,
         'codec': codec,
@@ -1611,6 +1618,7 @@ class RemoteVideoEmbeddedSubtitleTrack {
         if (_isNonEmpty(fileName)) 'fileName': fileName,
         if (containerTrackOrdinal != null)
           'containerTrackOrdinal': containerTrackOrdinal,
+        if (isExternalFile) 'isExternalFile': true,
       };
 
   RemoteVideoEmbeddedSubtitleTrack copyWith({
@@ -1626,6 +1634,7 @@ class RemoteVideoEmbeddedSubtitleTrack {
         url: url ?? this.url,
         fileName: fileName ?? this.fileName,
         containerTrackOrdinal: containerTrackOrdinal,
+        isExternalFile: isExternalFile,
       );
 
   static RemoteVideoEmbeddedSubtitleTrack fromJson(
@@ -1640,6 +1649,7 @@ class RemoteVideoEmbeddedSubtitleTrack {
         url: _jsonString(json['url']),
         fileName: _jsonString(json['fileName']),
         containerTrackOrdinal: _jsonInt(json['containerTrackOrdinal']),
+        isExternalFile: json['isExternalFile'] == true,
       );
 }
 
@@ -2043,6 +2053,7 @@ class RemoteVideoStreamUrls {
     this.miningVideoHasAudio = false,
     this.embeddedSubtitleTracks = const <RemoteVideoEmbeddedSubtitleTrack>[],
     this.streamIsOriginalContainer = true,
+    this.sourceRequiresDolbyVisionReshape = false,
   });
 
   final String streamUrl;
@@ -2054,6 +2065,11 @@ class RemoteVideoStreamUrls {
   /// 正在 demux 的流里，服务器抽不出文本时可交给 libmpv 自绘（BUG-2590）；转码
   /// HLS 流不带内嵌字幕轨，这条回落路不可用。
   final bool streamIsOriginalContainer;
+
+  /// 服务器元数据说这条流是**无兼容基础层**的杜比视界（Profile 5 类，需要 RPU 重整
+  /// 才能出正确颜色）。libmpv 旧版（mac / iOS 的 0.36、Android）不报
+  /// `colormatrix=dolbyvision`，播放页只能靠这一位得知（BUG-2691）。转码流为 false。
+  final bool sourceRequiresDolbyVisionReshape;
 
   /// TODO-1000：分离音视频流（YouTube video-only）时的 audio-only 流 URL；播放页经
   /// `AudioTrack.uri` 外挂、制卡音频从它裁。同轨/muxed 时为 null。

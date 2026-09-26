@@ -595,9 +595,7 @@ _GridFit? _fitSample(_SampleInk sample) {
           }
         }
       }
-      if (best != null && best.score.isFinite) {
-        candidates.add(best);
-      }
+      if (best != null && best.score.isFinite) candidates.add(best);
     }
   }
   candidates.sort((_GridFit a, _GridFit b) => a.score.compareTo(b.score));

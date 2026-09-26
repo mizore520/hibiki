@@ -27,6 +27,12 @@ class _LookupAppModel extends AppModel {
   bool get popupInstantScroll => false;
 
   @override
+  double get popupInstantScrollWheelStep => 0.5;
+
+  @override
+  double get popupInstantScrollTouchStep => 0.5;
+
+  @override
   int get popupDictionaryColumns => 1;
 
   @override
@@ -193,7 +199,12 @@ void main() {
           destinationViewportScreenRect: viewport,
         ),
       );
-      expect(attachedResult, isTrue);
+      expect(
+        attachedResult,
+        isTrue,
+        reason:
+            'native calls: ${calls.map((MethodCall call) => call.method).toList()}',
+      );
       expect(showAtCalls, hasLength(1));
 
       final Map<String, Object?> attachedShow = showAtCalls.single;

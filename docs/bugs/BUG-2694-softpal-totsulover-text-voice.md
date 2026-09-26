@@ -1,4 +1,4 @@
-## BUG-2683 · ディメンション凸ラバース!! 的线程夹人名且缺少语音资源
+## BUG-2694 · ディメンション凸ラバース!! 的线程夹人名且缺少语音资源
 
 - **报告**：2026-09-26（用户截图：所选 Pal 渲染线程穿插单独人名；音频来源 0、engine_pcm_unavailable_fallback_disabled、line_has_no_voice）
 - **真实性**：✅ 真实现象；截图与本机游戏资产静态结构一致。Luna Pal 渲染层只能观察绘字，PalSpriteCreateTextEx 同时接收人名和正文；Fushi 没有该游戏的资源语音适配，且用户当前禁用混音兜底。

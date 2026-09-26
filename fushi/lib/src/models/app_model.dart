@@ -79,8 +79,13 @@ import 'package:fushi_engine/models/dictionary_directory.dart';
 import 'package:fushi/src/models/dictionary_repository.dart';
 import 'package:fushi/src/models/media_history_repository.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
+import 'package:fushi/src/media/manga/cookie/manga_cookie_jar.dart';
 import 'package:fushi/src/media/manga/library/online_manga_library_entry.dart';
 import 'package:fushi/src/media/manga/manga_view_prefs.dart';
+import 'package:fushi/src/media/novel/online/lnreader_cloudflare.dart';
+import 'package:fushi/src/media/novel/online/lnreader_fetch_bridge.dart';
+import 'package:fushi/src/media/novel/online/lnreader_manager.dart';
+import 'package:fushi/src/media/novel/online/lnreader_runtime.dart';
 import 'package:fushi/src/media/manga/manga_reader_preferences.dart';
 import 'package:fushi/src/media/manga/interconnect/interconnect_manga_source.dart';
 import 'package:fushi/src/media/manga/library/online_manga_library_service.dart';
@@ -180,10 +185,11 @@ import 'package:fushi/src/sync/sync_orchestrator.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
 import 'package:fushi/src/models/theme_notifier.dart' as theme_notifier;
 import 'package:fushi/src/models/theme_notifier.dart'
-    show ThemeNotifier, CustomThemeEntry;
+    show ThemeNotifier, CustomThemeEntry, ThemePreset;
 // TODO-930: re-export the multi-theme value type so `fushi/models.dart`
 // consumers (theme swatch row, CustomThemePage) can name it.
-export 'package:fushi/src/models/theme_notifier.dart' show CustomThemeEntry;
+export 'package:fushi/src/models/theme_notifier.dart'
+    show CustomThemeEntry, ThemePreset;
 import 'package:fushi/src/models/audio_controller.dart';
 import 'package:fushi/src/media/audiobook/audiobook_material_service.dart';
 import 'package:fushi/src/media/audiobook/audiobook_session.dart';
@@ -2784,6 +2790,9 @@ class AppModel with ChangeNotifier {
       'material-symbols-rounded',
       // 内置 AnkiConnect 插件包（assets/anki/，GPLv3，新手引导一键安装用）。
       'anki-connect',
+      // galgame 校准 OCR 的 NFKC 映射表（gal_lookup_ocr_unicode.dart）由
+      // Unicode Character Database 生成，Unicode License V3 要求随附许可。
+      'unicode-data',
     ];
 
     for (String packageName in packageNames) {
@@ -3613,11 +3622,14 @@ class AppModel with ChangeNotifier {
 
   // ── Theme delegates (logic moved to ThemeNotifier) ──────────────────
 
-  static Map<
-    String,
-    ({Color seed, Brightness brightness, DynamicSchemeVariant variant})
-  >
-  get themePresets => ThemeNotifier.themePresets;
+  static Map<String, ThemePreset> get themePresets =>
+      ThemeNotifier.themePresets;
+
+  static ColorScheme buildPresetColorScheme(
+    ThemePreset preset,
+    Brightness brightness,
+  ) =>
+      ThemeNotifier.buildPresetColorScheme(preset, brightness);
 
   static String themeLabel(String key) => ThemeNotifier.themeLabel(key);
 
@@ -4297,6 +4309,11 @@ class AppModel with ChangeNotifier {
   /// 时应回退「不限」，而不是崩在一个纯锦上添花的默认值上。
   String get jimakuDefaultLanguage => _prefsRepo?.jimakuDefaultLanguage ?? '';
 
+  /// 默认内容语言（`''` = 未设置）。见 [PreferencesRepository.defaultContentLanguage]；
+  /// 与 [jimakuDefaultLanguage] 同理走 `_prefsRepo?`，偏好未就绪时不表态。
+  String get defaultContentLanguage =>
+      _prefsRepo?.defaultContentLanguage ?? '';
+
   Future<void> setJimakuDefaultLanguage(String langCode) async {
     await prefsRepo.setJimakuDefaultLanguage(langCode);
     await reloadVideoDownloadPipelineRuntime();
@@ -4597,6 +4614,42 @@ class AppModel with ChangeNotifier {
       // 同理只有真实 app 去拉扩展的公开下载量（一次 5 MB 量级的 GitHub API
       // 请求）；单测构造的 manager 一律不碰外网。
       fetchDownloadCounts: true,
+    );
+    unawaited(manager.initialise());
+    return manager;
+  }
+
+  /// 小说在线源（LNReader 插件）管理器。按首次访问懒建，只有进入书的「导入」
+  /// 视图在线源三段才会碰；插件运行时（headless WebView）更要等第一次真正调用
+  /// 插件才起。平台门在 [isNovelOnlineSourcesAvailable]，没过门的平台别来取。
+  LnReaderManager? _lnReaderManager;
+  LnReaderManager get lnReaderManager =>
+      _lnReaderManager ??= _createLnReaderManager();
+
+  LnReaderManager _createLnReaderManager() {
+    late final LnReaderManager manager;
+    final Directory root = Directory(
+      path.join(databaseDirectory.path, 'lnreader'),
+    );
+    // Cloudflare 放行 cookie 落在 LNReader 根目录下（删目录即彻底卸载）。
+    final LnReaderCloudflare cloudflare = LnReaderCloudflare(
+      MangaCookieJar(File(path.join(root.path, 'cookies.json'))),
+    );
+    final WebViewLnReaderRuntime runtime = WebViewLnReaderRuntime(
+      fetchBridge: LnReaderFetchBridge(
+        clientFactory: createAppHttpClient,
+        cloudflare: cloudflare,
+      ),
+      onStoragePersist: (String pluginId, Map<String, Object?> data) =>
+          manager.persistStorage(pluginId, data),
+    );
+    manager = LnReaderManager(
+      rootDirectory: root,
+      runtime: runtime,
+      cloudflare: cloudflare,
+      httpClientFactory: createAppHttpClient,
+      // 只有真实 app 进页即刷新内置官方仓库（单测构造的 manager 不碰外网）。
+      refreshOnInitialise: true,
     );
     unawaited(manager.initialise());
     return manager;
@@ -7527,6 +7580,8 @@ class AppModel with ChangeNotifier {
     _mihonManager = null;
     _animeMihonManager?.dispose();
     _animeMihonManager = null;
+    _lnReaderManager?.dispose();
+    _lnReaderManager = null;
     final ExitFlushCallback? mihonExitShutdown = _mihonRuntimeExitShutdown;
     _mihonRuntimeExitShutdown = null;
     if (mihonExitShutdown != null) {

@@ -1,10 +1,13 @@
+import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:flutter/cupertino.dart' show CupertinoIcons;
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 // SelectedContent 住在 rendering 层（selection.dart），material 不转出它。
 import 'package:flutter/rendering.dart' show SelectedContent;
+import 'package:flutter/scheduler.dart' show SchedulerBinding;
 import 'package:flutter/services.dart'
     show
         Clipboard,
@@ -13,6 +16,7 @@ import 'package:flutter/services.dart'
         KeyDownEvent,
         KeyEvent,
         LogicalKeyboardKey,
+        SystemChannels,
         TextInputAction;
 import 'package:macos_ui/macos_ui.dart'
     show MacosTextField, MacosIcon, OverlayVisibilityMode;
@@ -190,7 +194,10 @@ class FushiListItem extends StatefulWidget {
   /// （golden `list_tile_narrow` 即在 150×80 的盒子里复现出 overflow 红条），窄容器
   /// 里标题一换行就会撑破父容器。所以放宽必须逐调用点显式进行——只在父容器高度自由
   /// 的地方传 `titleMaxLines: 2`，而不是改默认值连带影响每一个既有调用点。
-  final int titleMaxLines;
+  ///
+  /// null = 不限行数：只给父容器高度自由、且截断会丢掉**唯一区分信息**的调用点
+  /// （发现页同系列书名只在末尾差一个卷号，两行 ellipsis 恰好把卷号切掉）。
+  final int? titleMaxLines;
   final int subtitleMaxLines;
   final FushiFocusId? focusId;
 
@@ -267,7 +274,11 @@ class _FushiListItemState extends State<FushiListItem> {
                   DefaultTextStyle.merge(
                     style: titleStyle,
                     maxLines: widget.titleMaxLines,
-                    overflow: TextOverflow.ellipsis,
+                    // 不限行时不能带 ellipsis：TextPainter 在 maxLines 为 null
+                    // 时把省略号作用于**第一行**，「不限行」反而退化成单行。
+                    overflow: widget.titleMaxLines == null
+                        ? null
+                        : TextOverflow.ellipsis,
                     child: widget.title,
                   ),
                   if (widget.subtitle != null)
@@ -388,6 +399,34 @@ class FushiSearchField extends StatelessWidget {
   final ValueChanged<String> onSubmitted;
   final VoidCallback? onClear;
 
+  /// 提交的收尾：清 composing，移动端再收起软键盘（BUG-2686）。
+  ///
+  /// 焦点刻意**不**交出去：unfocus 之后 [FushiFocusRoot] 的被动修复会把焦点
+  /// 还给登记过的搜索框（BUG-2620），移动端键盘随之再弹一次。所以只收键盘、
+  /// 不交焦点——再点一下框（EditableText.requestKeyboard）键盘就回来。
+  ///
+  /// 收键盘必须排在 EditableText 自己的收尾**之后**：提交动作带 shouldUnfocus，
+  /// 而焦点还在，它会在 onSubmitted 之后排一个 microtask 重建输入连接并 show
+  /// （flutter#84240 的「开发者把焦点留住了就重置键盘」）。在这里同步 hide 会被
+  /// 那次 show 覆盖——实测日志就是 hide → clearClient → setClient → show。
+  /// 所以收键盘排到下一帧的后帧回调：帧总在 microtask 队列排空之后才开始，顺序
+  /// 是确定的，不是靠等时间。后帧回调本身不调度帧，必须显式 scheduleFrame，否则
+  /// 没有别的 setState 时它永远不跑。桌面端没有要收的软键盘，维持原样。
+  void _finishSubmit() {
+    controller.clearComposing();
+    if (defaultTargetPlatform != TargetPlatform.android &&
+        defaultTargetPlatform != TargetPlatform.iOS) {
+      return;
+    }
+    SchedulerBinding.instance
+      ..addPostFrameCallback((_) {
+        if (!focusNode.hasFocus) return;
+        unawaited(
+            SystemChannels.textInput.invokeMethod<void>('TextInput.hide'));
+      })
+      ..scheduleFrame();
+  }
+
   @override
   Widget build(BuildContext context) {
     final FushiDesignTokens tokens = FushiDesignTokens.of(context);
@@ -475,8 +514,9 @@ class FushiSearchField extends StatelessWidget {
               // 就是「文字被全选、什么也没搜」（BUG-2620）。
               textInputAction: TextInputAction.search,
               // 给了 onEditingComplete 就不会走默认的 unfocus 收尾，焦点留在
-              // 框里；onSubmitted 仍照常触发。composing 要自己清。
-              onEditingComplete: controller.clearComposing,
+              // 框里；onSubmitted 仍照常触发。composing 要自己清，移动端的软
+              // 键盘也要自己收（见 [_finishSubmit]）。
+              onEditingComplete: _finishSubmit,
               onChanged: onChanged,
               onSubmitted: onSubmitted,
             ),
@@ -509,6 +549,9 @@ class FushiSearchField extends StatelessWidget {
         if (!focusNode.hasFocus) return KeyEventResult.ignored;
         if (controller.value.composing.isValid) return KeyEventResult.ignored;
         onSubmitted(controller.text);
+        // 有的移动端输入法把「搜索」键发成回车键事件而不是 editor action，
+        // 走到这里的提交同样要收键盘。
+        _finishSubmit();
         return KeyEventResult.handled;
       },
       child: searchBar,

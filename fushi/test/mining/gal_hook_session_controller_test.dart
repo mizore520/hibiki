@@ -2702,11 +2702,8 @@ void main() {
     endpoints.dispose();
   });
 
-  // BUG-2564：hook 字数的写入面收敛到 StudyClock（v92 统计域唯一写入面，按 uid
-  // 绝对值 upsert）：台词到达 → addChars → 去抖 flushNow 写穿，**不等停止监听**统计页
-  // 就能读到；dateKey 按统计日边界 statDateKeyOf（此前走日历日）。此前自家累计器攒满
-  // 500 字 / 60s 才 insert 一条新 uid，用户翻几行后仍是 0。无稳定身份（mediaKey 空）
-  // 不落——统计永不按 title 认身份——由下一条 DB 用例守。
+  // BUG-2564：hook 字数写入 StudyClock，去抖后不等停止监听即可见。
+  // 无稳定身份的台词不落段，由下一条 DB 用例守。
   test('BUG-2564：hook 台词字数经 StudyClock 落 game 段，去抖后不等停止监听即可见', () async {
     final FushiDatabase db = await _openDbWithLibraryGame();
     final TexthookerService service = TexthookerService.test();
@@ -3333,9 +3330,7 @@ void _playTrackerWiringGuard() {
     );
 
     // BUG-1892：附着捕获与启动捕获是同一件事的两条入口，计时接线必须对称。
-    final int attachAt = body.indexOf(
-      'Future<void> startAttachedCapture(',
-    );
+    final int attachAt = body.indexOf('Future<void> startAttachedCapture(');
     expect(attachAt, greaterThan(0), reason: 'startAttachedCapture 不存在，守卫需更新');
     final int attachEnd = body.indexOf(
       'Future<GalHookLaunchResult> launchGame(',

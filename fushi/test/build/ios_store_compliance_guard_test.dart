@@ -334,6 +334,51 @@ void main() {
         reason: '消费端不得各自写平台判断，只问 StoreRestrictedCapability。',
       );
     });
+
+    test('书「导入」视图的小说源三段（LNReader）由 onlineNovelSource 门控', () {
+      final String gate = compactCode(
+        read('lib/src/media/novel/online/novel_online_sources_gate.dart'),
+      );
+      expect(
+        gate,
+        contains(
+          'boolgetisNovelOnlineSourcesAvailable=>'
+          'StoreRestrictedCapability.onlineNovelSource.isAvailable&&'
+          'isLnReaderRuntimeSupported;',
+        ),
+      );
+      expect(
+        gate,
+        isNot(contains('Platform.isIOS')),
+        reason: '运行时平台门只列真支持的平台，iOS 的缺席归合规门管。',
+      );
+      final String sources = compactCode(
+        read('lib/src/pages/implementations/media_sources_page.dart'),
+      );
+      expect(
+        sources,
+        contains("if(widget.mediaKind=='book'&&isNovelOnlineSourcesAvailable)"),
+        reason: '书导入页取 lnReaderManager（仓库 / 扩展 / 在线源三段）必须挂在这个门后。',
+      );
+      expect(
+        sources,
+        contains('if(novelManager!=null)...<Widget>['),
+        reason: '三段的 sliver 只在拿到 manager 时才进树，门失效时整段不出现。',
+      );
+      // 在线小说书的描述符会随备份恢复到 iOS：阅读器开书建取章加载器（它会拉起
+      // lnReaderManager、联网刷仓库、跑插件）也必须挂在同一个门后。
+      final String onlineBook = compactCode(
+        read('lib/src/media/novel/online/lnreader_online_book.dart'),
+      );
+      expect(
+        onlineBook,
+        contains(
+          'if(!(onlineSourcesAvailable??isNovelOnlineSourcesAvailable))'
+          'returnnull;',
+        ),
+        reason: '阅读器开在线书时取 lnReaderManager 必须先过在线小说门。',
+      );
+    });
   });
 
   group('Aidoku 的 iOS 宿主已整条移除', () {

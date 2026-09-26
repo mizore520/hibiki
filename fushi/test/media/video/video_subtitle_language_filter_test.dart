@@ -21,6 +21,42 @@ AudioCue _cue(String text, int startMs, int endMs, {String? style}) {
 }
 
 void main() {
+  // mpv 解码内嵌文本轨回流的句子没有 markup，多行只在 text 里用 `\n` 分隔。
+  test('plain decoded cues without markup are filtered per line', () {
+    final AudioCue bilingual = AudioCue()
+      ..bookKey = ''
+      ..chapterHref = ''
+      ..sentenceIndex = 0
+      ..textFragmentId = ''
+      ..text = '今日はいい天気だね\n今天天气真好啊'
+      ..startMs = 1000
+      ..endMs = 2000
+      ..audioFileIndex = 0;
+    final List<AudioCue> raw = <AudioCue>[bilingual];
+
+    expect(
+      filterVideoSubtitleCues(
+        raw,
+        VideoSubtitleLanguageFilter.chinese,
+      ).map((AudioCue cue) => cue.text),
+      <String>['今天天气真好啊'],
+    );
+    expect(
+      filterVideoSubtitleCues(
+        raw,
+        VideoSubtitleLanguageFilter.japanese,
+      ).map((AudioCue cue) => cue.text),
+      <String>['今日はいい天気だね'],
+    );
+    expect(
+      filterVideoSubtitleCues(
+        raw,
+        VideoSubtitleLanguageFilter.chinese,
+      ).single.markup,
+      isNull,
+    );
+    expect(bilingual.text, '今日はいい天気だね\n今天天气真好啊');
+  });
   test('ASS style metadata filters paired Japanese and Chinese events', () {
     final List<AudioCue> raw = <AudioCue>[
       _cue('わっ 何これ', 1000, 2000, style: 'Liz jp'),
@@ -30,13 +66,17 @@ void main() {
     ];
 
     expect(
-      filterVideoSubtitleCues(raw, VideoSubtitleLanguageFilter.japanese)
-          .map((AudioCue cue) => cue.text),
+      filterVideoSubtitleCues(
+        raw,
+        VideoSubtitleLanguageFilter.japanese,
+      ).map((AudioCue cue) => cue.text),
       <String>['わっ 何これ', 'きれい'],
     );
     expect(
-      filterVideoSubtitleCues(raw, VideoSubtitleLanguageFilter.chinese)
-          .map((AudioCue cue) => cue.text),
+      filterVideoSubtitleCues(
+        raw,
+        VideoSubtitleLanguageFilter.chinese,
+      ).map((AudioCue cue) => cue.text),
       <String>['哇 这是什么', '真漂亮'],
     );
     expect(raw, hasLength(4));
@@ -52,8 +92,10 @@ void main() {
 
     // Three simultaneous events are not blindly paired; unknown title/effect is retained.
     expect(
-      filterVideoSubtitleCues(raw, VideoSubtitleLanguageFilter.japanese)
-          .map((AudioCue cue) => cue.text),
+      filterVideoSubtitleCues(
+        raw,
+        VideoSubtitleLanguageFilter.japanese,
+      ).map((AudioCue cue) => cue.text),
       containsAll(<String>['めっちゃ青い', '好蓝啊', 'TITLE', '日本']),
     );
   });
@@ -82,14 +124,12 @@ void main() {
         lineBreakGraphemes: <int>[3],
       );
 
-    final AudioCue japanese = filterVideoSubtitleCues(
-      <AudioCue>[bilingual],
-      VideoSubtitleLanguageFilter.japanese,
-    ).single;
-    final AudioCue chinese = filterVideoSubtitleCues(
-      <AudioCue>[bilingual],
-      VideoSubtitleLanguageFilter.chinese,
-    ).single;
+    final AudioCue japanese = filterVideoSubtitleCues(<AudioCue>[
+      bilingual,
+    ], VideoSubtitleLanguageFilter.japanese).single;
+    final AudioCue chinese = filterVideoSubtitleCues(<AudioCue>[
+      bilingual,
+    ], VideoSubtitleLanguageFilter.chinese).single;
     expect(japanese.text, '何これ');
     expect(chinese.text, '哇 这是什么');
     expect(bilingual.text, '何これ 哇 这是什么');
@@ -102,9 +142,7 @@ void main() {
       _cue('真漂亮', 1000, 2000, style: 'ch'),
     ];
     controller.setCues(raw);
-    controller.setSubtitleLanguageFilter(
-      VideoSubtitleLanguageFilter.japanese,
-    );
+    controller.setSubtitleLanguageFilter(VideoSubtitleLanguageFilter.japanese);
     expect(controller.cues.map((AudioCue cue) => cue.text), <String>['きれい']);
     expect(controller.rawCues, hasLength(2));
 
