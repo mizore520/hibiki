@@ -52,5 +52,5 @@ fushi_block_need_approval() {
     "Ask the user in chat first; only after explicit consent retry with FUSHI_APPROVE=$action." \
     "先在聊天里向用户说明要做什么，得到明确同意后再带标记重新执行：" \
     "  bash:       FUSHI_APPROVE=$action git ..." \
-    "  PowerShell: \$env:FUSHI_APPROVE='$action'; git ...; Remove-Item Env:FUSHI_APPROVE"
+    "  PowerShell: \$env:FUSHI_APPROVE='$action'; git ...; \$env:FUSHI_APPROVE = \$null"
 }

@@ -18,7 +18,7 @@
 
 `window_capture.cpp::ReadPhysicalClientScreenRect` 改用 `GetWindowInfo.rcClient` 一次读取物理屏幕客户区。贴附层、截图元数据与 DWM 客户区裁剪共用它，保留 SrcRect/DestRect 的严格包含检查。原生几何回归包含实际 `{952,474,3278,1783}`，以及少两像素时仍应拒绝的反例。错误分类另将已知映射失败与“没有台词”分开，日志只记录有界原因和尺寸。
 
-定向测试、原生编译和最终源码提交见 [当前交接](../personal/GAL_LOOKUP_HANDOFF.md)。本轮没有操作用户游戏、切换超分或新采集桌面；普通窗口 → Magpie → 退出后的实机恢复仍需用户验收。
+定向测试、原生编译和最终源码提交见 [当前交接](../personal/archive/GAL_LOOKUP_HANDOFF.md)。本轮没有操作用户游戏、切换超分或新采集桌面；普通窗口 → Magpie → 退出后的实机恢复仍需用户验收。
 
 ### 当前修订：源裁剪坐标与截图应用（2026-09-19）
 
@@ -41,7 +41,7 @@
 - Dart 采集与草稿存取支持这类完整视口，并以 PNG 实际尺寸作为拟合参考；不把带黑边输出客户区尺寸当作 PNG 尺寸。
 - 原窗口 WGC 与 profile 恢复路径继续保留。超分实机开关、鼠标命中和截图是否受输出光标影响仍需用户一次集中验收，不能以对象编译和模拟数据测试宣称已恢复。
 
-本批验证与最终候选见 [当前交接](../personal/GAL_LOOKUP_HANDOFF.md)。
+本批验证与最终候选见 [当前交接](../personal/archive/GAL_LOOKUP_HANDOFF.md)。
 
 ### 2026-09-19 最新用户反馈（只记录）
 

@@ -1,6 +1,6 @@
 ## BUG-2533 · 人工中心拟合无法求字号、换行及续行缩进
 
-当前候选已在后续轮次改为 OCR 提供位置、Hook 提供正文、规则格拟合推进和缩进；下面“无需 OCR”描述的是初版历史。第十三轮补充窄 ASCII 空格与续行共用原点，具体实现和证据见 [BUG-2542](BUG-2542-gal-cross-game-calibration-still-not-general.md) 与 [当前交接](../personal/GAL_LOOKUP_HANDOFF.md)。不要求用户逐字点中心，不将同一句首尾框的留白拆成不同布局。
+当前候选已在后续轮次改为 OCR 提供位置、Hook 提供正文、规则格拟合推进和缩进；下面“无需 OCR”描述的是初版历史。第十三轮补充窄 ASCII 空格与续行共用原点，具体实现和证据见 [BUG-2542](BUG-2542-gal-cross-game-calibration-still-not-general.md) 与 [当前交接](../personal/archive/GAL_LOOKUP_HANDOFF.md)。不要求用户逐字点中心，不将同一句首尾框的留白拆成不同布局。
 
 - **报告**：2026-09-18（用户：无法精确点字符中心，字号字距不知如何设置，多行溢出及续行缩进不一致）
 - **真实性**：✅ `fushi/lib/src/lookup/gal_lookup_calibration_draft.dart:197` 的旧拟合只求平移与字距，依赖已有字号/换行；DirectWrite 预览与游戏字体/排版不相同，增加人工中心点不能求出遗漏参数。每个真实截图的溢出原因不一，不能把提示一律归为框高度不足。

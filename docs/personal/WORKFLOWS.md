@@ -5,7 +5,7 @@
 命令都在任一 worktree 的仓库根执行，入口是 `pwsh -File tool/personal/flow.ps1 <命令>`，下文简写为 `flow <命令>`。需要用户同意的操作，同意后在**那一条命令**上加标记：
 
 ```powershell
-$env:FUSHI_APPROVE='adopt'; <命令>; Remove-Item Env:FUSHI_APPROVE
+$env:FUSHI_APPROVE='adopt'; <命令>; $env:FUSHI_APPROVE = $null
 ```
 
 git 钩子拦下操作时，照拦截提示处理；禁止绕过。
