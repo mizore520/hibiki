@@ -49,6 +49,7 @@
 #include "luna_text_selector.h"
 #include "text_thread_identity.h"
 #include "adapters/little_busters_voice_profile.h"
+#include "../hook/adapters/softpal_profile.h"
 
 // galgame 一键制卡 C 阶段注入器（C.1）。把 hook DLL 注入目标游戏进程，建立共享内存 + 就绪
 // 事件，确认注入成功后读回语音格式。Hibiki 主进程把它当子进程拉起（部署红线：注入代码只在
@@ -4145,8 +4146,31 @@ int RunInjection(HANDLE target, DWORD pid, const std::wstring& dll_path,
   bool luna_initialized = false;
   fushi_voice_hook::SiglusLunaStartupGate luna_startup_gate;
   uint32_t last_siglus_text_owner = UINT32_MAX;
+  const std::wstring image_path = ProcessImagePath(target);
+  const size_t image_leaf = image_path.find_last_of(L"\\/");
+  const wchar_t* image_name = image_path.c_str() +
+      (image_leaf == std::wstring::npos ? 0 : image_leaf + 1);
+  bool softpal_exact = false;
+  if (_wcsicmp(image_name, L"totsulover.exe") == 0) {
+    softpal_exact = fushi_voice_hook::MatchesSoftpalProfileHex(
+        Sha256File(image_path));
+  }
+  const ULONGLONG softpal_report_deadline = GetTickCount64() + 1500;
   auto maybe_start_luna = [&]() {
     if (!hold || !luna.enabled || luna_initialized) return;
+    if (softpal_exact) {
+      if (fushi_voice_hook::HasReadySoftpalResourceAudio(header)) {
+        // The exact-build adapter owns both script text and OGG. Do not
+        // install Luna's renderer hooks or expose their selectable threads.
+        header->text_hooked = 1;
+        luna_initialized = true;
+        fprintf(stderr, "[softpal] exact text ready; skipping LunaHook\n");
+        return;
+      }
+      // Adapter reports are published after the DLL ready signal. Let this
+      // one named game finish its bounded installation before fallback Luna.
+      if (GetTickCount64() < softpal_report_deadline) return;
+    }
     const auto text_owner = fushi_voice_hook::ReadSiglusTextOwner(header);
     if (last_siglus_text_owner != static_cast<uint32_t>(text_owner)) {
       last_siglus_text_owner = static_cast<uint32_t>(text_owner);

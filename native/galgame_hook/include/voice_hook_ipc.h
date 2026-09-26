@@ -339,6 +339,7 @@ constexpr uint32_t kTextSourceSgre = 5;
 // smash/fzmedia (TYPE-MOON "smash" framework: Fate/stay night REMASTERED family)
 // exact text published by the native KAG text-layer layout hook.
 constexpr uint32_t kTextSourceSmashFzmedia = 6;
+constexpr uint32_t kTextSourceSoftpal = 7;
 constexpr uint32_t kTextEventLine = 0;
 constexpr uint32_t kTextEventThreadDiscovered = 1;
 // Some Luna engine hooks expose scenario text and system controls from the
@@ -2669,6 +2670,21 @@ inline uint32_t ReadAdapterReports(const SharedHeader* header,
     return static_cast<uint32_t>(take);
   }
   return 0u;
+}
+
+// Softpal reports resource readiness only after its exact-build identity, PAC
+// indexes, and TextShow hook all pass. Reuse the versioned adapter report
+// instead of claiming an unrelated engine's saturated diagnostic bit.
+inline bool HasReadySoftpalResourceAudio(const SharedHeader* header) {
+  AdapterReportSlot reports[kAdapterReportSlots] = {};
+  const uint32_t count = ReadAdapterReports(
+      header, reports, kAdapterReportSlots);
+  for (uint32_t i = 0; i < count; ++i) {
+    if (std::strcmp(reports[i].id, "softpal") == 0 &&
+        reports[i].applicable != 0u && reports[i].installed != 0u)
+      return true;
+  }
+  return false;
 }
 
 inline NativeLoopbackRequestSnapshot ReadNativeLoopbackRequest(

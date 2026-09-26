@@ -3095,6 +3095,130 @@
         "tests/unity_mono_adapter_test.cpp",
         "../../fushi/test/mining/unity_mono_pairing_test.dart"
       ]
+    },
+    {
+      "id": "softpal",
+      "display_name": "Softpal (ディメンション凸ラバース!! exact build)",
+      "aliases": [
+        "Pal",
+        "Softpal"
+      ],
+      "family": {
+        "id": "softpal",
+        "relation": "Measured Pal.dll 1.10.0.0 build; no sibling title admitted"
+      },
+      "detection": {
+        "executable_names": {
+          "values": [
+            "totsulover.exe"
+          ],
+          "evidence": {
+            "kind": "real_sample",
+            "reference": "Local game executable inspected 2026-09-26; name is only a catalogue field; adapter requires exact SHA-256."
+          }
+        },
+        "pe_architectures": {
+          "values": [
+            "x86"
+          ],
+          "evidence": {
+            "kind": "real_sample",
+            "reference": "totsulover.exe PE machine 0x14c, measured 2026-09-26"
+          }
+        },
+        "directory_files_all": {
+          "values": [
+            "data.pac",
+            "voice.pac",
+            "patch.pac",
+            "dll/Pal.dll"
+          ],
+          "evidence": {
+            "kind": "real_sample",
+            "reference": "Original game directory inventory and PAC index structural validation 2026-09-26"
+          }
+        },
+        "pe_imports": {
+          "values": [
+            "Pal.dll"
+          ],
+          "evidence": {
+            "kind": "real_sample",
+            "reference": "Measured totsulover.exe import table 2026-09-26"
+          }
+        },
+        "runtime_modules": {
+          "values": [],
+          "evidence": null
+        },
+        "resource_extensions": {
+          "values": [
+            ".pac",
+            ".ogg"
+          ],
+          "evidence": {
+            "kind": "real_sample",
+            "reference": "voice.pac has 22,135 OGG index entries; patch.pac has 116 OGG overrides, measured locally 2026-09-26"
+          }
+        },
+        "hashes": {
+          "values": [
+            "a2d14820e5c63520084565768ab8f14f7c356aad623de2e313b12c14bae83688",
+            "bd9360c130e366759b1b5b7d37c103dc0d064f0cded2545252f504c18d9ff235"
+          ],
+          "evidence": {
+            "kind": "real_sample",
+            "reference": "totsulover.exe and dll/Pal.dll SHA-256, measured 2026-09-26; only EXE hash is the adapter admission gate"
+          }
+        }
+      },
+      "process_strategy": {
+        "launch": "generic_launch_available",
+        "attach": "generic_attach_available",
+        "follow_child_processes": false,
+        "notes": [
+          "A prior candidate was shown attached to the running game in user screenshots on 2026-09-26; the corrected call-15 fix in this revision has not been run.",
+          "Adapter hooks registered call-2 RVA 0x6fb90 and call-15 RVA 0x6ea60 after SHA-256 and prologue checks; the prior candidate mistakenly hooked call-16 RVA 0x6e6d0."
+        ]
+      },
+      "text": {
+        "capabilities": [
+          {
+            "kind": "native_text_show",
+            "status": "implemented_unverified",
+            "verification": "Static SCRIPT.SRC inspection found distinct call-2 and call-15 dialogue paths; EXE registration maps call 15 to RVA 0x6ea60. User screenshots show the previous candidate's dedicated thread capturing call-2 text and resource audio, while call-15 text remains absent because that candidate hooked call 16. The corrected hook is not yet runtime verified."
+          }
+        ],
+        "codepage": "932",
+        "thread_selection_hint": "When the exact-build Softpal adapter is ready, only its Softpal TextShow thread is offered; it emits dialogue body and event-owned OGG where present."
+      },
+      "audio": {
+        "priority": [
+          {
+            "kind": "softpal_pac_ogg_resource",
+            "format": "ogg_vorbis",
+            "status": "implemented_unverified",
+            "clean_voice": true,
+            "verification": "FILE.DAT voice operand directly names an OGG member; patch.pac wins over voice.pac. A user screenshot shows a previous call-2 line reporting game_resource audio ready; call-15 export and matching playback remain unverified."
+          }
+        ]
+      },
+      "verified_games": [],
+      "current_status": "implemented_unverified",
+      "known_limitations": [
+        "The prior candidate has user screenshots of selected Softpal text and one ready resource-audio line; this call-15 revision, matching playback, and Anki card E2E remain unverified.",
+        "14 script voice keys reference OGG members absent from all PAC indexes in this measured install; those lines remain without audio.",
+        "Only the exact measured executable, data.pac, Pal.dll SHA-256 values and both text-display prologues are admitted; other Softpal versions are not covered.",
+        "In-game word geometry is not implemented."
+      ],
+      "adapter_path": "hook/adapters/softpal_adapter.inc",
+      "fixture_paths": [
+        "tests/fixtures/softpal_replay.json"
+      ],
+      "test_paths": [
+        "tests/softpal_adapter_test.cpp",
+        "../../fushi/test/mining/galgame_audio_test.dart"
+      ]
     }
   ]
 }

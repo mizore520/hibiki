@@ -5,6 +5,8 @@
 
 #include <cassert>
 #include <cstdint>
+#include <cstring>
+#include <memory>
 
 #include "voice_hook_ipc.h"
 
@@ -40,5 +42,19 @@ int main() {
   assert(!HasReadyGameResourceAudio(0, kDiagUnityResourceExtractorReady));
   assert(HasReadyGameResourceAudio(
       0, kDiagUnityIl2CppHooksReady | kDiagUnityResourceExtractorReady));
+
+  auto header = std::make_unique<fushi_voice_hook::SharedHeader>();
+  assert(!fushi_voice_hook::HasReadySoftpalResourceAudio(header.get()));
+  fushi_voice_hook::AdapterReportSlot slot = {};
+  std::memcpy(slot.id, "softpal", 8);
+  slot.applicable = 1;
+  fushi_voice_hook::PublishAdapterReports(header.get(), &slot, 1);
+  assert(!fushi_voice_hook::HasReadySoftpalResourceAudio(header.get()));
+  slot.installed = 1;
+  fushi_voice_hook::PublishAdapterReports(header.get(), &slot, 1);
+  assert(fushi_voice_hook::HasReadySoftpalResourceAudio(header.get()));
+  slot.applicable = 0;
+  fushi_voice_hook::PublishAdapterReports(header.get(), &slot, 1);
+  assert(!fushi_voice_hook::HasReadySoftpalResourceAudio(header.get()));
   return 0;
 }

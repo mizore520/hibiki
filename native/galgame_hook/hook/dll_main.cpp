@@ -48,6 +48,7 @@
 #include "module_settle.h"
 #include "host_executable_digest.h"
 #include "adapters/cmvs_lookup_profile.h"
+#include "adapters/softpal_pac.h"
 #include "adapters/cmvs_dialogue_text_resolver.h"
 #include "adapters/cmvs_sprite_geometry_reader.h"
 #include "lookup_overlay_geometry.h"

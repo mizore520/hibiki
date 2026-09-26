@@ -29,10 +29,11 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2495 条。点号进各自文件。
+> 共 2496 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2683](bugs/BUG-2683-softpal-totsulover-text-voice.md) | ✅ | ✅ | ディメンション凸ラバース!! 的线程夹人名且缺少语音资源 |
 | [BUG-2681](bugs/BUG-2681-ousama-opus-voice.md) | ✅ | ✅ | 王様恋愛导出的 Opus 语音未进入资源索引 |
 | [BUG-2680](bugs/BUG-2680-gal-mine-lease-refused-after-calibration.md) | 🚧 | 🚧 | 校准后制卡截图租约被拒 |
 | [BUG-2679](bugs/BUG-2679-gal-first-mine-capture-refused.md) | ✅ | ✅ | 查词窗口里第一次点制卡截图被拒 |
@@ -137,18 +138,18 @@
 | [BUG-2551](bugs/BUG-2551-interconnect-audiobook-zero-audio-package.md) | ✅ | ✅ | 互联同步有声书只过去字幕、音频丢失且永不重推 |
 | [BUG-2550](bugs/BUG-2550-reader-stepper-label-truncated.md) | ✅ | ✅ | 阅读设置面板窄窗下 stepper 行标签被压成一个字 |
 | [BUG-2549](bugs/BUG-2549-english-phrasal-verb-deinflection.md) | ✅ | ✅ | 英语短语动词的变形查不到原形（gave up / picked it up 还原不到 give up / pick up） |
-| [BUG-2548](bugs/BUG-2548-collection-detail-drops-remote-members.md) | ✅ | ✅ | 合集详情页丢掉全部远端成员：行头 N 项、点进去只剩本地几本 |
 | [BUG-2548](bugs/BUG-2548-windows-launcher-untracked-unicode-path.md) | ✅ | ✅ | 启动器遇到未跟踪中文路径时无法计算源码状态 |
+| [BUG-2548](bugs/BUG-2548-collection-detail-drops-remote-members.md) | ✅ | ✅ | 合集详情页丢掉全部远端成员：行头 N 项、点进去只剩本地几本 |
 | [BUG-2547](bugs/BUG-2547-shelf-remote-sort-ignored.md) | ✅ | ✅ | 书架排序忽略远端占位卡：host 下发的时刻不用、恒沉底 |
 | [BUG-2547](bugs/BUG-2547-gal-attached-popup-coordinate-space.md) | ✅ | ✅ | 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡 |
-| [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
 | [BUG-2546](bugs/BUG-2546-dict-script-window-scope.md) | ✅ | ✅ | 词典自带脚本第二次查词后失效：折叠字段点不开 |
-| [BUG-2545](bugs/BUG-2545-toc-current-chapter-unmarked.md) | ✅ | ✅ | 阅读器导航「章节列表」不标当前章节 |
+| [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
 | [BUG-2545](bugs/BUG-2545-gal-attach-overlapping-stop.md) | ✅ | ✅ | 停止监听与重新附着重叠时旧清理覆盖新会话 |
+| [BUG-2545](bugs/BUG-2545-toc-current-chapter-unmarked.md) | ✅ | ✅ | 阅读器导航「章节列表」不标当前章节 |
 | [BUG-2544](bugs/BUG-2544-video-background-pause-no-resume.md) | ✅ | ✅ | 视频切到后台被暂停后回前台不自动续播 |
 | [BUG-2544](bugs/BUG-2544-gal-popup-blocks-attached-capture.md) | ✅ | ✅ | 词典占用鼠标时贴附层拒绝制卡截图 |
-| [BUG-2543](bugs/BUG-2543-gal-incomplete-game-capture.md) | ✅ | ✅ | 部分游戏无法采集完整游戏画面 |
 | [BUG-2543](bugs/BUG-2543-english-posless-yomitan-deinflection.md) | ✅ | ✅ | 英语无词性 Yomitan 词典的变形还原全部失效，且不规则形无还原规则 |
+| [BUG-2543](bugs/BUG-2543-gal-incomplete-game-capture.md) | ✅ | ✅ | 部分游戏无法采集完整游戏画面 |
 | [BUG-2542](bugs/BUG-2542-mobile-clip-export-silent-hang.md) | ✅ | ✅ | 手机端片段导出点了没反应：ffmpeg-kit 无界 await 挂死 + 分享被静默丢弃后仍报成功 |
 | [BUG-2542](bugs/BUG-2542-gal-cross-game-calibration-still-not-general.md) | 🚧 | ✅ | 换游戏后自动校准兼容性仍不足，需要逐游戏适配 |
 | [BUG-2541](bugs/BUG-2541-gal-magpie-upscaler-breaks-calibration.md) | ✅ | ✅ | Magpie 超分导致校准采集与已校准内嵌查词失效 |
@@ -161,8 +162,8 @@
 | [BUG-2535](bugs/BUG-2535-audiobook-unmatched-cue-chapter-end.md) | ✅ | ✅ | 有声书章尾：最后一句匹配播完、下一句未匹配时不进入下一章 |
 | [BUG-2534](bugs/BUG-2534-ios-gallery-topbar-under-status-bar.md) | ✅ | ✅ | iOS 插图册顶栏被状态栏 / 灵动岛压住，过滤 / 定位 / 关闭点不到 |
 | [BUG-2534](bugs/BUG-2534-background-calibration-sample-text-not-staged.md) | ✅ | ✅ | 后台校准采样未同步最新台词 |
-| [BUG-2533](bugs/BUG-2533-reader-status-clock-not-clickable.md) | ✅ | ✅ | 阅读器状态行/播放条的计时图标点不动，改成真正的 MD3 停续键 |
 | [BUG-2533](bugs/BUG-2533-gal-calibration-image-grid.md) | ✅ | ✅ | 人工中心拟合无法求字号、换行及续行缩进 |
+| [BUG-2533](bugs/BUG-2533-reader-status-clock-not-clickable.md) | ✅ | ✅ | 阅读器状态行/播放条的计时图标点不动，改成真正的 MD3 停续键 |
 | [BUG-2532](bugs/BUG-2532-ios-ankimobile-mined-detection.md) | ✅ | ✅ | iOS AnkiMobile 不显示已制卡：加卡回跳的 x-success 被丢弃，isDuplicate 恒 false |
 | [BUG-2532](bugs/BUG-2532-gal-lookup-popup-rearm.md) | ✅ | ✅ | 贴附查词在词典关闭后等待定时器恢复，期间点击透传 |
 | [BUG-2531](bugs/BUG-2531-reader-status-row-separate-scrim.md) | ✅ | ✅ | 竖屏读数行自己另画一块遮罩：底栏遮罩看着缺了进度显示那一层高度 |
@@ -397,10 +398,10 @@
 | [BUG-2263](bugs/BUG-2263-anki-localhost-prefers-ipv6.md) | ✅ | ✅ | AnkiConnect 使用 localhost 时优先连接 IPv6，导致本机请求延迟或失败 |
 | [BUG-2262](bugs/BUG-2262-macos-aidoku-partial-result-chapters-dropped.md) | ✅ | ✅ | macOS Aidoku 章节列表恒为空：桌面 runtime 丢弃 send_partial_result 回传的章节 |
 | [BUG-2262](bugs/BUG-2262-luna-safe-attach-double-hook-crash.md) | ✅ | ✅ | Luna 与 Fushi 双 Hook 导致游戏闪退 |
-| [BUG-2261](bugs/BUG-2261-reader-vn-live-style-css-dropped.md) | ✅ | ✅ | 阅读器视觉小说视图下纯CSS外观设置不实时生效 |
 | [BUG-2261](bugs/BUG-2261-luna-mine-before-audio-boundary.md) | ✅ | ✅ | Luna 当前句制卡提前截断录音导致卡片无音频 |
-| [BUG-2260](bugs/BUG-2260-netflix-advisory-overlay-selector-drift.md) | ✅ | ✅ | Netflix 分级提示 overlay 改用 .watch-video--advisories-container，三处隐藏选择器全部静默失效；内置播放器换集重载后 chrome 隐藏丢失 |
+| [BUG-2261](bugs/BUG-2261-reader-vn-live-style-css-dropped.md) | ✅ | ✅ | 阅读器视觉小说视图下纯CSS外观设置不实时生效 |
 | [BUG-2260](bugs/BUG-2260-local-windows-build-misses-gal-helper.md) | ✅ | ✅ | 本地 Windows 构建成功但未打包 galgame helper |
+| [BUG-2260](bugs/BUG-2260-netflix-advisory-overlay-selector-drift.md) | ✅ | ✅ | Netflix 分级提示 overlay 改用 .watch-video--advisories-container，三处隐藏选择器全部静默失效；内置播放器换集重载后 chrome 隐藏丢失 |
 | [BUG-2259](bugs/BUG-2259-windows-build-bundle-prefix.md) | ✅ | ✅ | Windows 构建 bundle 安装目标误指向 Program Files |
 | [BUG-2259](bugs/BUG-2259-macos-quit-no-exit-flush.md) | ✅ | ✅ | macOS Cmd+Q 退出不跑退出 flush（阅读位置/有声书进度/阅读统计丢最后一段） |
 | [BUG-2258](bugs/BUG-2258-macos-video-retina-blur.md) | ✅ | ✅ | mac 视频在 Retina 上发虚：media_kit 按视频原生分辨率建纹理，放大交给 Flutter 双线性 |

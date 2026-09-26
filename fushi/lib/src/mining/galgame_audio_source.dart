@@ -1537,6 +1537,7 @@ class EngineHookGalAudioSource implements GalAudioSource {
   /// 上层据此保留本实例继续轮询文本，同时另启系统 Loopback 作为音频源。
   bool get textHookReady => _textHookReady;
   bool get rawVoiceReady => _rawVoiceReady;
+  bool get softpalReady => _softpalReady;
 
   /// v13 文本分道的容量事实（native 累计计数）。
   ///
@@ -1570,6 +1571,7 @@ class EngineHookGalAudioSource implements GalAudioSource {
   bool _textHookReady = false;
   bool _audioHooksReady = false;
   bool _rawVoiceReady = false;
+  bool _softpalReady = false;
   int _textLaneRecycles = 0;
   int _textLaneOverflows = 0;
   int _xaudioDiagnostics = 0;
@@ -1777,6 +1779,7 @@ class EngineHookGalAudioSource implements GalAudioSource {
     _textHookReady = false;
     _audioHooksReady = false;
     _rawVoiceReady = false;
+    _softpalReady = false;
     _readyFormat = null;
     _launchedPid = 0;
     _launchObservation = null;
@@ -2149,6 +2152,7 @@ class EngineHookGalAudioSource implements GalAudioSource {
       _textHookReady = parseEngineTextHookReady(r);
       _audioHooksReady = parseEngineAudioHooksReady(r);
       _rawVoiceReady = r['rawVoiceReady'] == true;
+      _softpalReady = r['softpalReady'] == true;
       _textLaneRecycles = (r['textLaneRecycles'] as int?) ?? _textLaneRecycles;
       _textLaneOverflows =
           (r['textLaneOverflows'] as int?) ?? _textLaneOverflows;
@@ -2817,6 +2821,7 @@ class EngineHookGalAudioSource implements GalAudioSource {
     _textHookReady = false;
     _audioHooksReady = false;
     _rawVoiceReady = false;
+    _softpalReady = false;
     _readyFormat = null;
   }
 }
@@ -2915,6 +2920,7 @@ class GalHookedLine {
   /// This writer commits a seq before publishing its frozen voice binding.
   bool get eventOwnedVoice =>
       (sourceKind == 4 && hookName == 'SiglusEngine message') ||
+      (sourceKind == 7 && hookName == 'Softpal TextShow') ||
       (sourceKind == 2 &&
           eventKind == GalTextEventKind.line &&
           hookCode == 'HQFN1C:-18*-3244@8BA37:LITBUS_WIN32.exe');
@@ -2946,6 +2952,7 @@ class GalHookedLine {
       4 => 'siglus',
       5 => 'sgre',
       6 => 'smash',
+      7 => 'softpal',
       _ => 'hook',
     };
     return '$source:${threadId.toUnsigned(64).toRadixString(16)}';
@@ -2962,6 +2969,7 @@ class GalHookedLine {
             4 => 'Siglus exact',
             5 => 'SGRE exact',
             6 => 'smash exact',
+            7 => 'Softpal TextShow',
             _ => 'Text hook',
           };
     if (threadAddress == 0) return source;
