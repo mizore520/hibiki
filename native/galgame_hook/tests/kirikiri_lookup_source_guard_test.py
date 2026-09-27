@@ -515,8 +515,15 @@ def find_host_overlay_wheel_leak(source: MaskedSource) -> list[str]:
         hits.append(f"{ADAPTER.name}: bootstrap 未初始化 fushiLookupHostOverlayUnderCursor")
     if HOST_OVERLAY_SYNC_CALL not in text:
         hits.append(f"{ADAPTER.name}: 每帧泵没有同步宿主浮窗判定")
-    if "SyncKirikiriHostOverlayUnderCursor(false);" not in text:
-        hits.append(f"{ADAPTER.name}: 查词关闭时没有把宿主浮窗标记复位")
+    # 两条早退（会话结束/停机、查词关闭）都必须先复位，否则残留的 1 会吞掉之后所有滚轮。
+    if text.count("SyncKirikiriHostOverlayUnderCursor(false);") < 2:
+        hits.append(f"{ADAPTER.name}: 泵的早退路径没有全部复位宿主浮窗标记")
+    probe = text.find("bool HostOverlayUnderCursor() {")
+    probe_end = text.find("\n}\n", probe)
+    if probe < 0 or "WindowFromPoint" in text[probe:probe_end]:
+        hits.append(
+            f"{ADAPTER.name}: 浮窗判定不得用 WindowFromPoint（会向游戏同线程窗口发 WM_NCHITTEST）"
+        )
     return hits
 
 
@@ -4965,8 +4972,16 @@ class MutationSelfTest(unittest.TestCase):
             ),
             ("  " + HOST_OVERLAY_SYNC_CALL, "  // sync removed"),
             (
-                "    SyncKirikiriHostOverlayUnderCursor(false);",
-                "    // reset removed",
+                "    SyncKirikiriHostOverlayUnderCursor(false);\n    return;\n  }\n  g_lookup_enabled_last = true;",
+                "    return;\n  }\n  g_lookup_enabled_last = true;",
+            ),
+            (
+                "    SyncKirikiriHostOverlayUnderCursor(false);\n    return;\n  }\n  // 必须位于",
+                "    return;\n  }\n  // 必须位于",
+            ),
+            (
+                "  POINT cursor{};\n  if (!GetCursorPos(&cursor)) return false;\n  const ULONGLONG now",
+                "  POINT cursor{};\n  if (!GetCursorPos(&cursor)) return false;\n  (void)WindowFromPoint(cursor);\n  const ULONGLONG now",
             ),
         ):
             with self.subTest(old=old):

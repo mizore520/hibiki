@@ -6314,22 +6314,66 @@ void DrainKirikiriLookupInput() {
 // 读滚轮（`-wheel` 缺省 dinput，tTVPWheelDirectInputDevice），宿主 WH_MOUSE_LL 吞掉的只是
 // 窗口消息，同一格滚轮仍会经 Window.onMouseWheel 翻到下一句（BUG-2738）。这里只回答 Win32
 // 语义「这格滚轮本该属于光标下那个窗口」，不认任何游戏或宿主私有标识。
+// 候选浮窗：别的进程的顶层窗，其 owner 属于本进程。宿主会复用同一个 HWND 反复显隐，
+// 所以每 500 ms 用 EnumWindows 刷新一次候选，每帧只对这几扇窗做可见性与区域命中。
+// 不用 WindowFromPoint：光标落在游戏自己的窗上时它会向同线程窗口同步发 WM_NCHITTEST，
+// 等于每帧在 TJS continuous 回调里重入一次游戏 WndProc。这里的调用都不发窗口消息。
+constexpr size_t kHostOverlayCandidateCap = 16;
+constexpr ULONGLONG kHostOverlayRefreshMs = 500;
+struct HostOverlayCandidates {
+  HWND windows[kHostOverlayCandidateCap] = {};
+  size_t count = 0;
+  ULONGLONG refreshed_at = 0;
+  bool refreshed = false;
+};
+HostOverlayCandidates g_host_overlay_candidates;
+
+BOOL CALLBACK CollectHostOverlayCandidate(HWND window, LPARAM param) {
+  auto* out = reinterpret_cast<HostOverlayCandidates*>(param);
+  if (out->count >= kHostOverlayCandidateCap) return FALSE;
+  const HWND owner = GetWindow(window, GW_OWNER);
+  if (owner == nullptr) return TRUE;
+  const DWORD self = GetCurrentProcessId();
+  DWORD owner_pid = 0;
+  DWORD window_pid = 0;
+  GetWindowThreadProcessId(owner, &owner_pid);
+  GetWindowThreadProcessId(window, &window_pid);
+  if (owner_pid == self && window_pid != 0 && window_pid != self) {
+    out->windows[out->count++] = window;
+  }
+  return TRUE;
+}
+
+bool HostOverlayWindowContains(HWND window, POINT cursor) {
+  if (!IsWindow(window) || !IsWindowVisible(window) || IsIconic(window)) return false;
+  // 点击穿透的浮窗（悬浮歌词等）本来就不接收鼠标，滚轮归下面的游戏。
+  if ((GetWindowLongPtrW(window, GWL_EXSTYLE) & WS_EX_TRANSPARENT) != 0) return false;
+  RECT rect{};
+  if (!GetWindowRect(window, &rect) || !PtInRect(&rect, cursor)) return false;
+  // 级联卡片用 SetWindowRgn 裁成圆角 shell，包围矩形里的缝隙不属于它。
+  static HRGN region = CreateRectRgn(0, 0, 0, 0);
+  if (region == nullptr) return true;
+  const int kind = GetWindowRgn(window, region);
+  if (kind == ERROR || kind == NULLREGION) return true;  // 无窗口区域 = 整个矩形
+  return PtInRegion(region, cursor.x - rect.left, cursor.y - rect.top) != FALSE;
+}
+
 bool HostOverlayUnderCursor() {
   POINT cursor{};
   if (!GetCursorPos(&cursor)) return false;
-  const HWND hit = WindowFromPoint(cursor);
-  if (hit == nullptr) return false;
-  const HWND root = GetAncestor(hit, GA_ROOT);
-  if (root == nullptr || !IsWindowVisible(root)) return false;
-  const DWORD self = GetCurrentProcessId();
-  DWORD root_pid = 0;
-  GetWindowThreadProcessId(root, &root_pid);
-  if (root_pid == 0 || root_pid == self) return false;
-  const HWND owner = GetWindow(root, GW_OWNER);
-  if (owner == nullptr) return false;
-  DWORD owner_pid = 0;
-  GetWindowThreadProcessId(owner, &owner_pid);
-  return owner_pid == self;
+  const ULONGLONG now = GetTickCount64();
+  HostOverlayCandidates& cache = g_host_overlay_candidates;
+  if (!cache.refreshed || now - cache.refreshed_at >= kHostOverlayRefreshMs) {
+    HostOverlayCandidates fresh;
+    EnumWindows(&CollectHostOverlayCandidate, reinterpret_cast<LPARAM>(&fresh));
+    fresh.refreshed_at = now;
+    fresh.refreshed = true;
+    cache = fresh;
+  }
+  for (size_t i = 0; i < cache.count; ++i) {
+    if (HostOverlayWindowContains(cache.windows[i], cursor)) return true;
+  }
+  return false;
 }
 
 // 每帧一次 Win32 判定，只在变化时写一行 TJS（稳态零 TJS 求值）。执行失败不记新值，
@@ -6348,7 +6392,12 @@ void SyncKirikiriHostOverlayUnderCursor(bool active) {
 }
 
 void PumpKirikiriLookup() {
-  if (g_stop || !fushi_voice_hook::HasLookupRegion(g_header)) return;
+  if (g_stop || !fushi_voice_hook::HasLookupRegion(g_header)) {
+    // 会话结束 / 停机同样不能把「压着浮窗」留在 TJS 侧：宿主窗随会话消失后，
+    // 残留的 1 会让接缝吞掉之后每一格滚轮。
+    SyncKirikiriHostOverlayUnderCursor(false);
+    return;
+  }
   // 必须位于所有 early-return 之前：suppress 可能生效后紧接着被禁用、传感器退避或故障，
   // 这些状态都不能吞掉“下一次 continuous callback 已到达”这一事实。
   CommitKirikiriLookupCaptureSuppressAck();
