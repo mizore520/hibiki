@@ -2605,7 +2605,11 @@ void AttachedTextSurfaceWindow::UpdateShieldHandshakeWatch() {
     line << " (no new probe)";
   }
   line << " syncs=" << shield_handshake_watch_syncs_ << " -> " << state_ << '/'
-       << status_;
+       << status_ << " owner=" << shield_status_.owner_kind
+       << " request_target=0x" << std::hex << shield_status_.target_hwnd
+       << " surface_target=0x"
+       << static_cast<uint64_t>(reinterpret_cast<uintptr_t>(target_.hwnd))
+       << std::dec;
   NativeGlog(line.str());
 }
 
@@ -2637,7 +2641,11 @@ void AttachedTextSurfaceWindow::OnShieldHandshakeWatchTimer() {
          << " applied_seq=" << shield_status_.applied_seq
          << " active_buttons=" << shield_status_.active_buttons
          << " transaction_active=" << shield_transaction_active_
-         << " probe_published=" << (shield_handshake_probe_published_at_ != 0);
+         << " probe_published=" << (shield_handshake_probe_published_at_ != 0)
+         << " owner=" << shield_status_.owner_kind << " request_target=0x"
+         << std::hex << shield_status_.target_hwnd << " surface_target=0x"
+         << static_cast<uint64_t>(reinterpret_cast<uintptr_t>(target_.hwnd))
+         << std::dec;
     NativeGlog(line.str());
     return;
   }
@@ -2691,6 +2699,10 @@ bool AttachedTextSurfaceWindow::ShieldStatusBelongsToCurrentHandshake() const {
       policy::Attribution::kAcknowledged) {
     return true;
   }
+  // Popup pending is admitted too, unlike AttachedGlyph: native admission
+  // (ShieldPermitsLookup) must survive the release tail. Its masks/flags still
+  // come from the last applied request, which after the reset-on-epoch/HWND
+  // challenge can only be this epoch's own probe, glyph or popup request.
   if (policy::ClassifyPopupAfterHandshake(
           status_identity, shield_handshake_established_, handshake,
           current_epoch, current_target) != policy::Attribution::kForeign) {

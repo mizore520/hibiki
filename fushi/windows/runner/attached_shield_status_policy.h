@@ -85,8 +85,9 @@ inline Attribution ClassifyAttachedAfterHandshake(
                                                   : Attribution::kPending;
 }
 
-// A click on Fushi's own lookup popup publishes a Popup-owner down/release on
-// the same single request slot so the game cannot see that click. After the
+// A click on any host overlay registered for this game (lookup popup, hook
+// toolbar, floating lyric) publishes a Popup-owner down/release on the same
+// single request slot so the game cannot see that click. After the
 // exact challenge was acknowledged it is this host's input, not a lost
 // handshake: treating it as foreign suspended the surface, dismissed the popup
 // being clicked, and kept lookup rejected until the game next sampled the
