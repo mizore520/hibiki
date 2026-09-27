@@ -942,6 +942,8 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 				catch(e) {}
 			}
 			global.fushiLookupSensorStage = "bootstrap";
+			// DLL 每帧按 Win32 判定后只在变化时改写；滚轮接缝会读它，必须先存在。
+			global.fushiLookupHostOverlayUnderCursor = 0;
 			global.fushiLookupCardSeq = 0;
 			// 制卡截图的临时视觉抑制。它与永久 dismiss 分开：不动 submit/Esc fence，
 			// 下一张完整卡片帧会清除此位并恢复。同一事务的成功 token 由 DLL 回读。
@@ -3982,6 +3984,9 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 			{
 				try
 				{
+					// 光标压在宿主贴在游戏上的浮窗（直连查词卡片等）：这格滚轮属于那个窗口。
+					// DLL 每帧按 Win32 owner/进程判定后写入；这里只消费，不转发。
+					if(global.fushiLookupHostOverlayUnderCursor) return true;
 					if(global.fushiLookupCardSeq == 0) return false;
 					var card = global.fushiLookupCard;
 					if(card === void || !isvalid card || !card.visible) return false;
@@ -4063,14 +4068,14 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 						try { consumed = global.fushiLookupLeftClickHook(); }
 						catch(e) { global.fushiLookupFault(); }
 						if(consumed) return true;
-						return (this.fushiLookupOrig_onPrimaryClick incontextof this)(...);
+						return this.fushiLookupOrig_onPrimaryClick(...);
 					} incontextof global.kag)) seams = seams | 0x2;
 				if(global.fushiLookupWrapKagSeam("onMouseMove",
 					function(x, y)
 					{
 						try { global.fushiLookupMouseMoveHook(x, y); }
 						catch(e) { global.fushiLookupFault(); }
-						return (this.fushiLookupOrig_onMouseMove incontextof this)(...);
+						return this.fushiLookupOrig_onMouseMove(...);
 					} incontextof global.kag)) seams = seams | 0x4;
 				if(global.fushiLookupWrapKagSeam("onMouseWheel",
 					function(shift, delta, x, y)
@@ -4079,7 +4084,7 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 						try { consumed = global.fushiLookupMouseWheelHook(shift, delta, x, y); }
 						catch(e) { global.fushiLookupFault(); }
 						if(consumed) return true;
-						return (this.fushiLookupOrig_onMouseWheel incontextof this)(...);
+						return this.fushiLookupOrig_onMouseWheel(...);
 					} incontextof global.kag)) seams = seams | 0x8;
 				if(global.fushiLookupWrapKagSeam("onKeyDown",
 					function(key, shift)
@@ -4088,7 +4093,7 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 						try { consumed = global.fushiLookupKeyDownHook(key, shift); }
 						catch(e) { global.fushiLookupFault(); }
 						if(consumed) return true;
-						return (this.fushiLookupOrig_onKeyDown incontextof this)(...);
+						return this.fushiLookupOrig_onKeyDown(...);
 					} incontextof global.kag)) seams = seams | 0x10;
 				global.fushiLookupKagSeams = seams;
 			};
@@ -5546,17 +5551,18 @@ bool EvaluateTjsString(const wchar_t* expression, wchar_t* out, size_t out_chars
   return copied;
 }
 
-void ExecuteTjsScriptGuarded(const wchar_t* script) {
+bool ExecuteTjsScriptGuarded(const wchar_t* script) {
   if (g_lookup_execute_script == nullptr || g_lookup_alloc_string == nullptr ||
       g_lookup_release_string == nullptr || script == nullptr) {
-    return;
+    return false;
   }
   TjsVariantString* text = CallTjsAllocStringSeh(script);
-  if (text == nullptr) return;
+  if (text == nullptr) return false;
   const TjsString content = {text};
   // 插件 ABI 边界绝不把 C++/TJS 异常抛回游戏事件循环——SEH 边界，两家编译器的异常都拦。
-  CallTjsExecuteScriptSeh(content);
+  const bool ok = CallTjsExecuteScriptSeh(content);
   CallTjsReleaseStringSeh(text);
+  return ok;
 }
 
 void ApplyKirikiriLookupHighlight(uint32_t highlight_start,
@@ -6303,6 +6309,42 @@ void DrainKirikiriLookupInput() {
 }
 
 // 游戏主线程的每帧入口。开关关着、查词区不存在、传感器还没建立时，这里一个字节都不写。
+// 光标下是否压着宿主贴在本游戏上的浮窗：别的进程的可见顶层窗，其 owner 是本进程的窗口
+// （查词直连卡片、Hook 工具条、悬浮歌词都以游戏窗为 owner）。KiriKiri 默认用 DirectInput
+// 读滚轮（`-wheel` 缺省 dinput，tTVPWheelDirectInputDevice），宿主 WH_MOUSE_LL 吞掉的只是
+// 窗口消息，同一格滚轮仍会经 Window.onMouseWheel 翻到下一句（BUG-2738）。这里只回答 Win32
+// 语义「这格滚轮本该属于光标下那个窗口」，不认任何游戏或宿主私有标识。
+bool HostOverlayUnderCursor() {
+  POINT cursor{};
+  if (!GetCursorPos(&cursor)) return false;
+  const HWND hit = WindowFromPoint(cursor);
+  if (hit == nullptr) return false;
+  const HWND root = GetAncestor(hit, GA_ROOT);
+  if (root == nullptr || !IsWindowVisible(root)) return false;
+  const DWORD self = GetCurrentProcessId();
+  DWORD root_pid = 0;
+  GetWindowThreadProcessId(root, &root_pid);
+  if (root_pid == 0 || root_pid == self) return false;
+  const HWND owner = GetWindow(root, GW_OWNER);
+  if (owner == nullptr) return false;
+  DWORD owner_pid = 0;
+  GetWindowThreadProcessId(owner, &owner_pid);
+  return owner_pid == self;
+}
+
+// 每帧一次 Win32 判定，只在变化时写一行 TJS（稳态零 TJS 求值）。执行失败不记新值，
+// 下一帧重试，避免 TJS 与 C++ 两侧对「是否压着浮窗」各执一词。
+void SyncKirikiriHostOverlayUnderCursor() {
+  static int last = -1;
+  const int now = HostOverlayUnderCursor() ? 1 : 0;
+  if (now == last) return;
+  if (ExecuteTjsScriptGuarded(
+          now != 0 ? L"global.fushiLookupHostOverlayUnderCursor = 1;"
+                   : L"global.fushiLookupHostOverlayUnderCursor = 0;")) {
+    last = now;
+  }
+}
+
 void PumpKirikiriLookup() {
   if (g_stop || !fushi_voice_hook::HasLookupRegion(g_header)) return;
   // 必须位于所有 early-return 之前：suppress 可能生效后紧接着被禁用、传感器退避或故障，
@@ -6370,6 +6412,8 @@ void PumpKirikiriLookup() {
       return;
     }
   }
+  // 传感器已活：TJS 全局已由 bootstrap 建立，滚轮接缝据此在宿主浮窗上吞滚轮。
+  SyncKirikiriHostOverlayUnderCursor();
   int64_t notify = 0;
   // 稳态下每帧只有这一次求值：notify 不变就一行 TJS 都不再跑。
   if (g_lookup_sensor_eval_backoff > 0) {
