@@ -7,10 +7,16 @@ import 'package:fushi_engine/models/local_audio_db_entry.dart';
 import 'package:fushi_engine/media/video/video_library_import.dart'
     show parseSubtitleCues;
 import 'package:fushi_engine/media/video/video_sidecar.dart'
-    show findSidecarSubtitle, isSidecarSubtitleSuffix, pickSidecar;
+    show
+        defaultSidecarSubtitleSuffix,
+        findSidecarSubtitle,
+        isSidecarSubtitleSuffix,
+        pickSidecar,
+        sidecarSuffixesDisplacedBy;
 import 'package:fushi_audio/fushi_audio_core.dart'
     show AudioCue, AudiobookStorage, readTextWithEncoding;
 import 'package:fushi_engine/media/media_pref_keys.dart';
+import 'package:fushi_engine/media/video/anime_source_video_path.dart';
 import 'package:fushi_engine/media/video/m3u8_playlist.dart'
     show PlaylistEntry;
 import 'package:fushi_engine/media/video/metadata/video_library_scrape_sweep.dart'
@@ -116,6 +122,7 @@ abstract class _LocalLibraryHostBase
         VideoDeletionHost,
         VideoPlaybackSyncHost,
         AudiobookDelayHost,
+        VideoSubtitleDefaultHost,
         InterconnectServiceConfigHost,
         InterconnectProfileHost,
         VideoMetadataHost,
@@ -125,6 +132,8 @@ abstract class _LocalLibraryHostBase
   SyncAssetPackageService get _packages;
   Future<void> Function() get _refreshDictionaryCache;
   Future<void> Function(Future<void> Function() body) get _runExclusive;
+  Future<void> Function(Future<void> Function() body)
+      get _runSyncStateExclusive;
   Future<bool> Function()? get _isProfileTransferEnabled;
   Future<String> Function()? get _exportActiveProfileJson;
   Future<String> Function(String json)? get _importProfileJson;
@@ -185,6 +194,7 @@ class LocalLibraryHostService extends _LocalLibraryHostBase
     required SyncAssetPackageService packages,
     required Future<void> Function() refreshDictionaryCache,
     required Future<void> Function(Future<void> Function() body) runExclusive,
+    Future<void> Function(Future<void> Function() body)? runSyncStateExclusive,
     Future<String?> Function(File epubFile)? importBookFromFile,
     Future<void> Function(EpubBookRow row)? cleanupBookOnDisk,
     List<LocalAudioDbEntry> localAudioEntries = const <LocalAudioDbEntry>[],
@@ -213,6 +223,7 @@ class LocalLibraryHostService extends _LocalLibraryHostBase
         _packages = packages,
         _refreshDictionaryCache = refreshDictionaryCache,
         _runExclusive = runExclusive,
+        _runSyncStateExclusive = runSyncStateExclusive ?? runExclusive,
         _importBookFromFile = importBookFromFile,
         _cleanupBookOnDisk = cleanupBookOnDisk,
         _localAudioEntries = localAudioEntries,
@@ -240,6 +251,20 @@ class LocalLibraryHostService extends _LocalLibraryHostBase
   final Future<void> Function() _refreshDictionaryCache;
   @override
   final Future<void> Function(Future<void> Function() body) _runExclusive;
+
+  /// 同步状态域（聚合快照折叠 / 合集清单合并）专用的**窄**互斥（BUG-2717）。
+  ///
+  /// 这两个对端写只是本机 DB 的读-改-写，唯一需要互斥的对象是「同一批表上的其它
+  /// 本地 apply 步骤」——包括本机自己作为 client 出站同步时的聚合 / 合集落库。它们
+  /// 不该排在 [_runExclusive] 后面：app 里那把是**整个自动同步轮**的互斥，本机跑一轮
+  /// （含云备份）动辄几分钟，对端 15s 内拿不到响应头就判超时。
+  ///
+  /// 生产（app）传只包住本地落库步骤的窄锁；出站同步在自己的 apply 步骤上持同一把
+  /// （见 AggregateSyncService.localApplyLock）。未注入时退回 [_runExclusive]
+  /// （无头服务端那把本来就是库专用锁，形状相同）。
+  @override
+  final Future<void> Function(Future<void> Function() body)
+      _runSyncStateExclusive;
 
   /// 互联「配置文件」（Profile）搬运的三个可选依赖（与本类其余可选能力同范式：
   /// 注入回调而不是把 ProfileRepository 的构造依赖整条拖进来）。生产由 AppModel

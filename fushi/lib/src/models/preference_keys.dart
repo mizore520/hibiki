@@ -27,12 +27,28 @@ const Set<String> kKnownPreferenceKeys = <String>{
   // 同时登记在 kCredentialPreferenceKeys、PrefRedactionPolicy.sensitiveKeys
   // 与 deviceLocalPrefKeys。
   'ai_providers',
+  // String：「AI 下视频」的码率偏好（只排序）。`''` 不限 / `high` 高码率优先 /
+  // `low` 小体积优先。非凭据、跨设备。
+  'ai_video_download_bitrate',
   // String：「AI 下视频」的默认画质。`''` 未设置（首次使用时问并按勾选写回）/
-  // `ask` 每次询问 / `2160p` `1080p` `720p` `480p` `any` 固定档。非凭据、跨设备。
+  // `ask` 每次询问 / `best` 最高可用 / `2160p` `1440p` `1080p` `720p` `480p` /
+  // `any` 固定档。非凭据、跨设备。
   'ai_video_download_quality',
+  // String：「AI 下视频」的片源偏好（只排序）。`''` 不限 / `best` 最佳 /
+  // `bluray` 蓝光优先 / `web` 网络源优先。非凭据、跨设备。
+  'ai_video_download_source',
   // String：「AI 下视频」的字幕语言。`''` 未设置 / `ask` 每次询问 / `original`
   // 跟随作品语言 / `ja` 等语言码 / `none` 不配字幕。非凭据、跨设备。
   'ai_video_download_subtitle_language',
+  // String（JSON 数组）：AI 联网资料里用户自加的 MediaWiki 站点
+  // `[{id: 'custom:…', label, endpoint: 'https://…/api.php'}]`。只是公开网址，
+  // 非凭据、跨设备。
+  'ai_web_knowledge_custom_sites',
+  // String：AI 联网资料**关掉**的站点 id，逗号分隔（内置 `moegirl` 等 + 自定义
+  // `custom:…`）。从未写过 = 全开（或按旧键迁移）；新增的内置站默认开。非凭据、跨设备。
+  'ai_web_knowledge_disabled_sites',
+  // String：旧版（只有三个维基时）启用的站点 id。只读迁移用，新版不再写。
+  'ai_web_knowledge_sources',
   'app_locale',
   'app_ui_scale',
   'asr_transcribe_language',
@@ -50,6 +66,9 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'auto_search',
   'auto_search_debounce_delay',
   'auto_update_dictionaries',
+  // bool：「下载」改名「浏览」的一次性搬迁提示已处理（弹过，或判定本安装不需要
+  // 弹）。描述本安装的状态，与 first_time_setup 同族、不随 Profile 走。
+  'browse_moved_notice_handled',
   'builtInTagsSeeded',
   'clipboard_panel_block_capture',
   'collapse_dictionaries',
@@ -304,6 +323,10 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_danmaku_style',
   'video_download_backend_path_mappings',
   'video_download_embedded_installation_id',
+  // bool：下载进受管视频来源时跳过特典（PV / CM / NCOP / NCED / 菜单…）——管线
+  // 拿到种子文件表后把特典文件设为不下载；AI 下视频选版本时也丢掉只有特典的发布。
+  // 默认 false（旧行为：整颗种子全下）。非凭据、跨设备。
+  'video_download_skip_extras',
   'video_download_target_source_id',
   'video_fit_mode',
   'video_immersive_mode',
@@ -327,6 +350,9 @@ const Set<String> kKnownPreferenceKeys = <String>{
   'video_mpv_lua_capability',
   'video_mpv_lua_scripts_enabled',
   'video_mpv_shader_dir',
+  // String（[VideoOnlineMiningMode] 的 wireName）：在线视频点制卡后弹窗等不等——
+  // `background` 后台（默认）/ `deferred` 看完再制卡 / `wait` 等整张卡落地。
+  'video_online_mining_mode',
   'video_remote_subtitle',
   // 用户停用的内置视频资源索引器 id（逗号分隔，默认空 = 全部启用）。
   // 与 discovery_disabled_sources 同形；自配 Torznab 各自带 enabled，不进这里。
@@ -346,6 +372,10 @@ const Set<String> kKnownPreferenceKeys = <String>{
   // 零配置源，没有 key 门控；默认开是因为它是没填 Jimaku/OpenSubtitles key 的
   // 用户唯一能用的源。
   'video_subtitle_ajatt_enabled',
+  // bool（默认 true）：远端（互联 host）视频上导入 / 重定时得到的字幕，是否自动上传到
+  // host 并设为该集默认字幕（所有 peer 都会看到）。关掉则字幕只在本机生效。
+  // 见 PreferencesRepository.videoSubtitleAutoUploadToHost。
+  'video_subtitle_auto_upload_to_host',
   'video_subtitle_backfill_after_scrape',
   'video_subtitle_blur',
   'video_subtitle_language_filter',

@@ -1,10 +1,12 @@
 library;
 
+import 'package:fushi/src/media/video/discovery/video_franchise.dart';
 import 'package:flutter/foundation.dart';
 import 'package:fushi_engine/media/external_provider.dart';
 import 'package:fushi/src/media/video/discovery/video_discovery_adapters.dart';
 import 'package:fushi_engine/media/video/discovery/video_discovery_provider.dart';
 import 'package:fushi/src/media/video/metadata/anilist_video_metadata_provider.dart';
+import 'package:fushi_engine/media/video/metadata/mal_video_metadata_provider.dart';
 import 'package:fushi_engine/media/video/metadata/video_metadata_merge.dart';
 import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
 import 'package:fushi_engine/media/video/metadata/video_metadata_provider.dart';
@@ -13,6 +15,7 @@ import 'package:fushi_engine/media/video/scraper/title_normalizer.dart';
 import 'package:fushi/src/media/video/discovery/video_metadata_discovery_provider.dart';
 import 'package:fushi_engine/media/video/metadata/video_metadata_resolver.dart';
 import 'package:fushi/src/models/store_compliance.dart';
+import 'package:fushi/src/utils/misc/error_log_service.dart';
 
 /// 发现页的生产聚合服务。
 ///
@@ -255,6 +258,59 @@ class VideoDiscoveryService {
           : _supplementDetails(merged, supplement);
     }
     return merged;
+  }
+
+  /// 「整套下载」：[item] 所在系列的全部剧集与剧场版（见 `video_franchise.dart`）。
+  ///
+  /// TMDB collection（要 key）与 MAL 关联链（不要 key，只对动画走）两份合并；
+  /// 两个来源都不可用返回 null。单个来源失败只记诊断、不拖垮另一个。
+  Future<VideoFranchise?> loadFranchise(VideoDiscoveryItem item) async {
+    if (_closed) return null;
+    VideoFranchise? tmdb;
+    for (final VideoDiscoveryProvider provider in _providers) {
+      if (provider is VideoFranchiseSource) {
+        tmdb = await _guardFranchise(
+          'tmdb',
+          () => resolveVideoFranchise(provider as VideoFranchiseSource, item),
+        );
+        break;
+      }
+    }
+    VideoFranchise? mal;
+    final VideoMetadataProvider? malProvider =
+        _metadataProviders[VideoMetadataProviderKind.mal];
+    if (malProvider is MalVideoMetadataProvider &&
+        item.reference.discoveryCategory == VideoDiscoveryCategory.anime) {
+      mal = await _guardFranchise(
+        'mal',
+        () => resolveMalFranchise(_MalFranchiseSource(malProvider), item),
+      );
+    }
+    // 动画的剧集以 MAL 为准：TMDB 把一部动画按「整部剧（含全部季）」收，MAL 按
+    // 每季一个作品收——两边都进清单，同一批集会被整部剧和分季重复下载。
+    if (tmdb != null && mal != null && mal.series.isNotEmpty) {
+      tmdb = VideoFranchise(
+        name: tmdb.name,
+        series: const <VideoDiscoveryItem>[],
+        movies: tmdb.movies,
+      );
+    }
+    return mergeVideoFranchises(<VideoFranchise?>[tmdb, mal]);
+  }
+
+  Future<VideoFranchise?> _guardFranchise(
+    String source,
+    Future<VideoFranchise?> Function() body,
+  ) async {
+    try {
+      return await body();
+    } on Object catch (error, stack) {
+      ErrorLogService.instance.logDiagnostic(
+        'VideoDiscoveryService.loadFranchise.$source',
+        '$error\n$stack',
+      );
+      return null;
+    }
   }
 
   List<VideoMetadataLookup> _detailLookups(VideoDiscoveryItem item) {
@@ -908,3 +964,27 @@ VideoDiscoveryRequest _requestAtPage(VideoDiscoveryRequest request, int page) =>
       genre: request.genre,
       region: request.region,
     );
+
+/// MAL provider → 系列关联来源的薄适配。
+class _MalFranchiseSource implements VideoFranchiseRelationSource {
+  _MalFranchiseSource(this._provider);
+
+  final MalVideoMetadataProvider _provider;
+
+  @override
+  Future<MalRelatedWorks?> fetchRelatedWorks(String malId) =>
+      _provider.fetchRelatedWorks(malId);
+
+  @override
+  Future<List<VideoMetadataWork>> searchAnime(String title) async {
+    final List<VideoMetadataWork> works = <VideoMetadataWork>[];
+    for (final VideoMetadataMediaKind kind in VideoMetadataMediaKind.values) {
+      works.addAll(
+        await _provider.search(
+          VideoMetadataSearchRequest(title: title, mediaKind: kind, limit: 5),
+        ),
+      );
+    }
+    return works;
+  }
+}

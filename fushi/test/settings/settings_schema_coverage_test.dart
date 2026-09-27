@@ -92,11 +92,18 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 由专项测试咬住：能力位随开关实时翻转、关着时报了画质档也退回直传。
   'interconnect/Transcode video for peers':
       'test/sync/fushi_sync_server_transcode_test.dart',
+  // 游戏串流「允许远程启动」（host 侧许可，默认关，只在 Windows 出现）。写
+  // prefsRepo（changed=true），生效点在 **HTTP 端点**：app 把
+  // `prefsRepo.gameStreamRemoteLaunchEnabled` 实时注入成 host 的
+  // `isLaunchEnabled`（app_model），`/api/game-stream/launch` 每次处理都读它，关着就
+  // 403 `disabled`、不起进程。harness 里没有起 server，探不到。由专项测试咬住。
+  'interconnect/Allow remote launch':
+      'packages/fushi_engine/test/game_stream_launch_settings_test.dart',
   'appearance/Books': 'test/pages/home_page_tabs_test.dart',
   'appearance/Manga': 'test/pages/home_page_tabs_test.dart',
   'appearance/Video': 'test/pages/home_page_tabs_test.dart',
   'appearance/Game': 'test/pages/home_page_tabs_test.dart',
-  'appearance/Downloads': 'test/pages/home_page_tabs_test.dart',
+  'appearance/Browse': 'test/pages/home_page_tabs_test.dart',
   'appearance/Lookup': 'test/pages/home_page_tabs_test.dart',
   'appearance/Extension': 'test/pages/home_page_tabs_test.dart',
   // 「功能模块」后加的四个横切开关（听书/制卡/在线服务/同步备份）。它们**没有底栏
@@ -355,6 +362,14 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   // 全部准确率所在（外部 id / 原名 / 季集号怎么传给 provider）。
   'video/Auto-fetch subtitles after scraping':
       'test/media/video/scraped_subtitle_targets_test.dart',
+  // BUG-2728 自动上传的开关（默认开）。写 prefsRepo（changed=true），生效点是视频页
+  // _uploadRemoteSubtitleToHost 的进场门（关=不发 PUT、不提示），只在互联远端视频
+  // 导入 / 重定时字幕时触发——harness 里没有视频页、没有已配对 host，无适用探针。
+  // 偏好默认值 / 往返由 pref 测试咬住，「关 → 不调 putRemoteVideoSubtitleAsDefault」
+  // 由源码守卫咬住。
+  'video/Auto-upload imported subtitles to host':
+      'test/media/video/video_subtitle_auto_upload_pref_test.dart + '
+      'test/sync/interconnect_video_default_subtitle_test.dart',
   // Jimaku 默认字幕语言（BUG-1189/1190 那批「Jimaku 设置统一到设置页」）。写
   // prefsRepo（changed=true），生效点是三个 Jimaku 界面打开时的语言预选（没有该
   // 系列的语言记忆时用它兜底），不在 reader CSS / 主题树里，无适用探针；由专项
@@ -480,6 +495,11 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
       'test/settings/mining_media_quality_guard_test.dart + test/utils/desktop_audio_clipper_test.dart',
   // 句子音频头/尾 padding：效果在裁剪区间（padSentenceRange），纯函数 + 偏好写穿 +
   // 两条制卡链调用点源码守卫都在专项测试里。
+  // 在线视频制卡方式（后台 / 看完再制卡 / 等待完成）：写 prefsRepo，生效点是视频页
+  // 点制卡时的模式判定（纯函数 resolveVideoOnlineMiningMode）与暂存队列，harness 里
+  // 没有在线视频播放器可探；判定、队列落卡、弹窗与引擎暂存契约都在专项测试里。
+  'cardCreation/Online video mining':
+      'test/media/video/mpv_cache_snapshot_test.dart + test/mining/video_mine_queue_test.dart + test/mining/immersion_mining_cached_snapshot_test.dart',
   'cardCreation/Audio padding before sentence':
       'test/settings/mining_audio_padding_guard_test.dart',
   'cardCreation/Audio padding after sentence':
@@ -1057,6 +1077,41 @@ const Map<String, String> kCoveredElsewhere = <String, String>{
   'ai/Subtitle language':
       'test/settings/ai_video_download_settings_test.dart + '
       'test/ai/ai_video_acquisition_preferences_test.dart',
+  // 片源 / 码率偏好：同上，生效点是 reducer 重过滤时的版本排序
+  // （filterResourceGroups → rankResourceGroups），由 resource_picker 用例咬住。
+  'ai/Preferred source':
+      'test/settings/ai_video_download_settings_test.dart + '
+      'test/media/video/acquisition/video_acquisition_resource_picker_test.dart',
+  'ai/Bitrate':
+      'test/settings/ai_video_download_settings_test.dart + '
+      'test/media/video/acquisition/video_acquisition_resource_picker_test.dart',
+  // 跳过特典：生效点是下载管线的文件优先级（每轮现读偏好）与 AI 下视频的候选清洗，
+  // harness 里没有种子。
+  'ai/Skip extras':
+      'test/settings/ai_video_download_settings_test.dart + '
+      'test/media/video/download/video_download_pipeline_service_test.dart + '
+      'test/media/video/acquisition/video_acquisition_resource_picker_test.dart',
+  // 联网资料内置站开关：生效点是 AI 下视频 / 视频识别构造 WebKnowledgeClient 时读的
+  // 站点集合，harness 里没有那条链路。窄测试咬住写穿 + 空集不回落默认，客户端
+  // 测试咬住「只请求传入的站点」。
+  'ai/Wikipedia (中文)':
+      'test/settings/ai_web_knowledge_settings_test.dart + '
+      'test/ai/web_knowledge_test.dart',
+  'ai/Wikipedia (日本語)':
+      'test/settings/ai_web_knowledge_settings_test.dart + '
+      'test/ai/web_knowledge_test.dart',
+  'ai/Wikipedia (English)':
+      'test/settings/ai_web_knowledge_settings_test.dart + '
+      'test/ai/web_knowledge_test.dart',
+  'ai/Moegirlpedia (萌娘百科)':
+      'test/settings/ai_web_knowledge_settings_test.dart + '
+      'test/ai/web_knowledge_test.dart',
+  'ai/Anime News Network':
+      'test/settings/ai_web_knowledge_settings_test.dart + '
+      'test/ai/web_knowledge_test.dart',
+  'ai/TVmaze':
+      'test/settings/ai_web_knowledge_settings_test.dart + '
+      'test/ai/web_knowledge_test.dart',
 };
 
 /// 八个媒体类型 → Profile 绑定行共用的证据（同一条 resolveProfileId /

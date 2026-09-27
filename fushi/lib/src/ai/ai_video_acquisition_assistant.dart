@@ -25,6 +25,7 @@ import 'package:fushi/src/ai/ai_provider_config.dart';
 import 'package:fushi/src/ai/ai_reply_json.dart';
 import 'package:fushi/src/ai/ai_video_identity_assistant.dart';
 import 'package:fushi/src/ai/ai_video_search_assistant.dart';
+import 'package:fushi/src/ai/web_knowledge.dart';
 import 'package:fushi/src/media/video/acquisition/video_acquisition_models.dart';
 import 'package:fushi/src/models/preferences_repository.dart';
 import 'package:fushi/src/utils/misc/error_log_service.dart';
@@ -131,6 +132,11 @@ List<String> get _subtitleLanguageKeys => <String>[
   kVideoAcquisitionSubtitleNone,
 ];
 
+List<String> get _scopeKeys => <String>[
+  for (final VideoAcquisitionScope scope in VideoAcquisitionScope.values)
+    scope.storageKey,
+];
+
 List<String> get _categoryNames => <String>[
   for (final VideoDiscoveryCategory category in VideoDiscoveryCategory.values)
     category.name,
@@ -165,7 +171,8 @@ Answer with a single JSON object and nothing else. Every field is optional excep
   "quality": ${_quoted(_qualityKeys)},
   "qualityRemember": <true only when the user says this quality should be the default from now on>,
   "subtitleLanguage": ${_quoted(_subtitleLanguageKeys)},
-  "subtitleLanguageRemember": <true only when the user says this subtitle language should be the default from now on>
+  "subtitleLanguageRemember": <true only when the user says this subtitle language should be the default from now on>,
+  "scope": ${_quoted(_scopeKeys)}
 }
 
 Rules:
@@ -186,11 +193,18 @@ Rules:
   the list empty when no work is mentioned.
 - "mode": "download" for "download / get / grab it now"; "subscribe" for
   "follow / subscribe / keep getting new episodes".
-- "quality": map "4K" / "2160" to "2160p", "1080" / "full HD" to "1080p",
+- "quality": map "best / highest / as good as possible" to "best", "4K" /
+  "2160" to "2160p", "2K" / "1440" to "1440p", "1080" / "full HD" to "1080p",
   "720" to "720p", "480" / "SD" / "small" to "480p", "any / whatever" to "any".
 - "subtitleLanguage": "original" when the user wants subtitles in the work's
   own language; a language code for an explicit language; "none" when the
   user wants no subtitles.
+- "scope": "all" when the user wants the whole franchise / series (every
+  season and every movie, e.g. "the whole thing", "everything", "整套",
+  "全部"); "movies" when they want all the theatrical movies of the franchise
+  (e.g. "all Doraemon movies", "所有剧场版"); "series" when they want every TV
+  season but no movies; "work" when they explicitly want only this one work.
+  Omit it otherwise. The work title still goes into "workQueries".
 - "qualityRemember" / "subtitleLanguageRemember": true only when the user
   explicitly says "from now on", "by default", "always" or equivalent.
   Otherwise omit them; a one-off choice is not a new default.
@@ -264,6 +278,9 @@ VideoAcquisitionIntent parseVideoAcquisitionIntent(
       (VideoAcquisitionMode value) => value.name,
     ),
     choiceIndex: choiceIndex,
+    scope: decoded['scope'] is String
+        ? VideoAcquisitionScope.fromStorageKey(decoded['scope'] as String)
+        : null,
   );
   if (kind == VideoAcquisitionIntentKind.provide && patch.isEmpty) {
     return const VideoAcquisitionIntent.unclear();
@@ -388,13 +405,14 @@ Rules:
 - Compare titles across languages and romanizations (Japanese, Chinese,
   Korean, English, romaji), ignoring case and punctuation.
 - "reason" is one short sentence written in the language with tag "$locale".
-''';
+$kAiIdentityReferenceRule''';
 
 /// 跑一次「用户说的是哪一部」判定。失败原样抛 [AiChatFailure]。
 Future<AiVideoIdentityDecision> requestAiVideoAcquisitionIdentity({
   required AiChatClient client,
   required AiProviderConfig provider,
   required AiVideoIdentityQuery query,
+  List<WebKnowledgePage> references = const <WebKnowledgePage>[],
 }) async {
   final String reply = await client.complete(
     provider: provider,
@@ -402,7 +420,9 @@ Future<AiVideoIdentityDecision> requestAiVideoAcquisitionIdentity({
       AiChatMessage.system(
         buildAiVideoAcquisitionIdentitySystemPrompt(locale: query.locale),
       ),
-      AiChatMessage.user(buildAiVideoIdentityUserPrompt(query)),
+      AiChatMessage.user(
+        buildAiVideoIdentityUserPrompt(query, references: references),
+      ),
     ],
     maxTokens: 512,
   );
@@ -451,15 +471,20 @@ VideoAcquisitionIntentParser createPreferencesVideoAcquisitionIntentParser(
 AiVideoIdentityDecider createPreferencesVideoAcquisitionIdentityDecider(
   PreferencesRepository prefsRepo, {
   AiClientFactory? clientFactory,
+  WebKnowledgeClient Function()? webFactory,
 }) => (AiVideoIdentityQuery query) async {
   final AiProviderConfig? provider = resolveVideoAcquireAiProvider(prefsRepo);
   if (provider == null) return null;
   final AiChatClient client = clientFactory?.call() ?? AiChatClient();
+  final WebKnowledgeClient web =
+      webFactory?.call() ??
+      WebKnowledgeClient(sites: prefsRepo.aiWebKnowledgeSites);
   try {
     return await requestAiVideoAcquisitionIdentity(
       client: client,
       provider: provider,
       query: query,
+      references: await fetchAiIdentityReferences(web, query),
     );
   } catch (error, stack) {
     ErrorLogService.instance.logDiagnostic(
@@ -469,5 +494,6 @@ AiVideoIdentityDecider createPreferencesVideoAcquisitionIdentityDecider(
     rethrow;
   } finally {
     client.close();
+    web.close();
   }
 };
