@@ -922,6 +922,7 @@ extension _ReaderChrome on _ReaderFushiPageState {
     if (book == null) return;
     final List<EpubImageRef> images = book.images;
     final int currentChapter = _currentChapter;
+    final List<TtuTocEntry> toc = _buildTtuToc();
     // 章内位置也要带过去：插图册与书架端插图库用同一把尺判「读到没读到」
     // （BUG-2559）。缓存的分数属于别的章时（刚跳章、还没回报进度）退到章首 0，
     // 与落库时的同款判据一致。
@@ -937,6 +938,16 @@ extension _ReaderChrome on _ReaderFushiPageState {
             builder: (BuildContext routeContext) => ReaderGalleryPage(
               // 节头用真实章名（TOC 命中）；命不中时页面自己退到「第 N 章」。
               chapterLabelFor: _currentChapterLabelFor,
+              // 按目录分节：一个 xhtml 装好几话的书，插图按章内位置归到各话；
+              // 连续几页插图同属一话时合成一节。与顶栏章名同一份目录与判据。
+              toc: ReaderGalleryToc(
+                entries: toc,
+                currentEntry: resolveCurrentTocEntry(
+                  toc,
+                  currentChapter,
+                  _tocCharOffsetFor(currentChapter),
+                ),
+              ),
               images: images,
               currentChapter: currentChapter,
               currentNormCharOffset: currentNormCharOffset,
@@ -1840,8 +1851,8 @@ extension _ReaderChrome on _ReaderFushiPageState {
   }
 
   /// 阅读器悬浮球（用户开关，默认关）：半透明停靠在正文视口边缘，点开把布局
-  /// 编辑器里拖进 [ReaderControlSlot.floatingBall] 槽的按钮以弧形环绕展开（出厂
-  /// 是有声书的上一句 / 播放暂停 / 下一句）。
+  /// 编辑器里拖进 [ReaderControlSlot.floatingBall] 槽的按钮在球正上方竖排展开，
+  /// 视口太矮一列放不下时向屏幕中央换列（出厂是有声书的上一句 / 播放暂停 / 下一句）。
   ///
   /// 首章加载后才出现；槽里此刻一颗可渲染的按钮都没有（例如只放了传输键而书没挂
   /// 有声书）就不画球。活动范围是扣掉顶栏 / 底栏 / 状态行预留后的正文视口，与焦点
@@ -1998,12 +2009,8 @@ extension _ReaderChrome on _ReaderFushiPageState {
 
       if (!mounted) return;
 
-      // 所有平台共用左侧导航与右侧设置；有声书面板桌面/宽窗同走右侧侧栏，
-      // 手机保留全高 bottom sheet。
-      final bool useAudiobookSideSheet = readerAudiobookUsesSideSheet(
-        desktop: isDesktopPlatform,
-        window: MediaQuery.sizeOf(context),
-      );
+      // 所有平台共用左侧导航与右侧设置；有声书面板也一律走右侧侧栏（手机同样，
+      // 用户 2026-09-27 拍板：不再用底部抽屉）。
       final bool audiobookPanel =
           initialSubPage == 'audiobook' && _audiobookController != null;
       final ReaderQuickSettingsPresentation presentation = audiobookPanel
@@ -2023,7 +2030,6 @@ extension _ReaderChrome on _ReaderFushiPageState {
         () => _presentQuickSettings(
           sheetContent: sheetContent,
           presentation: presentation,
-          useAudiobookSideSheet: useAudiobookSideSheet,
         ),
       );
 
@@ -2037,27 +2043,15 @@ extension _ReaderChrome on _ReaderFushiPageState {
     }
   }
 
-  /// [_showAppearanceSheet] 的呈现分派（移动端有声书 sheet / 其余一律左右侧栏），
-  /// 返回的 Future 在面板关闭后完成。
+  /// [_showAppearanceSheet] 的呈现分派（各平台一律左右侧栏），返回的 Future 在
+  /// 面板关闭后完成。
   Future<void> _presentQuickSettings({
     required Widget sheetContent,
     required ReaderQuickSettingsPresentation presentation,
-    required bool useAudiobookSideSheet,
   }) async {
-    if (presentation == ReaderQuickSettingsPresentation.audiobookPanel &&
-        !useAudiobookSideSheet) {
-      // 手机：全高 bottom sheet 承载面板（面板内部 Flexible 需要有界高度）。
-      await adaptiveModalSheet<void>(
-        context: context,
-        builder: (BuildContext ctx) => SizedBox(
-          height: MediaQuery.sizeOf(ctx).height * 0.9,
-          child: sheetContent,
-        ),
-      );
-      return;
-    }
     // 有声书面板曾是 680px 居中对话框（FushiDialogFrame）；用户 2026-09-13 拍板
-    // 「和设置一样」——与导航 / 设置共用同一条右侧侧栏路由。
+    // 「和设置一样」——与导航 / 设置共用同一条右侧侧栏路由。手机曾保留全高底部
+    // 抽屉，2026-09-27 起同样走侧栏（侧栏全高有界，面板的钉住 / 整块滚判据照常）。
     await _presentSideSheet(
       // ッツ 形态：导航 / 章节贴左，外观设置 / 有声书贴右。
       side: presentation == ReaderQuickSettingsPresentation.sideSheetNavigation

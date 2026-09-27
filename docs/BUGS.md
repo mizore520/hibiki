@@ -29,11 +29,56 @@
 
 <!-- BUGS-INDEX:BEGIN（自动生成，勿手改；改完跑 `dart run tool/bug.dart reindex`）-->
 
-> 共 2516 条。点号进各自文件。
+> 共 2561 条。点号进各自文件。
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
+| [BUG-2743](bugs/BUG-2743-ext-hover-resume-stuck-paused.md) | ✅ | ✅ | 扩展悬停查词离开后仍暂停、暂停续播反应不灵敏 |
+| [BUG-2742](bugs/BUG-2742-anki-dict-image-single-dimension.md) | ✅ | ✅ | 制卡词典图片只声明一维时尺寸与 Yomitan 不一致（小、居中、竖排） |
+| [BUG-2741](bugs/BUG-2741-stats-sheet-ios-too-tall.md) | ✅ | ✅ | 统计时段明细/会话 sheet 在 iOS 上过高（顶进状态栏） |
+| [BUG-2738](bugs/BUG-2738-audiobook-chapter-ticks.md) | ✅ | ✅ | 阅读器有声书面板进度条章节刻度与进度不对齐 |
+| [BUG-2737](bugs/BUG-2737-video-item-rescrape.md) | ✅ | ✅ | 视频卡长按菜单没有「重新刮削」入口（刮错的独立电影无法重刮） |
+| [BUG-2736](bugs/BUG-2736-mihon-http11-waf-403.md) | ✅ | ✅ | Miruro 视频源详情/剧集/取流全 403：扩展宿主钉死 HTTP/1.1 被 Cloudflare WAF 拦 |
+| [BUG-2735](bugs/BUG-2735-galgame-remove-cascades-sessions.md) | ✅ | ✅ | 从库移除游戏经 FK cascade 删光所有 Profile 的游玩会话 |
+| [BUG-2734](bugs/BUG-2734-video-lookup-popup-entrance-wheel.md) | ✅ | ✅ | 视频查词框弹出动画跳变、滚轮手感与 galgame 查词框不一致 |
+| [BUG-2733](bugs/BUG-2733-gal-wgc-yellow-border.md) | ✅ | ✅ | galgame 全屏时游戏窗口四周常驻一圈黄线（WGC 捕获框） |
+| [BUG-2731](bugs/BUG-2731-video-swipe-seek-undone.md) | ✅ | ✅ | 移动端横滑跳转后被自适应画质重开流抹回原位 |
+| [BUG-2730](bugs/BUG-2730-bilibili-pcdn-referer.md) | ✅ | ✅ | B 站网页制卡 PCDN 节点 403：按 host 推 Referer 追不上域名轮换 |
+| [BUG-2729](bugs/BUG-2729-game-stream-weak-network.md) | ✅ | ✅ | 串流弱网：码率下限卡死拥塞控制、默认值被固化 |
+| [BUG-2728](bugs/BUG-2728-remote-video-subtitle-timing.md) | ✅ | ✅ | 远端视频缺波形对轴与重定时，导入字幕不上传服务端 |
+| [BUG-2727](bugs/BUG-2727-game-stream-low-resolution.md) | ✅ | ✅ | 串流码率卡在 2.5 Mbps、分辨率被压到 720p 以下 |
+| [BUG-2726](bugs/BUG-2726-game-stream-sgre-touch.md) | ✅ | ✅ | 串流触屏在 SGRE 上一律「输入未送达」 |
+| [BUG-2725](bugs/BUG-2725-game-stream-audio-chop.md) | ✅ | ✅ | 串流音频断续：回环音频喂送线程长期落后实时 |
+| [BUG-2724](bugs/BUG-2724-ios-furigana-gap.md) | ✅ | ✅ | iOS 振假名离本行远、贴近上一行/上一列 |
+| [BUG-2723](bugs/BUG-2723-gallery-header-overflow.md) | ✅ | ✅ | 插图册顶栏在手机竖屏挤爆：计数被压成 0 宽、英文等长文案整行溢出 |
+| [BUG-2722](bugs/BUG-2722-gallery-toc-sections.md) | ✅ | ✅ | 插图册按 spine 章分节：同文件多话的插图归错话、连续插图页拆成多个同名节 |
+| [BUG-2720](bugs/BUG-2720-emby-secondary-subtitle.md) | ✅ | ✅ | Emby 兼容层上副字幕选内嵌轨必失败 |
+| [BUG-2719](bugs/BUG-2719-home-body-layout-switch-remount.md) | ✅ | ✅ | 关掉视频后视频库回到「首页」分区而不是上次的分区 |
+| [BUG-2717](bugs/BUG-2717-interconnect-host-sync-lock.md) | ✅ | ✅ | 互联 host 的对端聚合/合集写排在本机整轮同步后面，手机每轮 15s 超时 |
+| [BUG-2716](bugs/BUG-2716-kirikiri-sticky-tail-after-midloop-attach.md) | ✅ | ✅ | KiriKiri 循环音效中途附着时 P P T 粘尾不剥，整段游戏内查词被拒 |
+| [BUG-2715](bugs/BUG-2715-selection-longpress-null-crash.md) | ✅ | ✅ | 日志面板内容变化或视口变高后长按空白处选区端点空断言崩溃 |
+| [BUG-2714](bugs/BUG-2714-interconnect-video-download-resume.md) | ✅ | ✅ | 互联视频下载：切屏被杀后任务消失、下载中心看不到进度、续传不校验/同名串 part/公网下到 m3u8 |
+| [BUG-2713](bugs/BUG-2713-subtitle-season-series.md) | ✅ | ✅ | 在线字幕搜索无视季号按第一季检索，第四季字幕查不到 |
+| [BUG-2712](bugs/BUG-2712-siglus-choice-lookup.md) | ✅ | ✅ | Siglus（CLANNAD）选项画面查词查到上一句、没有查词框、全屏看不到弹窗 |
+| [BUG-2711](bugs/BUG-2711-vn-split-screen-margin-asymmetry.md) | ✅ | ✅ | VN 模式拆屏后左右间距不一致 |
+| [BUG-2710](bugs/BUG-2710-kirikiri-lookup-click-swallowed-after-dismiss.md) | ✅ | ✅ | KiriKiri 游戏内查词关卡后，下一次点字被当作关闭再吞一次 |
+| [BUG-2709](bugs/BUG-2709-dict-online-update-parity.md) | ✅ | ✅ | 词典在线更新：钉版本号的下载地址更新不到新版，旧版导入的词典被判不可更新 |
+| [BUG-2708](bugs/BUG-2708-kirikiri-kagex-textrender-unbound-lookup.md) | ✅ | ✅ | KiriKiri KAGEX 有 TextRender 插件但未绑消息层，游戏内查词采不到字形且点击推进剧情（千恋＊万花） |
+| [BUG-2707](bugs/BUG-2707-dict-update-stale-download-url.md) | ✅ | ✅ | 词典在线更新用本地旧 downloadUrl 下载，更新永不生效 |
+| [BUG-2706](bugs/BUG-2706-gal-thread-memory-restores-dead-thread.md) | ✅ | ✅ | 同一 Fushi 进程二次启动同款游戏时文本线程记忆恢复到上一次的死线程 |
+| [BUG-2705](bugs/BUG-2705-kirikiri-embed-sticky-se-tail.md) | ✅ | ✅ | KiriKiri EmbedKrkrZ 台词被双写并拼上当前循环音效标签（千恋＊万花） |
+| [BUG-2704](bugs/BUG-2704-kirikiri-disc-chs-notice-before-entry.md) | ✅ | ✅ | 千恋＊万花光盘版汉化 exe 在 TLS 回调里弹声明框，Fushi 早注入就绪超时 |
+| [BUG-2703](bugs/BUG-2703-kirikiri-japanese-named-se-as-voice.md) | 🚧 | 🚧 | KiriKiri 日文命名的 SE 被当作语音候选配对（喫茶ステラ） |
+| [BUG-2702](bugs/BUG-2702-kirikiri-encrypted-member-voice-duplicate.md) | ✅ | ✅ | KiriKiri 插件层加密成员的密文被当语音落盘并与真语音拼接（喫茶ステラ） |
+| [BUG-2701](bugs/BUG-2701-kirikiri-tls-callback-early-inject-hang.md) | ✅ | ✅ | 带 TLS 回调的加壳 exe 被早注入卡死（喫茶ステラ 汉化版 Enigma） |
+| [BUG-2700](bugs/BUG-2700-anki-compact-glossaries.md) | ✅ | ✅ | 制卡「紧凑释义」开关不生效 |
+| [BUG-2699](bugs/BUG-2699-system-proxy-stale-cache.md) | ✅ | ✅ | 自动代理模式只在启动时读取系统代理 |
+| [BUG-2698](bugs/BUG-2698-extension-open-in-anki.md) | ✅ | ✅ | 浏览器扩展「在 Anki 中打开」未接通 |
+| [BUG-2697](bugs/BUG-2697-youtube-bridge-trusted-types.md) | ✅ | ✅ | YouTube MAIN world 解析字幕触发 TrustedHTML 报错 |
+| [BUG-2696](bugs/BUG-2696-manga-local-ocr-current-page-last.md) | ✅ | ✅ | 本地 OCR 整卷任务不从当前页开始，读到第 30 页要等前 29 页识别完 |
+| [BUG-2695](bugs/BUG-2695-manga-reader-dead-chapter-switches.md) | ✅ | ✅ | 漫画阅读器设置里跳过已读/已过滤/重复章节与章节过渡四个开关不生效 |
 | [BUG-2694](bugs/BUG-2694-softpal-totsulover-text-voice.md) | ✅ | ✅ | ディメンション凸ラバース!! 的线程夹人名且缺少语音资源 |
+| [BUG-2694](bugs/BUG-2694-ai-acquire-entry-hidden.md) | ✅ | ✅ | AI 下视频入口在未指派 AI 时整颗隐藏，Windows/Mac 都找不到 |
 | [BUG-2693](bugs/BUG-2693-lnreader-cover-load.md) | ✅ | ✅ | LNReader 源作品列表封面大量加载失败（相对地址被丢、无 UA/Referer/CF cookie、无磁盘缓存） |
 | [BUG-2692](bugs/BUG-2692-emby-mining-ffmpeg-direct-tls.md) | ✅ | ✅ | Emby/Jellyfin 能播放但制卡三条抽取全报 I/O error |
 | [BUG-2691](bugs/BUG-2691-dovi-p5-inverted-colors.md) | ✅ | ✅ | Emby 杜比视界 Profile 5 片源画面紫绿反色 |
@@ -162,8 +207,8 @@
 | [BUG-2548](bugs/BUG-2548-collection-detail-drops-remote-members.md) | ✅ | ✅ | 合集详情页丢掉全部远端成员：行头 N 项、点进去只剩本地几本 |
 | [BUG-2547](bugs/BUG-2547-shelf-remote-sort-ignored.md) | ✅ | ✅ | 书架排序忽略远端占位卡：host 下发的时刻不用、恒沉底 |
 | [BUG-2547](bugs/BUG-2547-gal-attached-popup-coordinate-space.md) | ✅ | ✅ | 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡 |
-| [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
 | [BUG-2546](bugs/BUG-2546-dict-script-window-scope.md) | ✅ | ✅ | 词典自带脚本第二次查词后失效：折叠字段点不开 |
+| [BUG-2546](bugs/BUG-2546-gal-attached-resize-grid-rounding.md) | ✅ | ✅ | 缩小游戏窗口后字格取整误报越界使高亮与查词消失 |
 | [BUG-2545](bugs/BUG-2545-toc-current-chapter-unmarked.md) | ✅ | ✅ | 阅读器导航「章节列表」不标当前章节 |
 | [BUG-2545](bugs/BUG-2545-gal-attach-overlapping-stop.md) | ✅ | ✅ | 停止监听与重新附着重叠时旧清理覆盖新会话 |
 | [BUG-2544](bugs/BUG-2544-video-background-pause-no-resume.md) | ✅ | ✅ | 视频切到后台被暂停后回前台不自动续播 |
@@ -180,8 +225,8 @@
 | [BUG-2537](bugs/BUG-2537-ass-sign-hover-controls.md) | ✅ | ✅ | ASS 定位字幕落到静止鼠标下即唤出控制条、且随控制条上抬 |
 | [BUG-2536](bugs/BUG-2536-audiobook-chapter-start-image-pause.md) | ✅ | ✅ | 有声书章首插图既不图片等待也不揭防剧透遮罩 |
 | [BUG-2535](bugs/BUG-2535-audiobook-unmatched-cue-chapter-end.md) | ✅ | ✅ | 有声书章尾：最后一句匹配播完、下一句未匹配时不进入下一章 |
-| [BUG-2534](bugs/BUG-2534-background-calibration-sample-text-not-staged.md) | ✅ | ✅ | 后台校准采样未同步最新台词 |
 | [BUG-2534](bugs/BUG-2534-ios-gallery-topbar-under-status-bar.md) | ✅ | ✅ | iOS 插图册顶栏被状态栏 / 灵动岛压住，过滤 / 定位 / 关闭点不到 |
+| [BUG-2534](bugs/BUG-2534-background-calibration-sample-text-not-staged.md) | ✅ | ✅ | 后台校准采样未同步最新台词 |
 | [BUG-2533](bugs/BUG-2533-reader-status-clock-not-clickable.md) | ✅ | ✅ | 阅读器状态行/播放条的计时图标点不动，改成真正的 MD3 停续键 |
 | [BUG-2533](bugs/BUG-2533-gal-calibration-image-grid.md) | ✅ | ✅ | 人工中心拟合无法求字号、换行及续行缩进 |
 | [BUG-2532](bugs/BUG-2532-ios-ankimobile-mined-detection.md) | ✅ | ✅ | iOS AnkiMobile 不显示已制卡：加卡回跳的 x-success 被丢弃，isDuplicate 恒 false |
@@ -426,8 +471,8 @@
 | [BUG-2259](bugs/BUG-2259-macos-quit-no-exit-flush.md) | ✅ | ✅ | macOS Cmd+Q 退出不跑退出 flush（阅读位置/有声书进度/阅读统计丢最后一段） |
 | [BUG-2258](bugs/BUG-2258-macos-video-retina-blur.md) | ✅ | ✅ | mac 视频在 Retina 上发虚：media_kit 按视频原生分辨率建纹理，放大交给 Flutter 双线性 |
 | [BUG-2258](bugs/BUG-2258-alt-wheel-entry-scroll.md) | ✅ | ✅ | 查词窗口 Alt+滚轮词条定位与顶部回退 |
-| [BUG-2257](bugs/BUG-2257-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
 | [BUG-2257](bugs/BUG-2257-manga-discovery-mal.md) | ✅ | ✅ | 漫画发现 AniList API 停用返回403，迁移MAL |
+| [BUG-2257](bugs/BUG-2257-gal-workbench-selection-stall.md) | ✅ | ✅ | Gal 捕获工作台句子选择被旧音轨请求阻塞 |
 | [BUG-2256](bugs/BUG-2256-subtitle-pause-reveal-ignores-gate.md) | ✅ | ✅ | 关掉「悬停或点击显形」后，暂停仍会揭开被隐藏的字幕 |
 | [BUG-2255](bugs/BUG-2255-reader-sentence-seek-dom-identity.md) | ✅ | ✅ | 正文从本句播放误取上一条字幕 |
 | [BUG-2254](bugs/BUG-2254-jellyfin-fnos-x-emby-auth.md) | ✅ | ✅ | 飞牛影视 Jellyfin 兼容层要求 X-Emby-Authorization 认证头 |

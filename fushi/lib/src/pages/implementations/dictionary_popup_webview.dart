@@ -69,7 +69,18 @@ class MinePopupResult {
     this.ankiConnect = false,
     this.noteId,
     this.duplicate = false,
-  });
+  }) : queued = false;
+
+  /// 制卡请求已接下、在后台进行（在线视频：抽媒体要时间，弹窗不陪着等）。
+  ///
+  /// 弹窗把按钮画成「已加入」✓（popup.js `result.queued` 分支，网页播放器队列早就在用），
+  /// 不回查 Anki、也不把它当成功记「最新可改」——那张卡此刻还不存在。真实结局由宿主
+  /// 在后台完成时用 OSD 报告。
+  const MinePopupResult.queued()
+      : ankiConnect = false,
+        noteId = null,
+        duplicate = false,
+        queued = true;
 
   /// BUG-1915：一次**未成功**的制卡结果。
   ///
@@ -91,7 +102,8 @@ class MinePopupResult {
   MinePopupResult.failed(MineOutcome outcome)
       : ankiConnect = false,
         noteId = null,
-        duplicate = outcome.result == MineResult.duplicate;
+        duplicate = outcome.result == MineResult.duplicate,
+        queued = false;
 
   /// 旧 `isAnkiConnect` 语义：true 表示制卡后可同步刷新 ✓ 状态。
   final bool ankiConnect;
@@ -111,6 +123,9 @@ class MinePopupResult {
   /// 权威答复。仅重复时为真。
   final bool duplicate;
 
+  /// 见 [MinePopupResult.queued]。
+  final bool queued;
+
   /// 序列化成 JS 可读的 Map（经 inappwebview callHandler 回传）。
   Map<String, Object?> toJson() => <String, Object?>{
         'ankiConnect': ankiConnect,
@@ -118,6 +133,7 @@ class MinePopupResult {
         // 只在为真时带上：popup.js 的 `reply.duplicate === true` 对缺字段与 false
         // 同解，省一个恒 false 的字段；守卫 popup_mine_failure_hint_test 逐字钉这行。
         if (duplicate) 'duplicate': true,
+        if (queued) 'queued': true,
       };
 }
 
@@ -192,6 +208,7 @@ class DictionaryPopupWebView extends ConsumerStatefulWidget {
     required this.result,
     super.key,
     this.hasChildPopup = false,
+    this.visibleViewportHeight,
     this.transparentDocumentBackground = false,
     this.onTextSelected,
     this.onLinkClick,
@@ -234,6 +251,13 @@ class DictionaryPopupWebView extends ConsumerStatefulWidget {
   /// popup.js 在点卡片本体留白时据此决定是否发 `tapOutside`（有子层才关后代，叶子层
   /// 不发，保持 TODO-859）。宿主按 `index < entries.length - 1` 派生传入。
   final bool hasChildPopup;
+
+  /// BUG-2734：宿主让本 WebView 按外壳最大高度布局、外壳只裁剪时，用户实际看得见的
+  /// 视口高度（逻辑像素 = WebView 视觉 px）。注入 popup.js 的
+  /// `__fushiSetVisibleViewportHeight`：tooltip / 按钮提示 / 图片灯箱据此定位，并开启
+  /// 内容尺寸复报（`popupContentResized` → [onContentMetrics]）。null = 不裁剪，JS 用
+  /// `innerHeight`。
+  final double? visibleViewportHeight;
 
   /// TODO-1065：本弹窗宿主是「app 外 / 悬浮字幕」独立查词窗（popup_main 宿主）时置 true。
   /// 该路径的圆角卡由 Flutter [FushiPopupSurface] 画，弹窗 WebView 跑在透明浮动窗里；
@@ -525,6 +549,7 @@ class DictionaryPopupWebViewState extends ConsumerState<DictionaryPopupWebView>
       _pushResults();
     }
     _setHasChildPopupJs(widget.hasChildPopup);
+    _setVisibleViewportHeightJs(widget.visibleViewportHeight);
   }
 
   /// renderer 死亡处置（救命动作 = 下面 [InAppWebView.onRenderProcessGone] 传了
@@ -1307,6 +1332,9 @@ JSON.stringify((function(){
     if (oldWidget.hasChildPopup != widget.hasChildPopup) {
       _setHasChildPopupJs(widget.hasChildPopup);
     }
+    if (oldWidget.visibleViewportHeight != widget.visibleViewportHeight) {
+      _setVisibleViewportHeightJs(widget.visibleViewportHeight);
+    }
     // 键表随用户改键而变，故比较 spec 本身而不是「回调有没有」——只比回调会让改键
     // 在弹窗持焦时不生效（BUG-1071 复诉的一半）。
     if ((oldWidget.onHostInputToken == null) !=
@@ -1323,6 +1351,18 @@ JSON.stringify((function(){
     if (_controller == null || !_ready) return;
     _controller!
         .evaluateJavascript(source: 'window.__hasChildPopup = $hasChild;');
+  }
+
+  /// BUG-2734：把 [visibleViewportHeight] 交给 popup.js（门控同 [_setHasChildPopupJs]，
+  /// 未就绪时由 onLoadStop 旁的种子调用补发当前值）。
+  void _setVisibleViewportHeightJs(double? height) {
+    if (_controller == null || !_ready) return;
+    final String value =
+        height != null && height.isFinite && height > 0 ? '$height' : 'null';
+    _controller!.evaluateJavascript(
+      source: 'window.__fushiSetVisibleViewportHeight && '
+          'window.__fushiSetVisibleViewportHeight($value);',
+    );
   }
 
   @override
@@ -2149,6 +2189,41 @@ JSON.stringify((function(){
               ErrorLogService.instance,
               () {
                 widget.onTopPullReleased?.call();
+                return null;
+              },
+            );
+          },
+        );
+
+        // BUG-2734：裁剪模式下内容在两次渲染之间变高的复报（见 popup.js
+        // __fushiObserveContentResize）。只更新外壳高度，不碰渲染 token / reveal。
+        controller.addJavaScriptHandler(
+          handlerName: 'popupContentResized',
+          callback: (args) {
+            return _guardJsBridge<Object?>(
+              'DictPopupWebview.popupContentResized',
+              null,
+              ErrorLogService.instance,
+              () {
+                final Object? rawContent = args.isNotEmpty ? args[0] : null;
+                final double? contentHeight = rawContent is num
+                    ? rawContent.toDouble()
+                    : double.tryParse(rawContent?.toString() ?? '');
+                final Object? rawViewport = args.length > 1 ? args[1] : null;
+                final RenderObject? renderObject = context.findRenderObject();
+                final double? viewportHeight = resolvePopupViewportHeight(
+                  reportedHeight: rawViewport is num
+                      ? rawViewport.toDouble()
+                      : double.tryParse(rawViewport?.toString() ?? ''),
+                  layoutHeight: renderObject is RenderBox &&
+                          renderObject.attached &&
+                          renderObject.hasSize
+                      ? renderObject.size.height
+                      : null,
+                );
+                if (contentHeight != null && viewportHeight != null) {
+                  widget.onContentMetrics?.call(contentHeight, viewportHeight);
+                }
                 return null;
               },
             );

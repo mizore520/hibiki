@@ -120,6 +120,7 @@ import 'package:fushi/src/media/torrent/anime_download_importer.dart';
 import 'package:fushi_engine/media/discovery/discovery_download_queue.dart';
 import 'package:fushi_engine/media/discovery/discovery_models.dart';
 import 'package:fushi/src/media/discovery/import/discovery_import_executor.dart';
+import 'package:fushi/src/media/downloads/download_keep_alive_bindings.dart';
 import 'package:fushi/src/media/discovery/import/discovery_import_production.dart';
 import 'package:fushi/src/media/discovery/media_discovery_service.dart';
 import 'package:fushi/src/media/discovery/media_discovery_source.dart';
@@ -183,6 +184,7 @@ import 'package:fushi/src/sync/sync_backend.dart';
 import 'package:fushi/src/sync/sync_conflict_prompter.dart';
 import 'package:fushi/src/sync/sync_orchestrator.dart';
 import 'package:fushi/src/sync/sync_repository.dart';
+import 'package:fushi/src/sync/sync_state_apply_lock.dart';
 import 'package:fushi/src/models/theme_notifier.dart' as theme_notifier;
 import 'package:fushi/src/models/theme_notifier.dart'
     show ThemeNotifier, CustomThemeEntry, ThemePreset;
@@ -217,6 +219,7 @@ import 'package:fushi/src/mining/bilibili_clip_miner.dart';
 import 'package:fushi/src/mining/galgame_library.dart';
 import 'package:fushi/src/mining/galgame_repository.dart';
 import 'package:fushi/src/mining/immersion_mining_engine.dart';
+import 'package:fushi/src/mining/video_online_mining_mode.dart';
 import 'package:fushi_engine/mining/immersion_mining_request.dart';
 import 'package:fushi/src/mining/immersion_capture_channel.dart';
 import 'package:fushi/src/mining/youtube_clip_miner.dart';
@@ -652,6 +655,10 @@ class AppModel with ChangeNotifier {
         dictRepo.clearDictionaryResultsCache();
       },
       runExclusive: runExclusiveWithSync,
+      // BUG-2717：对端推来的聚合快照 / 合集清单只和「本地落库步骤」互斥，不排在
+      // 本机整轮自动同步后面（整轮可能是几分钟的云备份，对端 15s 就超时）。本机
+      // 出站同步的聚合 / 合集落库持的是同一把窄锁，见 sync_state_apply_lock.dart。
+      runSyncStateExclusive: runExclusiveWithSyncStateApply,
       // BUG-714: 必须接线 importBookFromFile，否则 host 收到对端 client 的
       // PUT /api/library/books/<title> 时 importBook 抛 UnsupportedError，被
       // 服务端 catch 成 HTTP 500，互联/live 书籍推送（client→host）整体失效。
@@ -1927,6 +1934,7 @@ class AppModel with ChangeNotifier {
   void _migrateDictionaryTypes() {
     if (_dictTypesMigrated) return;
     _dictTypesMigrated = true;
+    unawaited(_backfillDictionarySourceMetadata());
     final dicts = dictRepo.dictionaries;
     for (final d in dicts) {
       // 探过就跳过——包括「探过、结论是什么都不用改」。
@@ -2025,6 +2033,54 @@ class AppModel with ChangeNotifier {
       if (detected != null) {
         debugPrint('[Fushi] migrated dict type: ${d.name} → ${detected.name}');
       }
+    }
+  }
+
+  /// 启动期一次性：给在线更新功能之前导入的词典从磁盘 index.json 补来源字段
+  /// （revision / isUpdatable / indexUrl / downloadUrl），见 [kDictSourceProbeKey]。
+  /// 没有这一步，这些词典的「更新」按钮只能让用户自己去下新包再选文件，
+  /// 「更新全部词典」也会漏掉它们。
+  ///
+  /// 异步读盘（不在 UI isolate 上同步 IO，OneDrive「仅云端」目录会同步卡死），
+  /// 全部读完后一次批量落库（只重载一次引擎）。落库前按名字取**当前**缓存里的
+  /// 那本再合并，不拿开头的快照覆盖读盘期间别处写下的变更（比如类型自愈标记）。
+  Future<void> _backfillDictionarySourceMetadata() async {
+    final Map<String, Map<String, String>> fromIndex =
+        <String, Map<String, String>>{};
+    for (final Dictionary d in dictRepo.dictionaries) {
+      if (!needsSourceMetadataBackfill(d.metadata)) continue;
+      final File indexFile = File(
+        path.join(dictionaryResourceDirectory.path, d.name, 'index.json'),
+      );
+      try {
+        // 文件不在不打标记：可能只是还没落盘，下次启动再读。
+        if (!await indexFile.exists()) continue;
+        fromIndex[d.name] = parseSourceMetadataFromIndexJson(
+          await indexFile.readAsString(),
+        );
+      } catch (e, stack) {
+        ErrorLogService.instance.log('AppModel.dictSourceBackfill', e, stack);
+      }
+    }
+    if (fromIndex.isEmpty) return;
+    final List<Dictionary> updated = <Dictionary>[
+      for (final Dictionary d in dictRepo.dictionaries)
+        if (fromIndex.containsKey(d.name) &&
+            needsSourceMetadataBackfill(d.metadata))
+          d.copyWith(
+            metadata: mergeBackfilledSourceMetadata(
+              d.metadata,
+              fromIndex[d.name]!,
+            ),
+          ),
+    ];
+    if (updated.isEmpty) return;
+    // 调用方是 unawaited：落库失败不能漏成未捕获的 zone 错误。不打标记即下次
+    // 启动再试。
+    try {
+      await dictRepo.persistDictionaries(updated);
+    } catch (e, stack) {
+      ErrorLogService.instance.log('AppModel.dictSourceBackfill', e, stack);
     }
   }
 
@@ -3322,7 +3378,7 @@ class AppModel with ChangeNotifier {
       //
       // 门只加在调用点：[startAnimeDownloadService] 函数体内部顺序敏感（懒建 session、
       // resume 剪枝哨兵），守卫测试按源码顺序扫它，绝不能把判断插进函数中段。
-      if (modules.isEnabled(ModuleId.downloads)) {
+      if (modules.isEnabled(ModuleId.browse)) {
         unawaited(
           startAnimeDownloadService().catchError((Object e, StackTrace s) {
             ErrorLogService.instance.log(
@@ -3628,8 +3684,7 @@ class AppModel with ChangeNotifier {
   static ColorScheme buildPresetColorScheme(
     ThemePreset preset,
     Brightness brightness,
-  ) =>
-      ThemeNotifier.buildPresetColorScheme(preset, brightness);
+  ) => ThemeNotifier.buildPresetColorScheme(preset, brightness);
 
   static String themeLabel(String key) => ThemeNotifier.themeLabel(key);
 
@@ -4311,8 +4366,7 @@ class AppModel with ChangeNotifier {
 
   /// 默认内容语言（`''` = 未设置）。见 [PreferencesRepository.defaultContentLanguage]；
   /// 与 [jimakuDefaultLanguage] 同理走 `_prefsRepo?`，偏好未就绪时不表态。
-  String get defaultContentLanguage =>
-      _prefsRepo?.defaultContentLanguage ?? '';
+  String get defaultContentLanguage => _prefsRepo?.defaultContentLanguage ?? '';
 
   Future<void> setJimakuDefaultLanguage(String langCode) async {
     await prefsRepo.setJimakuDefaultLanguage(langCode);
@@ -4326,6 +4380,16 @@ class AppModel with ChangeNotifier {
 
   Future<void> setVideoSubtitleBackfillAfterScrape(bool enabled) async {
     await prefsRepo.setVideoSubtitleBackfillAfterScrape(enabled);
+    notifyListeners();
+  }
+
+  /// 远端视频导入 / 重定时的字幕自动上传 host 并设为默认（默认开）。见
+  /// [PreferencesRepository.videoSubtitleAutoUploadToHost]。
+  bool get videoSubtitleAutoUploadToHost =>
+      _prefsRepo?.videoSubtitleAutoUploadToHost ?? true;
+
+  Future<void> setVideoSubtitleAutoUploadToHost(bool enabled) async {
+    await prefsRepo.setVideoSubtitleAutoUploadToHost(enabled);
     notifyListeners();
   }
 
@@ -4715,6 +4779,9 @@ class AppModel with ChangeNotifier {
   /// schema v78 的通用视频下载闭环。旧 JSON service 仅继续兼容本次启动后由旧
   /// 对话框新写入的计划；启动前已有 JSON 会先迁入这里并归档。
   VideoDownloadPipelineService? _videoDownloadPipelineService;
+
+  /// BUG-2714：内置引擎有活动任务时挂下载保活（随管线 runtime 起停）。
+  VideoDownloadJobsKeepAliveBinding? _videoDownloadKeepAlive;
 
   /// 下载管线 runtime「应当活着」的语义位（BUG-1738）。
   ///
@@ -5316,6 +5383,8 @@ class AppModel with ChangeNotifier {
       // 按作品的字幕语言：读字幕工作台 / AI 下载写的每系列记忆，键与导入落库的
       // 合集名同源；没记过就走上面的全局默认语言链。
       subtitleLanguageResolver: _resolveVideoDownloadSubtitleLanguage,
+      // 现读偏好：设置里一改，还没拿到文件表的任务就按新值跳过特典。
+      skipDownloadExtras: () => prefsRepo.videoDownloadSkipExtras,
       backendResolver: _resolveVideoDownloadBackend,
       scrapeCoordinator: scrape,
       onBackendTaskAdded: _checkpointEmbeddedVideoDownload,
@@ -5329,12 +5398,15 @@ class AppModel with ChangeNotifier {
       updateFeed: updateFeedService,
     )..start();
     _videoDownloadPipelineService = pipeline;
+    _videoDownloadKeepAlive = VideoDownloadJobsKeepAliveBinding(
+      database.watchVideoDownloadJobs(),
+    );
     _videoDownloadSubscriptionService = VideoDownloadSubscriptionService(
       database: database,
       resourceRegistry: resources,
       enqueue: pipeline.enqueue,
     )..start();
-    // DownloadsPage may have rendered while this fire-and-forget runtime was
+    // BrowsePage may have rendered while this fire-and-forget runtime was
     // still starting. Publish the new service identity so its cached resource
     // dependencies are rebuilt instead of remaining permanently unavailable.
     notifyListeners();
@@ -5471,6 +5543,10 @@ class AppModel with ChangeNotifier {
   Future<void> _disposeVideoDownloadPipelineRuntime({
     Duration? pipelineDrainTimeout,
   }) async {
+    final VideoDownloadJobsKeepAliveBinding? keepAlive =
+        _videoDownloadKeepAlive;
+    _videoDownloadKeepAlive = null;
+    if (keepAlive != null) await keepAlive.dispose();
     final VideoDownloadSubscriptionService? subscriptions =
         _videoDownloadSubscriptionService;
     _videoDownloadSubscriptionService = null;
@@ -5729,21 +5805,29 @@ class AppModel with ChangeNotifier {
 
   /// 发现页直链下载队列（懒建，app 生命周期常驻——关闭发现页不中断下载，
   /// 语义同 [mangaDownloadService]）。
-  DiscoveryDownloadQueue get discoveryDownloadQueue =>
-      _discoveryDownloadQueue ??= DiscoveryDownloadQueue(
-        resolvePayload: (DiscoveryResourceItem item) {
-          final MediaDiscoverySource? source = mediaDiscoveryService.sourceById(
-            item.sourceId,
-          );
-          if (source == null) {
-            throw StateError('unknown discovery source: ${item.sourceId}');
-          }
-          return source.resolvePayload(item);
-        },
-        importer: (DiscoveryDownloadTask task, File file) =>
-            discoveryImportExecutor.importDownload(task, file),
-      );
+  DiscoveryDownloadQueue get discoveryDownloadQueue {
+    final DiscoveryDownloadQueue? existing = _discoveryDownloadQueue;
+    if (existing != null) return existing;
+    final DiscoveryDownloadQueue queue = DiscoveryDownloadQueue(
+      resolvePayload: (DiscoveryResourceItem item) {
+        final MediaDiscoverySource? source = mediaDiscoveryService.sourceById(
+          item.sourceId,
+        );
+        if (source == null) {
+          throw StateError('unknown discovery source: ${item.sourceId}');
+        }
+        return source.resolvePayload(item);
+      },
+      importer: (DiscoveryDownloadTask task, File file) =>
+          discoveryImportExecutor.importDownload(task, file),
+    );
+    // BUG-2714：队列有未结束任务时挂下载保活。
+    _discoveryDownloadKeepAlive = DiscoveryDownloadKeepAliveBinding(queue);
+    return _discoveryDownloadQueue = queue;
+  }
+
   DiscoveryDownloadQueue? _discoveryDownloadQueue;
+  DiscoveryDownloadKeepAliveBinding? _discoveryDownloadKeepAlive;
 
   /// 发现页下载的落盘目录（与 torrent 同根：用户配置的下载根 → 默认根
   /// [downloadDefaultSaveRoot]，再按媒体域分子目录）。
@@ -6103,7 +6187,7 @@ class AppModel with ChangeNotifier {
               completedCount++;
               continue;
             }
-            await _autoRedownloadAndReimport(dictionary, job);
+            await _autoRedownloadAndReimport(dictionary, remote, job);
             completedCount++;
           } catch (e, stack) {
             if (DictionaryDownloadController.isCancellation(e)) break;
@@ -6136,8 +6220,12 @@ class AppModel with ChangeNotifier {
   /// 静默下载 + force 重导单本词典（复用手动链路语义：保留 order/hidden/collapsed，
   /// 回填 isUpdatable/URL 来源）。进度写进 [job] 的 notifier，让「后台正在更新什么」
   /// 在词典页状态行 / 进度框里可见且可取消（下载阶段）。
+  ///
+  /// BUG-2707：下载地址与回写来源都取自 [remote]（远端 index 声明的新版地址），
+  /// 本地记录的旧 downloadUrl 可能钉在旧版本目录，拿它下载等于重导旧包。
   Future<void> _autoRedownloadAndReimport(
     Dictionary dictionary,
+    DictionaryRemoteIndexResult remote,
     DictionaryDownloadJob job,
   ) async {
     final Directory tempDir = Directory(
@@ -6148,7 +6236,7 @@ class AppModel with ChangeNotifier {
       job.progress.value = 0;
       job.message.value = t.dict_update_updating(name: dictionary.name);
       final File zipFile = await DictionaryDownloader.download(
-        url: dictionary.downloadUrl,
+        url: remote.resolveDownloadUrl(dictionary.downloadUrl),
         tempDir: tempDir,
         progressNotifier: job.progress,
         cancelToken: job.cancelToken,
@@ -6163,11 +6251,10 @@ class AppModel with ChangeNotifier {
         // BUG-1595：自动更新替换的就是这本——远端包哪怕改了标题（title 携带版本
         // 号等）也不允许按 title 误判成新增、旧本残留。
         replaceTarget: dictionary,
-        sourceOverride: <String, String>{
-          'isUpdatable': 'true',
-          'downloadUrl': dictionary.downloadUrl,
-          'indexUrl': dictionary.indexUrl,
-        },
+        sourceOverride: remote.updatedSourceMetadata(
+          localDownloadUrl: dictionary.downloadUrl,
+          localIndexUrl: dictionary.indexUrl,
+        ),
       );
     } finally {
       if (tempDir.existsSync()) tempDir.deleteSync(recursive: true);
@@ -7440,6 +7527,11 @@ class AppModel with ChangeNotifier {
   Future<void> setTorrentUploadIntroShown() =>
       prefsRepo.setTorrentUploadIntroShown();
 
+  /// 「下载」改名「浏览」的一次性搬迁提示是否已处理（见 `browse_moved_notice.dart`）。
+  bool get browseMovedNoticeHandled => prefsRepo.browseMovedNoticeHandled;
+  Future<void> setBrowseMovedNoticeHandled() =>
+      prefsRepo.setBrowseMovedNoticeHandled();
+
   int get maximumTerms => prefsRepo.maximumTerms;
   void setMaximumTerms(int value) => prefsRepo.setMaximumTerms(value);
 
@@ -7492,6 +7584,8 @@ class AppModel with ChangeNotifier {
     _videoSpecsService?.dispose();
     _videoSpecsService = null;
     _videoSpecsServiceDb = null;
+    _discoveryDownloadKeepAlive?.dispose();
+    _discoveryDownloadKeepAlive = null;
     _discoveryDownloadQueue?.dispose();
     _discoveryDownloadQueue = null;
     _mediaDiscoveryService?.close();
@@ -7572,6 +7666,8 @@ class AppModel with ChangeNotifier {
     _videoSpecsService?.dispose();
     _videoSpecsService = null;
     _videoSpecsServiceDb = null;
+    _discoveryDownloadKeepAlive?.dispose();
+    _discoveryDownloadKeepAlive = null;
     _discoveryDownloadQueue?.dispose();
     _discoveryDownloadQueue = null;
     _mediaDiscoveryService?.close();
@@ -7671,6 +7767,12 @@ class AppModel with ChangeNotifier {
       prefsRepo.videoMiningImageMode;
   void setVideoMiningImageMode(VideoMiningImageMode mode) =>
       prefsRepo.setVideoMiningImageMode(mode);
+
+  // 在线视频制卡弹窗等不等（后台 / 看完再制卡 / 等待完成，透传 prefsRepo）。默认后台。
+  VideoOnlineMiningMode get videoOnlineMiningMode =>
+      prefsRepo.videoOnlineMiningMode;
+  Future<void> setVideoOnlineMiningMode(VideoOnlineMiningMode mode) =>
+      prefsRepo.setVideoOnlineMiningMode(mode);
 
   VideoMiningImageMode get galMiningImageMode => prefsRepo.galMiningImageMode;
   void setGalMiningImageMode(VideoMiningImageMode mode) =>
@@ -9315,6 +9417,23 @@ class _AppModelRemoteLookupService
   }
 
   @override
+  Future<AnkiOpenWordOutcome> openWordInAnki({
+    required String expression,
+    required String reading,
+  }) async {
+    // Issue #1409：与 app 内 openInAnki 桥（_handleOpenInAnkiBridge）同一
+    // repo.openWordInAnki；抛出一律按 failed（弹窗提示打不开，绝不静默）。
+    try {
+      final BaseAnkiRepository repo = _appModel.platformServices
+          .createAnkiRepository();
+      return await repo.openWordInAnki(expression, reading);
+    } catch (e, st) {
+      ErrorLogService.instance.log('Anki.openWordInAnki.extension', e, st);
+      return AnkiOpenWordOutcome.failed;
+    }
+  }
+
+  @override
   Future<RemoteMineResult> mineImmersion(ImmersionMinePayload payload) async {
     // BUG-2190：同 [mineEntry]——外字字节先落缓存，三条沉浸分支最终都走 repo 渲染。
     await writeDictionaryMediaCache(payload.fields['dictionaryMedia'] ?? '');
@@ -9497,6 +9616,9 @@ class _AppModelRemoteLookupService
           // 只解析音轨：封面走 providedCoverBytes（扩展的解码帧）。
           mediaSource: null,
           audioSource: bi.audioSource,
+          // B 站 CDN 防盗链：流解析层声明的 Referer 随请求下发给 ffmpeg，不靠按 host 猜
+          // （PCDN 域名会轮换，白名单漏一个就 403 → required audio missing）。
+          mediaSourceHttpHeaders: bi.httpHeaders,
           clipStartMs: bi.clipStartMs,
           clipEndMs: bi.clipEndMs,
           sentence: bi.sentence,

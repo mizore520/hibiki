@@ -1431,7 +1431,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   }) => 'Import failed: ${name} (${reason})';
   String dict_task_failed_summary({required Object n}) =>
       '${n} dictionary(s) failed';
-  String get dict_update_check => 'Check for updates';
   String get dict_update_checking => 'Checking for updates…';
   String dict_update_done({required Object name}) => '${name} updated.';
   String dict_update_failed({required Object error}) =>
@@ -1446,7 +1445,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   }) =>
       'The selected file is "${incoming}", but you are updating "${existing}". Replace anyway?';
   String get dict_update_name_mismatch_title => 'Names do not match';
-  String get dict_update_none => 'All dictionaries are up to date.';
   String dict_update_summary({
     required Object updated,
     required Object current,
@@ -1608,7 +1606,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Does not apply within your local network; LAN transfers always run at full speed.';
   String get download_rate_limit_lan_included =>
       'Also applies within your local network.';
-  String get download_resources_tab => 'Resources';
   String get download_save_root_change => 'Change folder';
   String get download_save_root_create_failed =>
       'Cannot create that folder. Check the drive and permissions.';
@@ -2773,7 +2770,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get keep_screen_awake => 'Keep screen awake';
   String get library_empty_go_import => 'Go to import';
   String get library_search => 'Search library';
-  String get library_view_browse => 'Discover';
   String get library_view_discover => 'Discover';
   String get library_view_import => 'Import';
   String get library_view_media => 'Library';
@@ -2851,8 +2847,8 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get manga_discovery_sources_browse => 'Browse a source';
   String get manga_global_search_hint => 'Search every enabled source';
   String get manga_global_search_no_sources =>
-      'No enabled manga sources yet. Add one in the Import tab.';
-  String get manga_global_search_open_sources => 'Go to Import';
+      'No enabled manga sources yet. Add one in the Browse tab.';
+  String get manga_global_search_open_sources => 'Go to Browse';
   String get manga_global_search_prompt =>
       'Type a title to search every enabled manga source at once.';
   String get manga_global_search_title => 'Search all sources';
@@ -3346,7 +3342,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get module_disabled_hint =>
       'This feature module is turned off in Settings > Appearance > Feature modules.';
   String get module_downloads_hidden_hint =>
-      'The Downloads tab is hidden in Settings → Appearance → Feature modules; turn it back on to manage subscriptions.';
+      'The Browse tab is hidden in Settings → Appearance → Feature modules; turn it back on to manage subscriptions.';
   String get module_extension_label => 'Browser extension';
   String get move_down => 'Move down';
   String get move_up => 'Move up';
@@ -6733,7 +6729,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get audiobook_follow_audio => 'Follow audio';
   String get reader_floating_ball => 'Floating ball';
   String get reader_floating_ball_hint =>
-      'A translucent ball docked at the edge of the page. Tap it to fan its buttons out around it, tap again to collapse; drag to move it or switch sides. Choose its buttons in the button layout editor above.';
+      'A translucent ball docked at the edge of the page. Tap it to stack its buttons in a column above it, tap the ball again to collapse; drag to move it or switch sides. Choose its buttons in the button layout editor above.';
   String get reader_control_item_play_pause => 'Play / Pause';
   String get reader_control_item_seek_back => 'Rewind 10 seconds';
   String get reader_control_item_seek_forward => 'Forward 10 seconds';
@@ -6765,7 +6761,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get ai_provider_incomplete => 'Not configured';
   String get ai_features_section => 'Feature providers';
   String get ai_features_section_summary =>
-      'Choose which provider each feature uses';
+      'Pick a default provider, then override it only for the features that need a different one or no AI';
   String get ai_feature_unset => 'Not set';
   String get ai_feature_galgame_text_process => 'Game text processing';
   String get ai_feature_galgame_text_process_summary =>
@@ -7070,7 +7066,6 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get video_online_episodes_empty => 'No episodes found.';
   String get video_online_stream_none =>
       'This episode returned no playable stream.';
-  String get media_import_segment_local => 'Local';
   String get media_import_segment_stores => 'Stores';
   String get media_import_segment_extensions => 'Extensions';
   String get media_import_segment_sources => 'Sources';
@@ -7222,9 +7217,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get manga_reader_mode_hint => 'Show reading mode on entry';
   String get manga_reader_tap_hint => 'Show tap zones';
   String get manga_reader_skip_read => 'Skip read chapters';
-  String get manga_reader_skip_filtered => 'Skip filtered chapters';
   String get manga_reader_skip_duplicate => 'Skip duplicate chapters';
-  String get manga_reader_transition => 'Always show chapter transition';
   String get manga_reader_fullscreen => 'Full screen';
   String get manga_reader_keep_screen => 'Keep screen on';
   String get manga_reader_invert_volume => 'Invert volume key direction';
@@ -7296,7 +7289,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get ai_video_download_section => 'AI video download';
   String get ai_video_download_quality => 'Default quality';
   String get ai_video_download_quality_hint =>
-      'Used when the AI download assistant picks a release; "Ask each time" asks on every request.';
+      'Used when the AI download assistant picks a release; "Best available" takes the highest resolution found, "Ask each time" asks on every request.';
   String get ai_video_download_quality_unset => 'Not set (ask on first use)';
   String get ai_video_download_quality_ask => 'Ask each time';
   String get ai_video_download_quality_any => 'Any';
@@ -7557,7 +7550,7 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get game_stream_more => 'More';
   String get game_stream_settings_adaptive => 'Adaptive bitrate';
   String get game_stream_settings_adaptive_hint =>
-      'Lower the bitrate when the network is congested';
+      'Start at half the bitrate and ramp up. When off, start at the full bitrate. Both lower it when the network is congested';
   String get game_stream_settings_apply_failed =>
       'Could not apply stream settings';
   String get game_stream_settings_audio => 'Play game audio';
@@ -7862,6 +7855,8 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
   String get manga_discovery_view_all => 'View all';
   String get manga_discovery_empty_title => 'No manga sources to discover yet';
   String get manga_discovery_empty_action => 'Manage sources';
+  String get manga_reader_download_ahead =>
+      'Download next chapter while reading';
   String get video_dolby_vision_colors_unsupported =>
       'Dolby Vision profile 5 video: this platform can\'t render its colors correctly yet, so the picture may look purple or green.';
   String get video_dolby_vision_colors_enable_hdr_output =>
@@ -7874,4 +7869,214 @@ class _StringsEn implements BaseTranslations<AppLocale, _StringsEn> {
       'Couldn\'t open online: ${error}';
   String novel_online_chapter_failed({required Object error}) =>
       'Couldn\'t load the chapter: ${error}';
+  String get dict_update_all => 'Update all dictionaries';
+  String get dict_update_all_no_source =>
+      'None of your dictionaries declares an online update source. Dictionaries whose index.json has no update URL can only be updated from a local file.';
+  String get dict_update_check_failed =>
+      'Couldn\'t check for updates. Check your network or proxy settings.';
+  String get dict_update_from_file_tooltip =>
+      'Update from a local file (this dictionary has no online update source)';
+  String get anki_lapis_visual_text_indent => 'First-line indent';
+  String anki_lapis_visual_text_indent_chars({required Object count}) =>
+      '${count} em';
+  String get video_online_mining_mode => 'Online video mining';
+  String get video_online_mining_mode_background => 'In the background';
+  String get video_online_mining_mode_background_hint =>
+      'The popup marks the card as added right away and keeps the video going; the clip is prepared and sent to Anki in the background.';
+  String get video_online_mining_mode_deferred => 'After watching';
+  String get video_online_mining_mode_deferred_hint =>
+      'Cards are prepared in the background and kept in a list; they go to Anki when you leave the player or tap Add all. Remove any you don\'t want first.';
+  String get video_online_mining_mode_wait => 'Wait for the card';
+  String get video_online_mining_mode_wait_hint =>
+      'The popup waits until the card is in Anki, so you can still edit the latest card.';
+  String video_mine_staged({required Object count}) =>
+      'Saved for later · ${count} waiting';
+  String video_mine_in_progress({required Object count}) =>
+      'Making ${count} card(s)…';
+  String video_mine_queue_badge({required Object count}) => '${count} to add';
+  String get video_mine_queue_title => 'Cards to add';
+  String get video_mine_queue_empty => 'No cards waiting.';
+  String get video_mine_queue_commit_all => 'Add all to Anki';
+  String video_mine_queue_committing({
+    required Object done,
+    required Object total,
+  }) => 'Adding ${done}/${total}…';
+  String video_mine_queue_committed({
+    required Object ok,
+    required Object failed,
+  }) => 'Added ${ok} cards, ${failed} failed';
+  String video_mine_queue_failed({required Object reason}) =>
+      'Failed: ${reason}';
+  String get video_mine_queue_remove => 'Remove';
+  String get download_interconnect_section_title => 'From paired devices';
+  String interconnect_download_notification_title({required Object count}) =>
+      'Downloading ${count} items from paired devices';
+  String download_keep_alive_multiple_title({required Object count}) =>
+      '${count} downloads in progress';
+  String update_download_notification_title({required Object version}) =>
+      'Downloading update ${version}';
+  String get video_subtitle_remote_audio_fetching =>
+      'Fetching the audio track from the host…';
+  String get video_subtitle_host_upload_done =>
+      'Subtitle uploaded to the host as this episode\'s default';
+  String get video_subtitle_host_upload_failed =>
+      'Couldn\'t upload the subtitle to the host; it\'s only saved on this device';
+  String get video_subtitle_host_upload_unsupported =>
+      'The host\'s Fushi is too old to receive subtitles; it\'s only saved on this device';
+  String get video_setting_subtitle_auto_upload_to_host =>
+      'Auto-upload imported subtitles to host';
+  String get video_setting_subtitle_auto_upload_to_host_hint =>
+      'When playing a video from a connected host, subtitles you import or retime are uploaded and set as that episode\'s default for every device. Turn off to keep them on this device only.';
+  String get delete_statistics_book_desc =>
+      'Reading time, characters read and lookup/mining counts for this book are removed from statistics on every device';
+  String get delete_statistics_manga_desc =>
+      'Reading time, characters, pages and lookup/mining counts for this manga are removed from statistics on every device';
+  String get delete_statistics_game_desc =>
+      'Play time and text characters for this game are removed from statistics on this device';
+  String get ai_feature_default_provider => 'Default provider';
+  String get ai_feature_default_provider_summary =>
+      'Every feature below uses this provider unless you pick another one for it';
+  String ai_feature_follow_default({required Object name}) =>
+      'Use default (${name})';
+  String get ai_feature_disabled => 'Don\'t use AI';
+  String get ai_video_download_quality_best => 'Best available';
+  String get ai_video_download_source => 'Preferred source';
+  String get ai_video_download_source_hint =>
+      'Versions from this source are tried first; others are still used when it is missing. Blu-ray includes BDRip and Remux.';
+  String get ai_video_download_source_any => 'Any';
+  String get ai_video_download_source_best =>
+      'Best (Remux > Blu-ray > WEB-DL > WEBRip > TV > DVD)';
+  String get ai_video_download_source_bluray => 'Blu-ray (BD)';
+  String get ai_video_download_source_web => 'Web (WEB-DL / WEBRip)';
+  String get ai_video_download_bitrate => 'Bitrate';
+  String get ai_video_download_bitrate_hint =>
+      'Estimated from the size per episode; ranks versions that already match the quality and source.';
+  String get ai_video_download_bitrate_any => 'Any';
+  String get ai_video_download_bitrate_high => 'Highest bitrate';
+  String get ai_video_download_bitrate_low => 'Smallest size';
+  String get ai_feature_assigned_unavailable =>
+      'Selected provider unavailable (incomplete or disabled)';
+  String get ai_video_acquire_action_change_work => 'Pick another work';
+  String get ai_video_acquire_action_scope_all => 'Whole series';
+  String get ai_video_acquire_action_scope_movies => 'All movies';
+  String get ai_video_acquire_action_scope_series => 'All TV series';
+  String get ai_video_acquire_action_scope_work => 'Only this work';
+  String get ai_video_acquire_restart => 'Download another';
+  String ai_video_acquire_franchise_searching({required Object title}) =>
+      'Looking for every work in the series of “${title}” (checking each work, this can take a minute)…';
+  String ai_video_acquire_franchise_found({
+    required Object name,
+    required Object series,
+    required Object movies,
+  }) =>
+      'Found “${name}”: ${series} TV series and ${movies} movies. Searching releases one by one…';
+  String ai_video_acquire_franchise_not_found({required Object title}) =>
+      'No other works found in the series of “${title}”, continuing with this one.';
+  String ai_video_acquire_franchise_ready({
+    required Object ready,
+    required Object total,
+  }) =>
+      '${ready} of ${total} works have releases. Untick what you don\'t want, then submit. Series still airing will be subscribed.';
+  String ai_video_acquire_franchise_submitted({
+    required Object downloads,
+    required Object subscriptions,
+    required Object failed,
+  }) =>
+      'Queued ${downloads} downloads and added ${subscriptions} subscriptions. Failed: ${failed}.';
+  String ai_video_acquire_option_submit_all({required Object count}) =>
+      'Submit selected (${count})';
+  String get ai_video_acquire_option_latest => 'Only the latest episode';
+  String get ai_video_acquire_franchise_entry_pending => 'Searching…';
+  String get ai_video_acquire_franchise_entry_none => 'No release found';
+  String ai_video_acquire_franchise_entry_download({required Object version}) =>
+      'Download · ${version}';
+  String ai_video_acquire_franchise_entry_subscribe({
+    required Object version,
+  }) => 'Subscribe · ${version}';
+  String get ai_video_acquire_franchise_entry_owned =>
+      'Already in library or subscribed';
+  String ai_video_acquire_summary_position({
+    required Object index,
+    required Object total,
+  }) => 'Version ${index} of ${total}';
+  String ai_video_acquire_summary_size({required Object size}) =>
+      'about ${size} per episode';
+  String get ai_video_acquire_failure_no_candidates =>
+      'No releases found for this work.';
+  String get ai_video_acquire_failure_no_plannable_version =>
+      'Releases were found, but none covers what you asked for.';
+  String get ai_video_acquire_failure_no_sources =>
+      'There is no managed video source to download into.';
+  String get ai_video_acquire_failure_nothing_selected =>
+      'Nothing selected to submit.';
+  String get ai_video_download_skip_extras => 'Skip extras';
+  String get ai_video_download_skip_extras_hint =>
+      'PV, CM, NCOP/NCED, menus and similar. Applies to every download into a video source: extras inside a torrent are not downloaded, and extras-only releases are never picked.';
+  String get ai_web_knowledge_section => 'Web knowledge';
+  String get ai_web_knowledge_wikipedia_zh => 'Wikipedia (中文)';
+  String get ai_web_knowledge_wikipedia_ja => 'Wikipedia (日本語)';
+  String get ai_web_knowledge_wikipedia_en => 'Wikipedia (English)';
+  String get ai_web_knowledge_section_hint =>
+      'Fushi itself fetches article text or work lists from the selected sources and hands them to the AI (used when AI video download lists the works of a franchise and when identifying video works). Your AI provider does not need web access. The AI can only cite what was fetched, and every listed work is still checked against the metadata source one by one. Other MediaWiki sites (such as a franchise wiki on Fandom) can be added below.';
+  String get ai_web_knowledge_moegirl => 'Moegirlpedia (萌娘百科)';
+  String get ai_web_knowledge_ann => 'Anime News Network';
+  String get ai_web_knowledge_tvmaze => 'TVmaze';
+  String get ai_web_knowledge_custom_title => 'Custom MediaWiki sites';
+  String get ai_web_knowledge_custom_add => 'Add MediaWiki site';
+  String get ai_web_knowledge_custom_name => 'Name';
+  String get ai_web_knowledge_custom_name_hint =>
+      'Leave empty to use the host name';
+  String get ai_web_knowledge_custom_endpoint => 'API address';
+  String get ai_web_knowledge_custom_endpoint_hint =>
+      'The site\'s api.php, e.g. https://onepiece.fandom.com/api.php';
+  String get ai_web_knowledge_custom_endpoint_invalid =>
+      'Enter an https:// address ending in api.php';
+  String get ai_web_knowledge_custom_remove => 'Remove site';
+  String get video_item_rescrape_not_planned =>
+      'This video isn\'t in any local video source\'s scrape plan';
+  String get plex_settings_hint =>
+      'Sign in with your Plex account, or connect to a server with its address and X-Plex-Token. Playback streams the original file (direct play); Plex transcoding is not used.';
+  String get plex_account_sign_in => 'Sign in with Plex';
+  String get plex_pin_waiting =>
+      'Waiting for you to approve Fushi in the browser…';
+  String get plex_pin_link_hint =>
+      'If the browser did not open, copy this link:';
+  String get plex_pin_expired => 'The sign-in request expired. Try again.';
+  String get plex_servers_none_reachable =>
+      'No reachable Plex server was found for this account.';
+  String plex_servers_added({required Object n}) => 'Added ${n} Plex server(s)';
+  String get plex_manual_title => 'Connect manually';
+  String get plex_token_label => 'X-Plex-Token';
+  String get plex_manual_connect => 'Connect';
+  String get plex_sign_in_failed => 'Plex sign-in failed';
+  String get remote_video_stream_play => 'Play (stream)';
+  String get nav_browse => 'Browse';
+  String get novel_detail_library_remove => 'Remove from bookshelf';
+  String get novel_detail_library_remove_confirm =>
+      'Remove this novel from the bookshelf? Cached chapters and reading progress will be deleted.';
+  String get novel_detail_download => 'Download';
+  String get novel_detail_library_added => 'Added to bookshelf';
+  String get video_online_extension_unavailable =>
+      'The video source extension for this episode is not installed or is disabled. Reinstall or enable it in Browse › Extensions.';
+  String get video_online_library_add => 'Add to video library';
+  String get video_online_library_remove => 'Remove from video library';
+  String video_online_library_added({required Object n}) =>
+      'Added ${n} episodes to the video library';
+  String get video_online_library_removed => 'Removed from the video library';
+  String get video_online_download_all => 'Download all';
+  String get video_online_download_episode => 'Download this episode';
+  String get video_online_download_started =>
+      'Download started — see Browse › Downloads';
+  String get video_online_downloaded => 'Downloaded';
+  String get onboarding_feature_browse_hint =>
+      'Online sources, extensions, discovery and downloads';
+  String browse_moved_notice_title({required Object browse}) =>
+      'Discovery and online sources moved to ${browse}';
+  String browse_moved_notice_body({
+    required Object browse,
+    required Object settings,
+    required Object appearance,
+    required Object modules,
+  }) =>
+      'Discovery and the online sources for manga, video and novels now live in the ${browse} tab, which is turned off on this device. To use them, turn on ${browse} in ${settings} › ${appearance} › ${modules}.';
 }

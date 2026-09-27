@@ -20,9 +20,6 @@ library;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show ValueListenable;
 
-import 'package:fushi/src/utils/misc/platform_utils.dart'
-    show kFushiSettingsWideMinHeight, kFushiSettingsWideThreshold;
-
 /// 顶部工具栏视觉高度 == 挤压态预留高（chrome 铁律：同一真相源，见
 /// reader_chrome_floating.dart 文件头）。
 const double kReaderDesktopHeaderHeight = 48;
@@ -36,17 +33,6 @@ const double kReaderDesktopHeaderTitleFontSize = 14;
 
 /// 右侧抽屉宽度（逻辑 px）。窄窗口下由 [showReaderSideSheet] 收窄到留出 48px 空白。
 const double kReaderSideSheetWidth = 400;
-
-/// 有声书面板的容器按可用空间选择：桌面/宽窗走右侧侧栏（与设置侧栏同一容器
-/// [showReaderSideSheet]，用户 2026-09-13 拍板：不再弹居中对话框），手机保留全高
-/// 底部面板（面板内部 `Flexible` 需要有界高度，bottom sheet 给得起）。
-bool readerAudiobookUsesSideSheet({
-  required bool desktop,
-  required Size window,
-}) =>
-    desktop ||
-    (window.width >= kFushiSettingsWideThreshold &&
-        window.height >= kFushiSettingsWideMinHeight);
 
 /// 导航抽屉打开时是否把焦点直接放进「书内搜索」输入框。
 ///
@@ -400,22 +386,34 @@ class ReaderDesktopHeaderButton extends StatelessWidget {
   }
 }
 
-/// 右侧抽屉外壳：标题行（标题 + 关闭 ×）+ 可滚动内容。
+/// 右侧抽屉外壳：标题行（标题 + 关闭 ×）+ 可选固定页头 [bottom] + 内容。
 class ReaderSideSheet extends StatelessWidget {
   const ReaderSideSheet({
     super.key,
     required this.title,
     required this.child,
     required this.onClose,
-    this.padding = const EdgeInsets.fromLTRB(20, 4, 20, 24),
+    this.padding = defaultPadding,
     this.headerActions = const <Widget>[],
+    this.bottom,
+    this.scrollable = true,
   });
+
+  /// 内容区默认留白；自管滚动的调用方（[scrollable] = false）按它对齐。
+  static const EdgeInsets defaultPadding = EdgeInsets.fromLTRB(20, 4, 20, 24);
 
   final String title;
   final Widget child;
   final VoidCallback onClose;
   final EdgeInsets padding;
   final List<Widget> headerActions;
+
+  /// 标题行下方、不随内容滚动的页头（如设置抽屉的标签栏）。
+  final Widget? bottom;
+
+  /// false 时 [child] 直接铺满内容区、自己负责滚动（如 [TabBarView] 每页各自
+  /// 滚动），[padding] 不再生效。
+  final bool scrollable;
 
   @override
   Widget build(BuildContext context) {
@@ -449,8 +447,11 @@ class ReaderSideSheet extends StatelessWidget {
             ],
           ),
         ),
+        if (bottom != null) bottom!,
         Expanded(
-          child: SingleChildScrollView(padding: padding, child: child),
+          child: scrollable
+              ? SingleChildScrollView(padding: padding, child: child)
+              : child,
         ),
       ],
     );

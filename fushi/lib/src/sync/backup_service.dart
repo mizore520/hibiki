@@ -18,6 +18,7 @@ import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi_dictionary/fushi_dictionary.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqlite3/sqlite3.dart' as sqlite;
+import 'package:fushi_engine/media/video/anime_source_video_path.dart';
 
 part 'backup_service/fs_retry.part.dart';
 part 'backup_service/path_rebase.part.dart';
@@ -604,8 +605,8 @@ const List<String> _deviceLocalTablesParentFirst = <String>[
 
 /// Content tables stripped from the exported DB copy when the `statistics`
 /// category is unticked (TODO-1193). None is FK-targeted by another content
-/// table, so a wholesale DELETE is safe (`galgame_sessions` is itself an FK
-/// CHILD of `galgames`; nothing references it, so deleting it trips nothing).
+/// table, so a wholesale DELETE is safe (nothing references `galgame_sessions`,
+/// so deleting it trips nothing).
 ///
 /// `activity_events` / `galgame_sessions` are session-granularity FACT
 /// streams, not aggregates, but they are what the statistics pages render
@@ -831,8 +832,10 @@ Future<void> _retainAudiobooks(
 }
 
 /// Games analogue of [_retainVideos]: DELETEs every `galgames` row whose `id`
-/// is NOT in [keep] (its `galgame_sources` / `galgame_sessions` follow via FK
-/// cascade) plus the game-kind rows of the logical-FK tables that never cascade
+/// is NOT in [keep] (its `galgame_sources` follow via FK cascade; its
+/// `galgame_sessions` are deleted explicitly first — v113 made that FK logical
+/// so a library removal keeps play time, but a stripped game must still take
+/// its sessions with it, exactly as the old cascade did) plus the game-kind rows of the logical-FK tables that never cascade
 /// (`tag_assignments`, `media_collection_items`, `study_segments`,
 /// `study_segment_tombstones`, `activity_events`, keyed by
 /// `media_kind`/`media_type` = 'game'). [keep]
@@ -848,6 +851,12 @@ Future<void> _retainGames(
         ? ''
         : ' WHERE id NOT IN '
             '(${List<String>.filled(keep.length, '?').join(', ')})';
+    // v113：game_id 不再 FK cascade——先按「即将被删的游戏」删会话，与旧 cascade
+    // 逐行等价（早已是孤儿的会话不在 galgames 里，不受影响）。
+    await db.customStatement(
+        'DELETE FROM galgame_sessions WHERE game_id IN '
+        '(SELECT id FROM galgames$notKept)',
+        keep.toList());
     await db.customStatement('DELETE FROM galgames$notKept', keep.toList());
     // Logical (non-FK) game references: orphaned once their host is gone.
     await db.customStatement(
@@ -955,8 +964,9 @@ class BackupService {
   /// self-contained (re-opens by URL, needs no packed file). Mirrors the merge
   /// engine's SQL predicate so export counts and import filtering stay aligned
   /// (TODO-1261).
+  /// 流媒体行不带文件也可达：http/https 流与在线视频源入库集（起播时向扩展取流）。
   static bool _isStreamingVideoPath(String videoPath) =>
-      videoPath.startsWith('http://') || videoPath.startsWith('https://');
+      isNetworkOnlyVideoPath(videoPath);
 
   /// COUNT(*) of a table on the live DB (used to report honest export totals).
   Future<int> _countRows(String table) async {

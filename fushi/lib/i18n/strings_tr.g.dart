@@ -2447,8 +2447,6 @@ class _StringsTr extends _StringsEn {
   String dict_task_failed_summary({required Object n}) =>
       '${n} dictionary(s) failed';
   @override
-  String get dict_update_check => 'Güncellemeleri Denetle';
-  @override
   String get dict_update_checking => 'Güncellemeler denetleniyor…';
   @override
   String dict_update_done({required Object name}) => '${name} güncellendi.';
@@ -2471,8 +2469,6 @@ class _StringsTr extends _StringsEn {
       'Seçilen dosya "${incoming}", ancak "${existing}" sözlüğünü güncelliyorsunuz. Yine de değiştirilsin mi?';
   @override
   String get dict_update_name_mismatch_title => 'Adlar eşleşmiyor';
-  @override
-  String get dict_update_none => 'Tüm sözlükler güncel.';
   @override
   String dict_update_summary({
     required Object updated,
@@ -2766,8 +2762,6 @@ class _StringsTr extends _StringsEn {
   @override
   String get download_rate_limit_lan_included =>
       'Yerel ağınızda da geçerlidir.';
-  @override
-  String get download_resources_tab => 'Kaynaklar';
   @override
   String get download_save_root_change => 'Klasörü değiştir';
   @override
@@ -4816,8 +4810,6 @@ class _StringsTr extends _StringsEn {
   @override
   String get library_search => 'Kütüphanede ara';
   @override
-  String get library_view_browse => 'Keşfet';
-  @override
   String get library_view_discover => 'Keşfet';
   @override
   String get library_view_import => 'İçe aktar';
@@ -4955,9 +4947,9 @@ class _StringsTr extends _StringsEn {
   String get manga_global_search_hint => 'Etkin tüm kaynaklarda ara';
   @override
   String get manga_global_search_no_sources =>
-      'Henüz etkin manga kaynağı yok. İçe aktar sekmesinden bir tane ekleyin.';
+      'Henüz etkin manga kaynağı yok. Göz at sekmesinden bir tane ekleyin.';
   @override
-  String get manga_global_search_open_sources => 'İçe aktarmaya git';
+  String get manga_global_search_open_sources => 'Göz at\'a git';
   @override
   String get manga_global_search_prompt =>
       'Etkin tüm manga kaynaklarında aynı anda aramak için bir başlık yazın.';
@@ -5811,7 +5803,7 @@ class _StringsTr extends _StringsEn {
       'This feature module is turned off in Settings > Appearance > Feature modules.';
   @override
   String get module_downloads_hidden_hint =>
-      'İndirmeler sekmesi Ayarlar → Görünüm → Özellik modülleri altında gizli; abonelikleri yönetmek için yeniden açın.';
+      'Göz at sekmesi Ayarlar → Görünüm → Özellik modülleri altında gizli; abonelikleri yönetmek için yeniden açın.';
   @override
   String get module_extension_label => 'Tarayıcı eklentisi';
   @override
@@ -11726,7 +11718,7 @@ class _StringsTr extends _StringsEn {
   String get reader_floating_ball => 'Floating ball';
   @override
   String get reader_floating_ball_hint =>
-      'A translucent ball docked at the edge of the page. Tap it to fan its buttons out around it, tap again to collapse; drag to move it or switch sides. Choose its buttons in the button layout editor above.';
+      'A translucent ball docked at the edge of the page. Tap it to stack its buttons in a column above it, tap the ball again to collapse; drag to move it or switch sides. Choose its buttons in the button layout editor above.';
   @override
   String get reader_control_item_play_pause => 'Play / Pause';
   @override
@@ -12281,25 +12273,23 @@ class _StringsTr extends _StringsEn {
   String get video_extensions_title => 'Video source extensions';
   @override
   String get video_online_sources_hint =>
-      'Third-party Aniyomi extensions (extensions-lib 14). Content comes from each extension\'s website and plays in the built-in player.';
+      'Üçüncü taraf Aniyomi eklentileri (extensions-lib 14). İçerik her eklentinin web sitesinden gelir ve yerleşik oynatıcıda oynatılır.';
   @override
   String get video_online_sources_empty =>
-      'No enabled video sources. Install and enable an extension first.';
+      'Etkin video kaynağı yok. Önce bir eklenti yükleyip etkinleştirin.';
   @override
-  String get video_online_episodes_title => 'Episodes';
+  String get video_online_episodes_title => 'Bölümler';
   @override
-  String get video_online_episodes_empty => 'No episodes found.';
+  String get video_online_episodes_empty => 'Bölüm bulunamadı.';
   @override
   String get video_online_stream_none =>
-      'This episode returned no playable stream.';
+      'Bu bölüm oynatılabilir bir akış döndürmedi.';
   @override
-  String get media_import_segment_local => 'Local';
+  String get media_import_segment_stores => 'Depolar';
   @override
-  String get media_import_segment_stores => 'Stores';
+  String get media_import_segment_extensions => 'Eklentiler';
   @override
-  String get media_import_segment_extensions => 'Extensions';
-  @override
-  String get media_import_segment_sources => 'Sources';
+  String get media_import_segment_sources => 'Kaynaklar';
   @override
   String get mihon_source_move_up => 'Move up';
   @override
@@ -12556,11 +12546,7 @@ class _StringsTr extends _StringsEn {
   @override
   String get manga_reader_skip_read => 'Skip read chapters';
   @override
-  String get manga_reader_skip_filtered => 'Skip filtered chapters';
-  @override
   String get manga_reader_skip_duplicate => 'Skip duplicate chapters';
-  @override
-  String get manga_reader_transition => 'Always show chapter transition';
   @override
   String get manga_reader_fullscreen => 'Full screen';
   @override
@@ -13121,7 +13107,7 @@ class _StringsTr extends _StringsEn {
   String get game_stream_settings_adaptive => 'Adaptive bitrate';
   @override
   String get game_stream_settings_adaptive_hint =>
-      'Lower the bitrate when the network is congested';
+      'Start at half the bitrate and ramp up. When off, start at the full bitrate. Both lower it when the network is congested';
   @override
   String get game_stream_settings_apply_failed =>
       'Could not apply stream settings';
@@ -13619,6 +13605,9 @@ class _StringsTr extends _StringsEn {
   @override
   String get manga_discovery_empty_action => 'Manage sources';
   @override
+  String get manga_reader_download_ahead =>
+      'Download next chapter while reading';
+  @override
   String get video_dolby_vision_colors_unsupported =>
       'Dolby Vision profile 5 video: this platform can\'t render its colors correctly yet, so the picture may look purple or green.';
   @override
@@ -13637,4 +13626,339 @@ class _StringsTr extends _StringsEn {
   @override
   String novel_online_chapter_failed({required Object error}) =>
       'Couldn\'t load the chapter: ${error}';
+  @override
+  String get dict_update_all => 'Update all dictionaries';
+  @override
+  String get dict_update_all_no_source =>
+      'None of your dictionaries declares an online update source. Dictionaries whose index.json has no update URL can only be updated from a local file.';
+  @override
+  String get dict_update_check_failed =>
+      'Couldn\'t check for updates. Check your network or proxy settings.';
+  @override
+  String get dict_update_from_file_tooltip =>
+      'Update from a local file (this dictionary has no online update source)';
+  @override
+  String get anki_lapis_visual_text_indent => 'First-line indent';
+  @override
+  String anki_lapis_visual_text_indent_chars({required Object count}) =>
+      '${count} em';
+  @override
+  String get video_online_mining_mode => 'Online video mining';
+  @override
+  String get video_online_mining_mode_background => 'In the background';
+  @override
+  String get video_online_mining_mode_background_hint =>
+      'The popup marks the card as added right away and keeps the video going; the clip is prepared and sent to Anki in the background.';
+  @override
+  String get video_online_mining_mode_deferred => 'After watching';
+  @override
+  String get video_online_mining_mode_deferred_hint =>
+      'Cards are prepared in the background and kept in a list; they go to Anki when you leave the player or tap Add all. Remove any you don\'t want first.';
+  @override
+  String get video_online_mining_mode_wait => 'Wait for the card';
+  @override
+  String get video_online_mining_mode_wait_hint =>
+      'The popup waits until the card is in Anki, so you can still edit the latest card.';
+  @override
+  String video_mine_staged({required Object count}) =>
+      'Saved for later · ${count} waiting';
+  @override
+  String video_mine_in_progress({required Object count}) =>
+      'Making ${count} card(s)…';
+  @override
+  String video_mine_queue_badge({required Object count}) => '${count} to add';
+  @override
+  String get video_mine_queue_title => 'Cards to add';
+  @override
+  String get video_mine_queue_empty => 'No cards waiting.';
+  @override
+  String get video_mine_queue_commit_all => 'Add all to Anki';
+  @override
+  String video_mine_queue_committing({
+    required Object done,
+    required Object total,
+  }) => 'Adding ${done}/${total}…';
+  @override
+  String video_mine_queue_committed({
+    required Object ok,
+    required Object failed,
+  }) => 'Added ${ok} cards, ${failed} failed';
+  @override
+  String video_mine_queue_failed({required Object reason}) =>
+      'Failed: ${reason}';
+  @override
+  String get video_mine_queue_remove => 'Remove';
+  @override
+  String get download_interconnect_section_title => 'From paired devices';
+  @override
+  String interconnect_download_notification_title({required Object count}) =>
+      'Downloading ${count} items from paired devices';
+  @override
+  String download_keep_alive_multiple_title({required Object count}) =>
+      '${count} downloads in progress';
+  @override
+  String update_download_notification_title({required Object version}) =>
+      'Downloading update ${version}';
+  @override
+  String get video_subtitle_remote_audio_fetching =>
+      'Fetching the audio track from the host…';
+  @override
+  String get video_subtitle_host_upload_done =>
+      'Subtitle uploaded to the host as this episode\'s default';
+  @override
+  String get video_subtitle_host_upload_failed =>
+      'Couldn\'t upload the subtitle to the host; it\'s only saved on this device';
+  @override
+  String get video_subtitle_host_upload_unsupported =>
+      'The host\'s Fushi is too old to receive subtitles; it\'s only saved on this device';
+  @override
+  String get video_setting_subtitle_auto_upload_to_host =>
+      'Auto-upload imported subtitles to host';
+  @override
+  String get video_setting_subtitle_auto_upload_to_host_hint =>
+      'When playing a video from a connected host, subtitles you import or retime are uploaded and set as that episode\'s default for every device. Turn off to keep them on this device only.';
+  @override
+  String get delete_statistics_book_desc =>
+      'Reading time, characters read and lookup/mining counts for this book are removed from statistics on every device';
+  @override
+  String get delete_statistics_manga_desc =>
+      'Reading time, characters, pages and lookup/mining counts for this manga are removed from statistics on every device';
+  @override
+  String get delete_statistics_game_desc =>
+      'Play time and text characters for this game are removed from statistics on this device';
+  @override
+  String get ai_feature_default_provider => 'Default provider';
+  @override
+  String get ai_feature_default_provider_summary =>
+      'Every feature below uses this provider unless you pick another one for it';
+  @override
+  String ai_feature_follow_default({required Object name}) =>
+      'Use default (${name})';
+  @override
+  String get ai_feature_disabled => 'Don\'t use AI';
+  @override
+  String get ai_video_download_quality_best => 'Best available';
+  @override
+  String get ai_video_download_source => 'Preferred source';
+  @override
+  String get ai_video_download_source_hint =>
+      'Versions from this source are tried first; others are still used when it is missing. Blu-ray includes BDRip and Remux.';
+  @override
+  String get ai_video_download_source_any => 'Any';
+  @override
+  String get ai_video_download_source_best =>
+      'Best (Remux > Blu-ray > WEB-DL > WEBRip > TV > DVD)';
+  @override
+  String get ai_video_download_source_bluray => 'Blu-ray (BD)';
+  @override
+  String get ai_video_download_source_web => 'Web (WEB-DL / WEBRip)';
+  @override
+  String get ai_video_download_bitrate => 'Bitrate';
+  @override
+  String get ai_video_download_bitrate_hint =>
+      'Estimated from the size per episode; ranks versions that already match the quality and source.';
+  @override
+  String get ai_video_download_bitrate_any => 'Any';
+  @override
+  String get ai_video_download_bitrate_high => 'Highest bitrate';
+  @override
+  String get ai_video_download_bitrate_low => 'Smallest size';
+  @override
+  String get ai_feature_assigned_unavailable =>
+      'Selected provider unavailable (incomplete or disabled)';
+  @override
+  String get ai_video_acquire_action_change_work => 'Pick another work';
+  @override
+  String get ai_video_acquire_action_scope_all => 'Whole series';
+  @override
+  String get ai_video_acquire_action_scope_movies => 'All movies';
+  @override
+  String get ai_video_acquire_action_scope_series => 'All TV series';
+  @override
+  String get ai_video_acquire_action_scope_work => 'Only this work';
+  @override
+  String get ai_video_acquire_restart => 'Download another';
+  @override
+  String ai_video_acquire_franchise_searching({required Object title}) =>
+      'Looking for every work in the series of “${title}”…';
+  @override
+  String ai_video_acquire_franchise_found({
+    required Object name,
+    required Object series,
+    required Object movies,
+  }) =>
+      'Found “${name}”: ${series} TV series and ${movies} movies. Searching releases one by one…';
+  @override
+  String ai_video_acquire_franchise_not_found({required Object title}) =>
+      'No other works found in the series of “${title}”, continuing with this one.';
+  @override
+  String ai_video_acquire_franchise_ready({
+    required Object ready,
+    required Object total,
+  }) =>
+      '${ready} of ${total} works have releases. Untick what you don\'t want, then submit. Series still airing will be subscribed.';
+  @override
+  String ai_video_acquire_franchise_submitted({
+    required Object downloads,
+    required Object subscriptions,
+    required Object failed,
+  }) =>
+      'Queued ${downloads} downloads and added ${subscriptions} subscriptions. Failed: ${failed}.';
+  @override
+  String ai_video_acquire_option_submit_all({required Object count}) =>
+      'Submit selected (${count})';
+  @override
+  String get ai_video_acquire_option_latest => 'Only the latest episode';
+  @override
+  String get ai_video_acquire_franchise_entry_pending => 'Searching…';
+  @override
+  String get ai_video_acquire_franchise_entry_none => 'No release found';
+  @override
+  String ai_video_acquire_franchise_entry_download({required Object version}) =>
+      'Download · ${version}';
+  @override
+  String ai_video_acquire_franchise_entry_subscribe({
+    required Object version,
+  }) => 'Subscribe · ${version}';
+  @override
+  String get ai_video_acquire_franchise_entry_owned =>
+      'Already in library or subscribed';
+  @override
+  String ai_video_acquire_summary_position({
+    required Object index,
+    required Object total,
+  }) => 'Version ${index} of ${total}';
+  @override
+  String ai_video_acquire_summary_size({required Object size}) =>
+      'about ${size} per episode';
+  @override
+  String get ai_video_acquire_failure_no_candidates =>
+      'No releases found for this work.';
+  @override
+  String get ai_video_acquire_failure_no_plannable_version =>
+      'Releases were found, but none covers what you asked for.';
+  @override
+  String get ai_video_acquire_failure_no_sources =>
+      'There is no managed video source to download into.';
+  @override
+  String get ai_video_acquire_failure_nothing_selected =>
+      'Nothing selected to submit.';
+  @override
+  String get ai_video_download_skip_extras => 'Skip extras';
+  @override
+  String get ai_video_download_skip_extras_hint =>
+      'PV, CM, NCOP/NCED, menus and similar. Applies to every download into a video source: extras inside a torrent are not downloaded, and extras-only releases are never picked.';
+  @override
+  String get ai_web_knowledge_section => 'Web knowledge';
+  @override
+  String get ai_web_knowledge_wikipedia_zh => 'Wikipedia (中文)';
+  @override
+  String get ai_web_knowledge_wikipedia_ja => 'Wikipedia (日本語)';
+  @override
+  String get ai_web_knowledge_wikipedia_en => 'Wikipedia (English)';
+  @override
+  String get ai_web_knowledge_section_hint =>
+      'Fushi itself fetches article text or work lists from the selected sources and hands them to the AI (used when AI video download lists the works of a franchise and when identifying video works). Your AI provider does not need web access. The AI can only cite what was fetched, and every listed work is still checked against the metadata source one by one. Other MediaWiki sites (such as a franchise wiki on Fandom) can be added below.';
+  @override
+  String get ai_web_knowledge_moegirl => 'Moegirlpedia (萌娘百科)';
+  @override
+  String get ai_web_knowledge_ann => 'Anime News Network';
+  @override
+  String get ai_web_knowledge_tvmaze => 'TVmaze';
+  @override
+  String get ai_web_knowledge_custom_title => 'Custom MediaWiki sites';
+  @override
+  String get ai_web_knowledge_custom_add => 'Add MediaWiki site';
+  @override
+  String get ai_web_knowledge_custom_name => 'Name';
+  @override
+  String get ai_web_knowledge_custom_name_hint =>
+      'Leave empty to use the host name';
+  @override
+  String get ai_web_knowledge_custom_endpoint => 'API address';
+  @override
+  String get ai_web_knowledge_custom_endpoint_hint =>
+      'The site\'s api.php, e.g. https://onepiece.fandom.com/api.php';
+  @override
+  String get ai_web_knowledge_custom_endpoint_invalid =>
+      'Enter an https:// address ending in api.php';
+  @override
+  String get ai_web_knowledge_custom_remove => 'Remove site';
+  @override
+  String get video_item_rescrape_not_planned =>
+      'This video isn\'t in any local video source\'s scrape plan';
+  @override
+  String get plex_settings_hint =>
+      'Sign in with your Plex account, or connect to a server with its address and X-Plex-Token. Playback streams the original file (direct play); Plex transcoding is not used.';
+  @override
+  String get plex_account_sign_in => 'Sign in with Plex';
+  @override
+  String get plex_pin_waiting =>
+      'Waiting for you to approve Fushi in the browser…';
+  @override
+  String get plex_pin_link_hint =>
+      'If the browser did not open, copy this link:';
+  @override
+  String get plex_pin_expired => 'The sign-in request expired. Try again.';
+  @override
+  String get plex_servers_none_reachable =>
+      'No reachable Plex server was found for this account.';
+  @override
+  String plex_servers_added({required Object n}) => 'Added ${n} Plex server(s)';
+  @override
+  String get plex_manual_title => 'Connect manually';
+  @override
+  String get plex_token_label => 'X-Plex-Token';
+  @override
+  String get plex_manual_connect => 'Connect';
+  @override
+  String get plex_sign_in_failed => 'Plex sign-in failed';
+  @override
+  String get remote_video_stream_play => 'Play (stream)';
+  @override
+  String get nav_browse => 'Göz at';
+  @override
+  String get novel_detail_library_remove => 'Kitaplıktan kaldır';
+  @override
+  String get novel_detail_library_remove_confirm =>
+      'Bu roman kitaplıktan kaldırılsın mı? Önbelleğe alınan bölümler ve okuma ilerlemesi silinecek.';
+  @override
+  String get novel_detail_download => 'İndir';
+  @override
+  String get novel_detail_library_added => 'Kitaplığa eklendi';
+  @override
+  String get video_online_extension_unavailable =>
+      'Bu bölümün video kaynağı eklentisi yüklü değil veya devre dışı. Göz at › Eklentiler bölümünden yeniden yükleyin veya etkinleştirin.';
+  @override
+  String get video_online_library_add => 'Video kitaplığına ekle';
+  @override
+  String get video_online_library_remove => 'Video kitaplığından kaldır';
+  @override
+  String video_online_library_added({required Object n}) =>
+      '${n} bölüm video kitaplığına eklendi';
+  @override
+  String get video_online_library_removed => 'Video kitaplığından kaldırıldı';
+  @override
+  String get video_online_download_all => 'Tümünü indir';
+  @override
+  String get video_online_download_episode => 'Bu bölümü indir';
+  @override
+  String get video_online_download_started =>
+      'İndirme başladı — Göz at › İndirmeler bölümüne bakın';
+  @override
+  String get video_online_downloaded => 'İndirildi';
+  @override
+  String get onboarding_feature_browse_hint =>
+      'Çevrimiçi kaynaklar, eklentiler, keşif ve indirmeler';
+  @override
+  String browse_moved_notice_title({required Object browse}) =>
+      'Keşfet ve çevrimiçi kaynaklar ${browse} sekmesine taşındı';
+  @override
+  String browse_moved_notice_body({
+    required Object browse,
+    required Object settings,
+    required Object appearance,
+    required Object modules,
+  }) =>
+      'Keşfet sayfası ile manga, video ve roman için çevrimiçi kaynaklar artık ${browse} sekmesinde; bu sekme bu cihazda kapalı. Bunları kullanmak için ${settings} › ${appearance} › ${modules} bölümünden ${browse} seçeneğini açın.';
 }
