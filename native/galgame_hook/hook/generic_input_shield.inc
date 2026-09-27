@@ -517,6 +517,25 @@ void ForgetGenericDirectInputKind(void *device) {
 // 有界诊断：只在 DirectInput 真读到滚轮时记，每进程最多 24 行。用来回答「游戏的滚轮
 // 到底是不是从 DirectInput 来、来的时候光标是否被判为压着宿主浮窗」（BUG-2738 复测）。
 std::atomic<int> g_generic_wheel_diag_budget{24};
+// 盲区诊断：不看有没有滚轮，只证明游戏的 DirectInput 读取确实经过本层 detour。
+// 上一轮只在 lZ!=0 时记，detour 根本没被调到与「游戏没用 DirectInput」同形。
+std::atomic<int> g_generic_dinput_call_diag_budget{12};
+
+void NoteGenericDirectInputCall(const wchar_t *surface, void *device,
+                                DWORD bytes, LONG raw_wheel) {
+  if (g_generic_dinput_call_diag_budget.fetch_sub(
+          1, std::memory_order_relaxed) <= 0)
+    return;
+  const bool mouse = GenericDirectInputDeviceIsMouse(device);
+  wchar_t line[192] = {};
+  _snwprintf_s(line, _TRUNCATE,
+               L"dinput.call %ls device=%p bytes=%lu mouse=%d wheel=%ld "
+               L"thread=%lu",
+               surface, device, static_cast<unsigned long>(bytes),
+               mouse ? 1 : 0, raw_wheel,
+               static_cast<unsigned long>(GetCurrentThreadId()));
+  HookLogLine(line);
+}
 
 void NoteGenericDirectInputWheel(const wchar_t *surface, LONG delta,
                                  bool mouse, bool overlay, bool stripped) {
@@ -533,14 +552,19 @@ void NoteGenericDirectInputWheel(const wchar_t *surface, LONG delta,
 // 与窗口归属，稳态（没有滚轮）零额外系统调用。
 void StripHostOverlayWheelFromMouseState(void *device, DWORD bytes,
                                          LPVOID state) {
-  if (state == nullptr || (bytes != 16u && bytes != 20u))
+  if (state == nullptr)
     return;
+  if (bytes != 16u && bytes != 20u) {
+    NoteGenericDirectInputCall(L"state", device, bytes, 0);
+    return;
+  }
   LONG wheel = 0;
   __try {
     wheel = static_cast<const LONG *>(state)[kGenericMouseStateWheelIndex];
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     return;
   }
+  NoteGenericDirectInputCall(L"state", device, bytes, wheel);
   if (wheel == 0)
     return;
   const bool mouse = GenericDirectInputDeviceIsMouse(device);
@@ -674,6 +698,8 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceData(
       event_count == nullptr || events == nullptr) {
     return result;
   }
+  NoteGenericDirectInputCall(L"buffered", device, object_bytes,
+                             static_cast<LONG>(*event_count));
   StripHostOverlayWheelFromDeviceData(device, object_bytes, events,
                                       event_count);
   MarkGenericShieldObserved(
@@ -1095,9 +1121,22 @@ void ProbeGenericDirectInputDevice(void *direct_input) {
     const auto create_device = reinterpret_cast<GenericDirectInputCreateDeviceFn>(
         VtableSlot(direct_input, 3));
     void *device = nullptr;
-    if (create_device != nullptr &&
-        SUCCEEDED(create_device(direct_input, kSystemMouse, &device, nullptr)) &&
-        device != nullptr) {
+    const HRESULT created =
+        create_device != nullptr
+            ? create_device(direct_input, kSystemMouse, &device, nullptr)
+            : E_POINTER;
+    wchar_t line[192] = {};
+    _snwprintf_s(line, _TRUNCATE,
+                 L"dinput.probe device hr=0x%08lx state_fn=%p hooked=%d",
+                 static_cast<unsigned long>(created),
+                 device != nullptr ? VtableSlot(device, 9) : nullptr,
+                 device != nullptr &&
+                         g_generic_direct_input_get_device_state_originals
+                                 .Lookup(VtableSlot(device, 9)) != nullptr
+                     ? 1
+                     : 0);
+    HookLogLine(line);
+    if (SUCCEEDED(created) && device != nullptr) {
       reinterpret_cast<GenericDirectInputObjectReleaseFn>(VtableSlot(device, 2))(
           device);
     }
