@@ -415,6 +415,8 @@ constexpr DWORD kGenericDirectInputDevTypeMouse7 = 2u;     // DIDEVTYPE_MOUSE
 constexpr DWORD kGenericDirectInputDevTypeMouse8 = 0x12u;  // DI8DEVTYPE_MOUSE
 using GenericDirectInputGetCapabilitiesFn =
     HRESULT(STDMETHODCALLTYPE *)(void *, LPDIDEVCAPS);
+using GenericDirectInputGetPropertyFn =
+    HRESULT(STDMETHODCALLTYPE *)(void *, REFGUID, LPDIPROPHEADER);
 
 struct GenericDirectInputKind {
   void *device = nullptr;
@@ -423,6 +425,7 @@ struct GenericDirectInputKind {
 constexpr size_t kGenericDirectInputKindCapacity = 16;
 GenericDirectInputKind
     g_generic_direct_input_kinds[kGenericDirectInputKindCapacity] = {};
+size_t g_generic_direct_input_kind_next = 0;
 SRWLOCK g_generic_direct_input_kind_lock = SRWLOCK_INIT;
 
 bool QueryGenericDirectInputIsMouse(void *device) {
@@ -437,8 +440,28 @@ bool QueryGenericDirectInputIsMouse(void *device) {
     return false;
   }
   const DWORD type = GET_DIDEVICE_TYPE(caps.dwDevType);
-  return type == kGenericDirectInputDevTypeMouse7 ||
-         type == kGenericDirectInputDevTypeMouse8;
+  if (type != kGenericDirectInputDevTypeMouse7 &&
+      type != kGenericDirectInputDevTypeMouse8) {
+    return false;
+  }
+  // 绝对轴模式下 lZ 是累计值：清零会在光标进出浮窗时制造两次大跳变。只处理默认的
+  // 相对模式；查不到属性（老实现不支持）按缺省相对处理。
+  DIPROPDWORD mode{};
+  mode.diph.dwSize = sizeof(mode);
+  mode.diph.dwHeaderSize = sizeof(mode.diph);
+  mode.diph.dwObj = 0;
+  mode.diph.dwHow = DIPH_DEVICE;
+  __try {
+    const auto get_property = reinterpret_cast<GenericDirectInputGetPropertyFn>(
+        VtableSlot(device, 5));
+    if (get_property != nullptr &&
+        SUCCEEDED(get_property(device, DIPROP_AXISMODE, &mode.diph)) &&
+        mode.dwData == DIPROPAXISMODE_ABS) {
+      return false;
+    }
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+  }
+  return true;
 }
 
 bool GenericDirectInputDeviceIsMouse(void *device) {
@@ -463,13 +486,21 @@ bool GenericDirectInputDeviceIsMouse(void *device) {
   ReleaseSRWLockShared(&g_generic_direct_input_kind_lock);
   const bool mouse = QueryGenericDirectInputIsMouse(device);
   AcquireSRWLockExclusive(&g_generic_direct_input_kind_lock);
+  GenericDirectInputKind *slot = nullptr;
   for (auto &kind : g_generic_direct_input_kinds) {
-    if (kind.device == nullptr || kind.device == device) {
-      kind.device = device;
-      kind.mouse = mouse;
+    if (kind.device == device || (slot == nullptr && kind.device == nullptr))
+      slot = &kind;
+    if (kind.device == device)
       break;
-    }
   }
+  if (slot == nullptr) {
+    // 满了按轮转覆盖：否则此后每格滚轮都要重新 GetCapabilities。
+    slot = &g_generic_direct_input_kinds[g_generic_direct_input_kind_next];
+    g_generic_direct_input_kind_next =
+        (g_generic_direct_input_kind_next + 1) % kGenericDirectInputKindCapacity;
+  }
+  slot->device = device;
+  slot->mouse = mouse;
   ReleaseSRWLockExclusive(&g_generic_direct_input_kind_lock);
   return mouse;
 }
@@ -522,7 +553,8 @@ void StripHostOverlayWheelFromMouseState(void *device, DWORD bytes,
     } __except (EXCEPTION_EXECUTE_HANDLER) {
     }
   }
-  NoteGenericDirectInputWheel(L"state", wheel, mouse, overlay, stripped);
+  if (mouse)
+    NoteGenericDirectInputWheel(L"state", wheel, mouse, overlay, stripped);
 }
 
 // 缓冲事件：只删鼠标设备上的 DIMOFS_Z 事件，其余事件保持原顺序。
@@ -555,7 +587,7 @@ void StripHostOverlayWheelFromDeviceData(void *device, DWORD object_bytes,
     }
   } __except (EXCEPTION_EXECUTE_HANDLER) {
   }
-  if (has_wheel)
+  if (has_wheel && mouse)
     NoteGenericDirectInputWheel(L"buffered", 0, mouse, overlay, removed != 0);
 }
 
@@ -1076,6 +1108,10 @@ void ProbeGenericDirectInputDevice(void *direct_input) {
 }
 
 void ProbeGenericDirectInputImplementations() {
+  // 引擎主窗出现 = 静态初始化与 dinput 的 DllMain 早已完成（与 exe 直取 exporter 同一
+  // 判据，BUG-2118）；在那之前从 worker 线程建 DirectInput 对象可能撞上加载期。
+  if (FindGameMainWindow() == nullptr)
+    return;
   static bool probed_dinput8 = false;
   static bool probed_dinput_a = false;
   static bool probed_dinput_w = false;
@@ -1084,22 +1120,26 @@ void ProbeGenericDirectInputImplementations() {
   if (!probed_dinput8 && dinput8 != nullptr &&
       g_generic_dinput8_factory_hooked.load(std::memory_order_relaxed)) {
     probed_dinput8 = true;
-    // IID_IDirectInput8W = BF798031-483A-4DA2-AA99-5D64ED369700。
-    static constexpr GUID kDirectInput8W = {
-        0xbf798031u,
-        0x483au,
-        0x4da2u,
-        {0xaau, 0x99u, 0x5du, 0x64u, 0xedu, 0x36u, 0x97u, 0x00u}};
+    // A/W 设备可能是两张 vtable，各探一次。
+    // IID_IDirectInput8A = BF798030-…，IID_IDirectInput8W = BF798031-…。
+    static constexpr GUID kDirectInput8Interfaces[] = {
+        {0xbf798030u, 0x483au, 0x4da2u,
+         {0xaau, 0x99u, 0x5du, 0x64u, 0xedu, 0x36u, 0x97u, 0x00u}},
+        {0xbf798031u, 0x483au, 0x4da2u,
+         {0xaau, 0x99u, 0x5du, 0x64u, 0xedu, 0x36u, 0x97u, 0x00u}},
+    };
     const auto create = reinterpret_cast<GenericDirectInput8CreateFn>(
         GetProcAddress(dinput8, "DirectInput8Create"));
-    void *direct_input = nullptr;
-    const bool ok = create != nullptr &&
-                    SUCCEEDED(create(instance, 0x0800, kDirectInput8W,
-                                     &direct_input, nullptr));
-    if (ok)
-      ProbeGenericDirectInputDevice(direct_input);
-    HookLogLine(ok ? L"dinput.probe factory=DirectInput8Create ok=1"
-                   : L"dinput.probe factory=DirectInput8Create ok=0");
+    for (const GUID &iid : kDirectInput8Interfaces) {
+      void *direct_input = nullptr;
+      const bool ok = create != nullptr &&
+                      SUCCEEDED(create(instance, 0x0800, iid, &direct_input,
+                                       nullptr));
+      if (ok)
+        ProbeGenericDirectInputDevice(direct_input);
+      HookLogLine(ok ? L"dinput.probe factory=DirectInput8Create ok=1"
+                     : L"dinput.probe factory=DirectInput8Create ok=0");
+    }
   }
   HMODULE dinput = GetModuleHandleW(L"dinput.dll");
   if (dinput == nullptr)
