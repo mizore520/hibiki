@@ -1673,14 +1673,12 @@ function constructYomitanGlossaries(entryIndex) {
     return renderer.render(window.lookupEntries[entryIndex], {
         dictionaryStyles: window.dictionaryStyles || {},
         hiddenDictionaryNames: window.hiddenDictionaryNames || [],
-        compactGlossaries: window.compactGlossariesAnki === true,
-        compactGlossaryCss: COMPACT_GLOSSARIES_ANKI,
         parseTags,
         numericTagPattern: NUMERIC_TAG,
         isRedirectGlossary,
-        getNaturalImageSize: (dictionary, path) => definitionImageNaturalSizes.get(
-            definitionImageNaturalSizeKey(dictionary, path),
-        ),
+        getNaturalImageSize: (dictionary, path) =>
+            definitionImageNaturalSizes.get(definitionImageNaturalSizeKey(dictionary, path)) ||
+            currentExportImageSizes?.get(exportImageSizeKey(dictionary, path)) || null,
         getMediaFilename: (dictionary, path) => (
             window.useAnkiConnect || window.embedMedia
                 ? getMediaFilename(dictionary, path)

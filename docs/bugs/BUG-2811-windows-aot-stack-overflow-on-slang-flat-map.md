@@ -1,4 +1,4 @@
-## BUG-2268 · Windows AOT 编译 Slang 巨型动态映射时栈溢出
+## BUG-2811 · Windows AOT 编译 Slang 巨型动态映射时栈溢出
 - **报告**：2026-08-13（同步作者最新版并保留个人文案后的 Release 候选构建）
 - **真实性**：✅ 真 bug。`gen_snapshot.exe` 以 Windows 状态码 `-1073741571`
   （stack overflow）退出；Slang 默认单文件并生成 57,766 项动态键 flat map，生成的

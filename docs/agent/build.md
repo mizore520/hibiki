@@ -16,7 +16,7 @@
 
 `tool/bootstrap.sh`（Windows：`.\tool\bootstrap.ps1`）一条命令完成：`flutter pub get` → `ci/apply-patches.sh`。`melos bootstrap` 经 post hook 做同样两步。然后：
 
-### Windows 候选包唯一入口（BUG-2269）
+### Windows 候选包唯一入口（BUG-2812）
 
 `flutter build windows --release` 的输出只是基础构建目录，**不得直接作为候选版交付**：它不会自动包含正式 Windows 包后置组装的 ffmpeg/ffprobe、VC++ CRT、双架构 Galgame helper、Mihon runtime 与 Magpie 离线包。候选版必须从仓库根运行：
 

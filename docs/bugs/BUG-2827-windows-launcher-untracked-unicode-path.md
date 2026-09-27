@@ -1,4 +1,4 @@
-## BUG-2548 · 启动器遇到未跟踪中文路径时无法计算源码状态
+## BUG-2827 · 启动器遇到未跟踪中文路径时无法计算源码状态
 - **报告**：2026-09-19，用户运行原工作区 BAT 后提示 Cannot compute the source state，尚未进入编译。
 - **真实性**：✅ 真 bug。`tool/get_windows_build_state.ps1` 的 untracked `ls-files` 未关闭 Git 路径转义，中文文件名变成带引号的八进制字符串，传入 `GetFullPath` 报 Illegal characters in path。实际触发文件是本机独立识别工具的未跟踪中文 BAT。关闭转义后，定向测试进一步复现 Windows PowerShell 按传统控制台编码误解码 Git UTF-8 路径的问题。
 - **[x] ① 已修复** — untracked 路径查询和 tracked 查询统一使用 `core.quotePath=false`；显式以 UTF-8 解码 Git 输出，脚本保存 UTF-8 BOM 以保证 Windows PowerShell 5.1 正确读取中文排除规则。启动 BAT 的三个状态查询不再隐藏 stderr。修复提交见本文件 Git 历史。

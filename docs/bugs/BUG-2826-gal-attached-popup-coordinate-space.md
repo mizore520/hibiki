@@ -1,4 +1,4 @@
-## BUG-2547 · 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡
+## BUG-2826 · 贴附查词弹窗混用游戏和主窗口DPI导致偏移与遮挡
 - **报告**：2026-09-19（用户：校准层查词弹窗位置不合理，希望复用已有内嵌定位）
 - **真实性**：✅ `AttachedTextSurfaceWindow::EmitLookupEvent` 提供呈现画面的物理屏幕矩形，旧 `FlutterWindow::RegisterGalHookTextChannel` 按目标窗口 DPI 转成逻辑单位；DPI-unaware 游戏可返回 96，而 `GlobalLookupController._lookupExternal` 又乘主窗口 DPR。已有日志中 `(1401,1374,44×39)` 被乘 1.75 后将落点算到 `(2452,2480)`。同时 attached 使用 desktop route，旧根卡没有 word anchor，也未将游戏呈现视口传给既有避让算法。
 - **[x] ① 已实现候选** — native 随当前命中冻结物理字框与 `destination_viewport_screen`，沿 typed hit → attached controller → 现有 global lookup 传递不可变参数。物理坐标直接进入 `showAt`，用该显示器回报的 DPR 转换根卡 CSS anchor；视口大小与相对原点传入已有 `computeFrameRect`，复用上下避让和边缘约束。旧浮窗逻辑矩形兼容，普通桌面查词不继承 galCard 的尺寸上限或视口。源码提交和最终验证见本批交接。

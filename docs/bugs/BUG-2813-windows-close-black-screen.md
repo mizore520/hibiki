@@ -1,4 +1,4 @@
-## BUG-2270 · Windows关闭时主窗口黑屏延迟
+## BUG-2813 · Windows关闭时主窗口黑屏延迟
 - **报告**：2026-08-16（用户报告，作者更新合入后出现）
 - **真实性**：✅ 真 bug（`fushi/windows/runner/flutter_window.cpp:2573`、
   `fushi/lib/main.dart:705`）。Windows runner 启用了

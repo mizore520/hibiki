@@ -1,4 +1,4 @@
-## BUG-2532 · 贴附查词在词典关闭后等待定时器恢复，期间点击透传
+## BUG-2817 · 贴附查词在词典关闭后等待定时器恢复，期间点击透传
 - **报告**：2026-09-18（用户：普通查词连续成功后偶发点击推进台词，稍后又能查词）
 - **真实性**：✅ 源码确认存在恢复窗口；尚不能证明用户每次失败都来自此窗口。`fushi/windows/runner/global_lookup_window.cpp:1002` 的 `ReleaseDismissHooks` 释放 popup 的 singleton hook；旧实现没有在释放完成后唤醒 attached，依靠 `attached_text_surface_window.cpp:31` 的 500 ms health timer 恢复，期间点击可透传。错位 miss 是独立可能原因。
 - **[x] ① 已修复** — 本地候选提交 `88bf7d6d93`：保留被 popup 暂占的 attached HWND 候选；popup 关闭、匹配 up 和 sampled tail 真正中性后投递 rearm 消息，attached 重走原 admission/握手/快照发布。snapshot 临时撤销不丢候选；窗口销毁退役候选；自身 Hide 不触发自唤醒。

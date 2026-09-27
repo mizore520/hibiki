@@ -3101,6 +3101,19 @@ function applyNaturalImageSize(data, dictionary, getNaturalImageSize) {
         return {...data, width: naturalSize.width, height: naturalSize.height};
     }
 
+    // A single declared dimension is a bound, not an invented 100px second
+    // dimension. Use the measured ratio even when the mismatch is exactly at
+    // the general 1.5x tolerance boundary.
+    const hasWidth = hasPreferredWidth || typeof data.width === 'number';
+    const hasHeight = hasPreferredHeight || typeof data.height === 'number';
+    if (hasWidth !== hasHeight) {
+        const fittedSize = fitNaturalImageInsideDeclaredBounds(data, naturalSize);
+        const result = {...data, width: fittedSize.width, height: fittedSize.height};
+        delete result.preferredWidth;
+        delete result.preferredHeight;
+        return result;
+    }
+
     const width = typeof data.width === 'number' ? data.width : 100;
     const height = typeof data.height === 'number' ? data.height : 100;
     const inverseAspectRatio = (
@@ -3229,6 +3242,32 @@ StructuredContentGenerator.prototype.createDefinitionImage = function(data, dict
                 img.width = natural.width;
                 img.height = natural.height;
             }
+        }
+    }
+    // A timed-out media probe must not turn a height-only em image into the
+    // vendored generator's synthetic 100em-wide strip. Let the image's own
+    // aspect ratio determine its width when it eventually loads.
+    if (
+        data?.sizeUnits === 'em' &&
+        typeof data.height === 'number' && data.height > 0 &&
+        typeof data.width !== 'number' &&
+        typeof data.preferredWidth !== 'number' &&
+        typeof data.preferredHeight !== 'number' &&
+        !(natural && Number.isFinite(natural.width) && natural.width > 0 &&
+          Number.isFinite(natural.height) && natural.height > 0)
+    ) {
+        const container = node.children?.[0];
+        const image = findGlossImage(node);
+        if (container && image) {
+            container.style.width = 'auto';
+            const sizer = container.children?.[0];
+            if (sizer) sizer.style.paddingTop = '0';
+            node.dataset.hasAspectRatio = 'false';
+            image.removeAttribute('width');
+            image.removeAttribute('height');
+            image.style.width = 'auto';
+            image.style.height = `${data.height}em`;
+            image.style.position = 'static';
         }
     }
     return node;

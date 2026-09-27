@@ -1,4 +1,4 @@
-## BUG-2544 · 词典占用鼠标时贴附层拒绝制卡截图
+## BUG-2823 · 词典占用鼠标时贴附层拒绝制卡截图
 
 - **报告**：2026-09-19，用户在普通贴附查词弹窗中制卡时出现 `the attached glyph surface is no longer current`。
 - **根因确认**：现场日志在失败前记录 `mouseHookBusy / low_level_mouse_arm_failed:singleton_owned_by_other_hwnd`。`attached_text_surface_window.cpp` 在词典窗口持有单例鼠标 Hook 时隐藏字框、保留当前配置与正文；`GalAttachedTextController.acquireMiningCaptureLease` 却只接受 activeAttached（另有后台校准例外），错误地把输入准入与截图隐藏屏障绑定。

@@ -1,4 +1,4 @@
-## BUG-2534 · 后台校准采样未同步最新台词
+## BUG-2819 · 后台校准采样未同步最新台词
 - **报告**：2026-09-18（用户：多句校准时删除样本或停留较久后，采集稳定样本失败；重启后暂时恢复）
 - **真实性**：✅ 真 bug。样本对话框占据前台时，native surface 进入 `suspended/targetBackground`；`GalAttachedTextController.syncSession` 仍在 `gal_attached_text_controller.dart:501` 更新 `_latestSourceText`，但旧的 `_pushLatestTextIfActive` 只在前台附着、实时校准或已有 capture lease 时推送（`:556`、修复前 `:1917`）。新台词因此没有同步至 hidden surface，`_sentSourceText != _latestSourceText`；采集 lease 在 `:1652-1660` 严格拒绝不同代文本。上层采集入口把这个条件归为失败，用户只看到无法采样。重启重新激活前台 surface 会推送文本，故表面恢复。
 - **[x] ① 已实现候选** — `gal_attached_text_controller.dart:_pushLatestTextIfActive` 只在已确认的 `suspended/targetBackground`、已有 attached claim 与 active variant 的后台校准采样态，额外将最新文本 stage 到 hidden native surface。仍保留 `canCaptureCalibrationSample`、精确 generation 和 lease token 的全部限制；没有加入延迟、重试或放宽其它 suspended 状态。`gal_lookup_calibration_capture.dart` 与 `gal_hook_text_overlay_controller.dart` 同时将采集失败改为不含台词、路径、HWND 或 native 错误文本的分类异常，供 UI 给出安全的恢复提示。新版真实游戏验收仍待用户构建后完成。

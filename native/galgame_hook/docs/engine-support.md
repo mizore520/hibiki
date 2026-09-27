@@ -29,6 +29,7 @@
 | `unreal_iostore` | Unreal Engine (IoStore) | `implemented_unverified` | luna_pc_hooks (implemented_unverified) | xaudio2_or_directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
 | `aos_sfa` | AOS / SFA (Princess Sugar, Atelier Kaguya family) | `implemented_unverified` | — | xaudio2_or_directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
 | `unity_mono` | Unity (Mono runtime) | `implemented_unverified` | luna_hook (implemented_unverified) | xaudio2_or_directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
+| `softpal` | Softpal (ディメンション凸ラバース!! exact build) | `implemented_unverified` | native_text_show (implemented_unverified) | softpal_pac_ogg_resource (implemented_unverified) | 0 |
 
 ## 无 OCR 内嵌查词矩阵
 
@@ -41,7 +42,7 @@
 | `tyrano_nwjs` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `unity_il2cpp` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `elf_ai6` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
-| `reallive` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
+| `reallive` | engine_exact_layout、attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `bgi_ethornell` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `catsystem2` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `malie_libp` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
@@ -71,7 +72,7 @@
 - `elf_ai6` geometry：The calibrated fallback is implemented offline; positioned GDI lineage has not been admitted for this engine.
   - verified shield：The generic standard-surface shield is present, without the required real-build transaction corpus.
   - risky left click：Risk is accepted unconditionally (BUG-2154 removed the per-executable consent gate, which was unsatisfiable: the generic shield can never reach Verified); allow_risk still crosses the IPC contract, but no measured real-build click-leak rate is recorded.
-- `reallive` geometry：The calibrated fallback is implemented offline; positioned GDI lineage has not been admitted for this engine.
+- `reallive` geometry：The personal Little Busters! EX/Luca adapter publishes an exact-layout provider under the RealLive family. This is specific to that measured game/build and is not a general RealLive geometry claim. The calibrated fallback is implemented offline; full lookup/card acceptance remains unverified.
   - verified shield：The generic standard-surface shield is present, without the required real-build transaction corpus.
   - risky left click：Risk is accepted unconditionally (BUG-2154 removed the per-executable consent gate, which was unsatisfiable: the generic shield can never reach Verified); allow_risk still crosses the IPC contract, but no measured real-build click-leak rate is recorded.
 - `bgi_ethornell` geometry：The calibrated fallback is implemented offline; positioned GDI/DWrite lineage has not been admitted for this engine.
@@ -1011,6 +1012,47 @@ Tests：`tests/aos_sfa_adapter_test.cpp`、`../../fushi/test/mining/aos_sfa_pair
 Fixtures：`tests/fixtures/unity_mono_replay.json`
 
 Tests：`tests/unity_mono_adapter_test.cpp`、`../../fushi/test/mining/unity_mono_pairing_test.dart`
+
+### Softpal (ディメンション凸ラバース!! exact build) (`softpal`)
+
+- 状态：`implemented_unverified`
+- 别名：Pal、Softpal
+- 家族：`softpal`（Measured Pal.dll 1.10.0.0 build; no sibling title admitted）
+- 当前 adapter：`hook/adapters/softpal_adapter.inc`
+- 进程策略：launch=`generic_launch_available`，attach=`generic_attach_available`，follow-child=`false`
+
+识别签名（所有非空项均带真实样本或运行时观察证据）：
+
+- `executable_names`：totsulover.exe；证据：real_sample — Local game executable inspected 2026-09-26; name is only a catalogue field; adapter requires exact SHA-256.
+- `pe_architectures`：x86；证据：real_sample — totsulover.exe PE machine 0x14c, measured 2026-09-26
+- `directory_files_all`：data.pac、voice.pac、patch.pac、dll/Pal.dll；证据：real_sample — Original game directory inventory and PAC index structural validation 2026-09-26
+- `pe_imports`：Pal.dll；证据：real_sample — Measured totsulover.exe import table 2026-09-26
+- `resource_extensions`：.pac、.ogg；证据：real_sample — voice.pac has 22,135 OGG index entries; patch.pac has 116 OGG overrides, measured locally 2026-09-26
+- `hashes`：a2d14820e5c63520084565768ab8f14f7c356aad623de2e313b12c14bae83688、bd9360c130e366759b1b5b7d37c103dc0d064f0cded2545252f504c18d9ff235；证据：real_sample — totsulover.exe and dll/Pal.dll SHA-256, measured 2026-09-26; only EXE hash is the adapter admission gate
+
+文本能力：
+
+- `native_text_show`：`implemented_unverified` — Static SCRIPT.SRC inspection found distinct call-2 and call-15 dialogue paths; EXE registration maps call 15 to RVA 0x6ea60. User screenshots show the previous candidate's dedicated thread capturing call-2 text and resource audio, while call-15 text remains absent because that candidate hooked call 16. The corrected hook is not yet runtime verified.
+- codepage：932
+- 线程提示：When the exact-build Softpal adapter is ready, only its Softpal TextShow thread is offered; it emits dialogue body and event-owned OGG where present.
+
+音频优先级：
+
+1. `softpal_pac_ogg_resource` — `implemented_unverified`；格式：ogg_vorbis；clean voice：是
+
+真实样本证据：
+
+
+已知限制：
+
+- The prior candidate has user screenshots of selected Softpal text and one ready resource-audio line; this call-15 revision, matching playback, and Anki card E2E remain unverified.
+- 14 script voice keys reference OGG members absent from all PAC indexes in this measured install; those lines remain without audio.
+- Only the exact measured executable, data.pac, Pal.dll SHA-256 values and both text-display prologues are admitted; other Softpal versions are not covered.
+- In-game word geometry is not implemented.
+
+Fixtures：`tests/fixtures/softpal_replay.json`
+
+Tests：`tests/softpal_adapter_test.cpp`、`../../fushi/test/mining/galgame_audio_test.dart`
 
 ## 状态定义
 

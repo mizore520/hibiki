@@ -1,4 +1,4 @@
-## BUG-2269 · Windows 候选包可绕过完整运行组件组装与验证
+## BUG-2812 · Windows 候选包可绕过完整运行组件组装与验证
 - **报告**：2026-08-14（用户：字幕候选版过滤正常但制卡报 `ffmpeg launch failed: errorCode=2`）
 - **真实性**：✅ 真 bug。`flutter build windows --release` 只产基础 bundle；正式流程在 `.github/workflows/release-desktop.yml` 后续步骤才复制 ffmpeg/ffprobe、CRT、Mihon、Magpie 与 Galgame helper。交付本地基础 Release 目录可完全绕过这些门。既有 `tool/package_windows_runtime.ps1` 只装核心本地运行组件，也没有完整候选清单/ready 标记；结果是 EXE 能启动、字幕功能能测，到真实制卡首次启动 ffmpeg 才失败。
 - **[x] ① 已修复** — 新增 `tool/build_windows_candidate.ps1` 作为 Windows 候选唯一入口，统一执行基础构建、核心 runtime、Mihon、Magpie 和最终验证；基础 Release 只作为输入，候选在独立 `fushi/build/windows-candidate/Release` 重建，既不覆盖运行中的开发版，也不会把上次半组装目录沿用下来。新增 `tool/verify_windows_candidate.ps1` 对主程序、媒体工具、torrent、CRT、Mihon、Magpie、双架构 helper fail-closed，并只在全部通过后写 `fushi-candidate-manifest.json`。正式 Windows release workflow 同样调用该验证器；旧成功标记会在任何新一轮组包开始时先删除，避免失败后遗留假绿。

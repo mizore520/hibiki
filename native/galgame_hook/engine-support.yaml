@@ -106,8 +106,8 @@
         "engine_id": "reallive",
         "geometry": {
           "status": "implemented_unverified",
-          "providers": ["attached_calibrated"],
-          "evidence": "The calibrated fallback is implemented offline; positioned GDI lineage has not been admitted for this engine."
+          "providers": ["engine_exact_layout", "attached_calibrated"],
+          "evidence": "The personal Little Busters! EX/Luca adapter publishes an exact-layout provider under the RealLive family. This is specific to that measured game/build and is not a general RealLive geometry claim. The calibrated fallback is implemented offline; full lookup/card acceptance remains unverified."
         },
         "verified_shield": {
           "status": "implemented_unverified",
