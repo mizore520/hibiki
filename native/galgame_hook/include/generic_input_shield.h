@@ -374,27 +374,31 @@ inline InputShieldFilterResult FilterDirectInputBufferedLeftButton(
   return out;
 }
 
-// BUG-2738：光标压在宿主贴在游戏上的浮窗时，那一格滚轮属于浮窗。DirectInput 鼠标的
-// lZ 在 DIMOUSESTATE / DIMOUSESTATE2（16 / 20 字节）里都是第三个 LONG（DIMOFS_Z = 8）。
-// 其它布局不认识，原样返回。返回是否真的清掉了一格滚轮。
-constexpr uint32_t kDirectInputMouseWheelOffset = 8u;
+// BUG-2738：光标压在宿主贴在游戏上的浮窗时，那一格滚轮属于浮窗。滚轮轴在数据里的位置
+// 由设备当前数据格式决定：标准 DIMOUSESTATE(2) 在字节 8（DIMOFS_Z），KiriKiri 的滚轮
+// 设备用只含 Z 轴的 4 字节自定义格式，在字节 0。调用方向设备查出偏移后传进来，这里只做
+// 数据操作。
+constexpr uint32_t kDirectInputMouseWheelOffset = 8u;  // DIMOFS_Z（标准格式）
 
-inline bool ClearDirectInputMouseStateWheel(uint8_t *state, size_t bytes) {
-  if (state == nullptr || (bytes != 16u && bytes != 20u))
+// 即时状态：把 [offset, offset+4) 的 LONG 清零。越界或本来就是 0 返回 false。
+inline bool ClearDirectInputStateAxis(uint8_t *state, size_t bytes,
+                                      uint32_t offset) {
+  if (state == nullptr || static_cast<size_t>(offset) + sizeof(int32_t) > bytes)
     return false;
-  int32_t wheel = 0;
-  std::memcpy(&wheel, state + kDirectInputMouseWheelOffset, sizeof(wheel));
-  if (wheel == 0)
+  int32_t value = 0;
+  std::memcpy(&value, state + offset, sizeof(value));
+  if (value == 0)
     return false;
-  wheel = 0;
-  std::memcpy(state + kDirectInputMouseWheelOffset, &wheel, sizeof(wheel));
+  value = 0;
+  std::memcpy(state + offset, &value, sizeof(value));
   return true;
 }
 
-// 缓冲事件：DIDEVICEOBJECTDATA 首字段 dwOfs。只删 DIMOFS_Z，其余事件保持原顺序；
-// stride 由调用方给（DX3 / DX8 结构大小不同）。返回删掉的条数。
-inline size_t RemoveDirectInputWheelEvents(uint8_t *events, size_t stride,
-                                           uint32_t *event_count) {
+// 缓冲事件：DIDEVICEOBJECTDATA 首字段 dwOfs 是数据格式内偏移。只删该偏移的事件，其余
+// 保持原顺序；stride 由调用方给（DX3 / DX8 结构大小不同）。返回删掉的条数。
+inline size_t RemoveDirectInputAxisEvents(uint8_t *events, size_t stride,
+                                          uint32_t *event_count,
+                                          uint32_t offset) {
   if (events == nullptr || event_count == nullptr ||
       stride < sizeof(uint32_t) * 2u) {
     return 0;
@@ -402,9 +406,9 @@ inline size_t RemoveDirectInputWheelEvents(uint8_t *events, size_t stride,
   const size_t count = *event_count;
   size_t write = 0;
   for (size_t read = 0; read < count; ++read) {
-    uint32_t offset = 0;
-    std::memcpy(&offset, events + read * stride, sizeof(offset));
-    if (offset == kDirectInputMouseWheelOffset)
+    uint32_t event_offset = 0;
+    std::memcpy(&event_offset, events + read * stride, sizeof(event_offset));
+    if (event_offset == offset)
       continue;
     if (write != read)
       std::memmove(events + write * stride, events + read * stride, stride);
@@ -414,14 +418,14 @@ inline size_t RemoveDirectInputWheelEvents(uint8_t *events, size_t stride,
   return count - write;
 }
 
-inline bool DirectInputEventsContainWheel(const uint8_t *events, size_t stride,
-                                          size_t count) {
+inline bool DirectInputEventsContainAxis(const uint8_t *events, size_t stride,
+                                         size_t count, uint32_t offset) {
   if (events == nullptr || stride < sizeof(uint32_t) * 2u)
     return false;
   for (size_t i = 0; i < count; ++i) {
-    uint32_t offset = 0;
-    std::memcpy(&offset, events + i * stride, sizeof(offset));
-    if (offset == kDirectInputMouseWheelOffset)
+    uint32_t event_offset = 0;
+    std::memcpy(&event_offset, events + i * stride, sizeof(event_offset));
+    if (event_offset == offset)
       return true;
   }
   return false;

@@ -127,8 +127,10 @@ void TestRawInputPreservesMovementWheelAndOtherButtons() {
 }
 
 void TestHostOverlayWheelIsRemovedOnlyFromTheWheelAxis() {
-  // BUG-2738: DIMOUSESTATE / DIMOUSESTATE2 carry lZ at byte 8.  Only that axis
-  // is cleared; movement and buttons stay exactly as sampled.
+  // BUG-2738: the wheel axis sits wherever the device's current data format
+  // put it. Standard DIMOUSESTATE(2) has lZ at byte 8; KiriKiri's wheel device
+  // uses a 4-byte custom format holding only Z at byte 0 (real game log:
+  // GetDeviceState bytes=4). Only that axis is cleared.
   for (const size_t bytes : {size_t{16}, size_t{20}}) {
     std::array<uint8_t, 20> state{};
     const int32_t x = 7, y = -3, z = 120;
@@ -136,7 +138,8 @@ void TestHostOverlayWheelIsRemovedOnlyFromTheWheelAxis() {
     std::memcpy(state.data() + 4, &y, sizeof(y));
     std::memcpy(state.data() + 8, &z, sizeof(z));
     state[12] = 0x80;  // left button down
-    assert(fushi_voice_hook::ClearDirectInputMouseStateWheel(state.data(), bytes));
+    assert(fushi_voice_hook::ClearDirectInputStateAxis(
+        state.data(), bytes, fushi_voice_hook::kDirectInputMouseWheelOffset));
     int32_t out = -1;
     std::memcpy(&out, state.data() + 8, sizeof(out));
     assert(out == 0);
@@ -145,30 +148,41 @@ void TestHostOverlayWheelIsRemovedOnlyFromTheWheelAxis() {
     std::memcpy(&out, state.data() + 4, sizeof(out));
     assert(out == y);
     assert(state[12] == 0x80);
-    // Nothing to clear is reported as such.
-    assert(!fushi_voice_hook::ClearDirectInputMouseStateWheel(state.data(), bytes));
+    assert(!fushi_voice_hook::ClearDirectInputStateAxis(state.data(), bytes, 8u));
   }
-  // Unknown layouts (keyboard 256 bytes, joystick 80) are never touched.
-  std::array<uint8_t, 256> keyboard{};
-  keyboard[8] = 0x80;
-  assert(!fushi_voice_hook::ClearDirectInputMouseStateWheel(keyboard.data(), 256));
-  assert(keyboard[8] == 0x80);
+  // KiriKiri wheel-only format: 4 bytes, Z at offset 0.
+  std::array<uint8_t, 4> wheel_only{};
+  const int32_t delta = -120;
+  std::memcpy(wheel_only.data(), &delta, sizeof(delta));
+  assert(fushi_voice_hook::ClearDirectInputStateAxis(wheel_only.data(), 4, 0u));
+  int32_t cleared = -1;
+  std::memcpy(&cleared, wheel_only.data(), sizeof(cleared));
+  assert(cleared == 0);
+  // An offset that does not fit the returned state is never touched.
+  std::memcpy(wheel_only.data(), &delta, sizeof(delta));
+  assert(!fushi_voice_hook::ClearDirectInputStateAxis(wheel_only.data(), 4, 8u));
+  assert(!fushi_voice_hook::ClearDirectInputStateAxis(wheel_only.data(), 3, 0u));
 
   std::array<BufferedEvent, 4> events{{{0u, 5u, 1u}, {8u, 120u, 2u},
                                        {12u, 0x80u, 3u}, {8u, 0xFFFFFF88u, 4u}}};
   auto *bytes = reinterpret_cast<uint8_t *>(events.data());
-  assert(fushi_voice_hook::DirectInputEventsContainWheel(
-      bytes, sizeof(BufferedEvent), events.size()));
+  assert(fushi_voice_hook::DirectInputEventsContainAxis(
+      bytes, sizeof(BufferedEvent), events.size(), 8u));
   uint32_t count = static_cast<uint32_t>(events.size());
-  assert(fushi_voice_hook::RemoveDirectInputWheelEvents(
-             bytes, sizeof(BufferedEvent), &count) == 2u);
+  assert(fushi_voice_hook::RemoveDirectInputAxisEvents(
+             bytes, sizeof(BufferedEvent), &count, 8u) == 2u);
   assert(count == 2u);
   assert(events[0].dwOfs == 0u && events[0].timestamp == 1u);
   assert(events[1].dwOfs == 12u && events[1].timestamp == 3u);
-  assert(!fushi_voice_hook::DirectInputEventsContainWheel(
-      bytes, sizeof(BufferedEvent), count));
-  assert(fushi_voice_hook::RemoveDirectInputWheelEvents(
-             bytes, sizeof(BufferedEvent), &count) == 0u);
+  assert(!fushi_voice_hook::DirectInputEventsContainAxis(
+      bytes, sizeof(BufferedEvent), count, 8u));
+  // Wheel-only format: the Z events carry offset 0.
+  std::array<BufferedEvent, 2> wheel_events{{{0u, 120u, 5u}, {0u, 120u, 6u}}};
+  uint32_t wheel_count = 2u;
+  assert(fushi_voice_hook::RemoveDirectInputAxisEvents(
+             reinterpret_cast<uint8_t *>(wheel_events.data()),
+             sizeof(BufferedEvent), &wheel_count, 0u) == 2u);
+  assert(wheel_count == 0u);
 }
 
 void TestHostOverlayWheelIsStrippedBeforeDeviceRegistration() {

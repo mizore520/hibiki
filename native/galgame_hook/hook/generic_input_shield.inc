@@ -405,22 +405,32 @@ bool IsStandardDirectInputMouseFormat(LPCDIDATAFORMAT format,
 
 // ── 宿主浮窗下的滚轮（BUG-2738）────────────────────────────────────────────────
 // 引擎经 DirectInput 读滚轮时（KiriKiri 缺省 `-wheel=dinput`），宿主 WH_MOUSE_LL 吞掉的
-// 只是窗口消息；光标压在宿主贴在游戏上的浮窗（直连查词卡片等）时，同一格滚轮仍从
-// DIMOUSESTATE.lZ / DIMOFS_Z 进入游戏并翻页。这里在源头把那一格去掉：只动鼠标设备的
-// Z 轴，只在光标确实压着那种浮窗时，其余字段与左键护盾逻辑不变。
-// 附着前游戏自建的设备没有登记（错过了工厂 hook），所以鼠标身份另按 GetCapabilities
-// 判定并缓存；设备 Release 到 0 时清掉。
-constexpr size_t kGenericMouseStateWheelIndex = 2;  // lX, lY, lZ：DIMOFS_Z == 8
+// 只是窗口消息；光标压在宿主贴在游戏上的浮窗时，同一格滚轮仍从 DirectInput 进入游戏并
+// 翻页。这里在源头把那一格去掉：只动鼠标设备的 Z 轴，只在光标确实压着那种浮窗时，其余
+// 字段与左键护盾逻辑不变。
+//
+// Z 轴在数据里的位置由设备**当前**数据格式决定，不能按大小猜：标准 DIMOUSESTATE(2)
+// 在字节 8，KiriKiri 的滚轮设备用只含 Z 轴的 4 字节自定义格式（真机 GetDeviceState
+// bytes=4），在字节 0。用 GetObjectInfo(DIPH_BYOFFSET) 按当前格式逐个偏移反查对象类型
+// （EnumObjects 给的是原生格式偏移，对自定义格式不成立），找到 GUID_ZAxis 即缓存。
+// 附着前游戏自建的设备没有登记（错过了工厂 hook），鼠标身份按 GetCapabilities 判定。
+// 缓存在 SetDataFormat 与 Release 到 0 时失效。
 constexpr DWORD kGenericDirectInputDevTypeMouse7 = 2u;     // DIDEVTYPE_MOUSE
 constexpr DWORD kGenericDirectInputDevTypeMouse8 = 0x12u;  // DI8DEVTYPE_MOUSE
+constexpr int32_t kGenericWheelOffsetUnknown = -2;
+constexpr int32_t kGenericWheelOffsetNone = -1;
+constexpr DWORD kGenericWheelOffsetProbeLimit = 64;  // 标准布局 ≤ 20 字节，留足余量
 using GenericDirectInputGetCapabilitiesFn =
     HRESULT(STDMETHODCALLTYPE *)(void *, LPDIDEVCAPS);
 using GenericDirectInputGetPropertyFn =
     HRESULT(STDMETHODCALLTYPE *)(void *, REFGUID, LPDIPROPHEADER);
+using GenericDirectInputGetObjectInfoFn =
+    HRESULT(STDMETHODCALLTYPE *)(void *, void *, DWORD, DWORD);
 
 struct GenericDirectInputKind {
   void *device = nullptr;
   bool mouse = false;
+  int32_t wheel_offset = kGenericWheelOffsetUnknown;
 };
 constexpr size_t kGenericDirectInputKindCapacity = 16;
 GenericDirectInputKind
@@ -444,7 +454,7 @@ bool QueryGenericDirectInputIsMouse(void *device) {
       type != kGenericDirectInputDevTypeMouse8) {
     return false;
   }
-  // 绝对轴模式下 lZ 是累计值：清零会在光标进出浮窗时制造两次大跳变。只处理默认的
+  // 绝对轴模式下 Z 是累计值：清零会在光标进出浮窗时制造两次大跳变。只处理默认的
   // 相对模式；查不到属性（老实现不支持）按缺省相对处理。
   DIPROPDWORD mode{};
   mode.diph.dwSize = sizeof(mode);
@@ -464,6 +474,68 @@ bool QueryGenericDirectInputIsMouse(void *device) {
   return true;
 }
 
+// 当前数据格式里 |offset| 处的对象是不是 Z 轴。A/W 设备的 DIDEVICEOBJECTINSTANCE
+// 大小不同、又不知道是哪一种，按候选 dwSize 逐个试到成功为止；guidType 在两者里都紧跟
+// dwSize，读法一致。
+bool GenericDirectInputOffsetIsZAxis(void *device, DWORD offset) {
+  static constexpr GUID kZAxis = {
+      0xa36d02e2u,
+      0xc9f3u,
+      0x11cfu,
+      {0xbfu, 0xc7u, 0x44u, 0x45u, 0x53u, 0x54u, 0x00u, 0x00u}};
+  static constexpr DWORD kInstanceSizes[] = {
+      sizeof(DIDEVICEOBJECTINSTANCEW), sizeof(DIDEVICEOBJECTINSTANCEA),
+      sizeof(DIDEVICEOBJECTINSTANCE_DX3W), sizeof(DIDEVICEOBJECTINSTANCE_DX3A)};
+  alignas(8) uint8_t buffer[sizeof(DIDEVICEOBJECTINSTANCEW)] = {};
+  __try {
+    const auto get_object = reinterpret_cast<GenericDirectInputGetObjectInfoFn>(
+        VtableSlot(device, 14));
+    if (get_object == nullptr)
+      return false;
+    for (const DWORD size : kInstanceSizes) {
+      memset(buffer, 0, sizeof(buffer));
+      memcpy(buffer, &size, sizeof(size));
+      const HRESULT hr = get_object(device, buffer, offset, DIPH_BYOFFSET);
+      if (hr == DIERR_INVALIDPARAM)
+        continue;  // dwSize 不是这台设备认的那一种，换下一个
+      if (FAILED(hr))
+        return false;  // 这个偏移上没有对象
+      GUID type{};
+      memcpy(&type, buffer + sizeof(DWORD), sizeof(type));
+      return InlineIsEqualGUID(type, kZAxis) != FALSE;
+    }
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+  }
+  return false;
+}
+
+GenericDirectInputKind *FindGenericDirectInputKindLocked(void *device) {
+  for (auto &kind : g_generic_direct_input_kinds) {
+    if (kind.device == device)
+      return &kind;
+  }
+  return nullptr;
+}
+
+GenericDirectInputKind *AdoptGenericDirectInputKindLocked(void *device) {
+  if (auto *existing = FindGenericDirectInputKindLocked(device))
+    return existing;
+  for (auto &kind : g_generic_direct_input_kinds) {
+    if (kind.device == nullptr) {
+      kind = GenericDirectInputKind{};
+      kind.device = device;
+      return &kind;
+    }
+  }
+  // 满了按轮转覆盖：否则此后每格滚轮都要重新查询设备。
+  auto &slot = g_generic_direct_input_kinds[g_generic_direct_input_kind_next];
+  g_generic_direct_input_kind_next =
+      (g_generic_direct_input_kind_next + 1) % kGenericDirectInputKindCapacity;
+  slot = GenericDirectInputKind{};
+  slot.device = device;
+  return &slot;
+}
+
 bool GenericDirectInputDeviceIsMouse(void *device) {
   if (device == nullptr)
     return false;
@@ -476,33 +548,57 @@ bool GenericDirectInputDeviceIsMouse(void *device) {
   if (registered)
     return true;
   AcquireSRWLockShared(&g_generic_direct_input_kind_lock);
-  for (const auto &kind : g_generic_direct_input_kinds) {
-    if (kind.device == device) {
-      const bool mouse = kind.mouse;
-      ReleaseSRWLockShared(&g_generic_direct_input_kind_lock);
-      return mouse;
-    }
+  const auto *cached = FindGenericDirectInputKindLocked(device);
+  if (cached != nullptr) {
+    const bool mouse = cached->mouse;
+    ReleaseSRWLockShared(&g_generic_direct_input_kind_lock);
+    return mouse;
   }
   ReleaseSRWLockShared(&g_generic_direct_input_kind_lock);
   const bool mouse = QueryGenericDirectInputIsMouse(device);
   AcquireSRWLockExclusive(&g_generic_direct_input_kind_lock);
-  GenericDirectInputKind *slot = nullptr;
-  for (auto &kind : g_generic_direct_input_kinds) {
-    if (kind.device == device || (slot == nullptr && kind.device == nullptr))
-      slot = &kind;
-    if (kind.device == device)
-      break;
-  }
-  if (slot == nullptr) {
-    // 满了按轮转覆盖：否则此后每格滚轮都要重新 GetCapabilities。
-    slot = &g_generic_direct_input_kinds[g_generic_direct_input_kind_next];
-    g_generic_direct_input_kind_next =
-        (g_generic_direct_input_kind_next + 1) % kGenericDirectInputKindCapacity;
-  }
-  slot->device = device;
-  slot->mouse = mouse;
+  AdoptGenericDirectInputKindLocked(device)->mouse = mouse;
   ReleaseSRWLockExclusive(&g_generic_direct_input_kind_lock);
   return mouse;
+}
+
+// 当前格式里 Z 轴的偏移；没有则 -1。|candidates| 是本次调用里可能的偏移（即时状态按
+// 4 字节步长覆盖返回的大小；缓冲事件用事件里实际出现的 dwOfs），只在第一次查询时用。
+int32_t GenericDirectInputWheelOffset(void *device, const DWORD *candidates,
+                                      size_t candidate_count) {
+  AcquireSRWLockShared(&g_generic_direct_input_kind_lock);
+  const auto *cached = FindGenericDirectInputKindLocked(device);
+  const int32_t known = cached != nullptr ? cached->wheel_offset
+                                          : kGenericWheelOffsetUnknown;
+  ReleaseSRWLockShared(&g_generic_direct_input_kind_lock);
+  if (known != kGenericWheelOffsetUnknown)
+    return known;
+  int32_t found = kGenericWheelOffsetNone;
+  for (size_t i = 0; i < candidate_count; ++i) {
+    if (candidates[i] < kGenericWheelOffsetProbeLimit &&
+        GenericDirectInputOffsetIsZAxis(device, candidates[i])) {
+      found = static_cast<int32_t>(candidates[i]);
+      break;
+    }
+  }
+  // 只有即时状态那条路覆盖了完整格式，才能把「没找到」记成定论；缓冲事件只看到了
+  // 部分偏移，没找到时不缓存，留给下一次。
+  AcquireSRWLockExclusive(&g_generic_direct_input_kind_lock);
+  auto *kind = AdoptGenericDirectInputKindLocked(device);
+  const bool settled = found != kGenericWheelOffsetNone || candidate_count > 1;
+  if (settled)
+    kind->wheel_offset = found;
+  ReleaseSRWLockExclusive(&g_generic_direct_input_kind_lock);
+  if (settled) {
+    // 每台设备每种格式只记一次：之后命中缓存不再到这里。
+    wchar_t line[128] = {};
+    _snwprintf_s(line, _TRUNCATE,
+                 L"dinput.wheel_offset device=%p offset=%ld probed=%lu", device,
+                 static_cast<long>(found),
+                 static_cast<unsigned long>(candidate_count));
+    HookLogLine(line);
+  }
+  return found;
 }
 
 void ForgetGenericDirectInputKind(void *device) {
@@ -514,105 +610,104 @@ void ForgetGenericDirectInputKind(void *device) {
   ReleaseSRWLockExclusive(&g_generic_direct_input_kind_lock);
 }
 
-// 有界诊断：只在 DirectInput 真读到滚轮时记，每进程最多 24 行。用来回答「游戏的滚轮
-// 到底是不是从 DirectInput 来、来的时候光标是否被判为压着宿主浮窗」（BUG-2738 复测）。
+// 有界诊断：只在鼠标设备上真读到滚轮时记，每进程最多 24 行，回答「滚轮是否从
+// DirectInput 来、光标是否被判为压着宿主浮窗、是否去掉」（BUG-2738 复测）。
 std::atomic<int> g_generic_wheel_diag_budget{24};
-// 盲区诊断：不看有没有滚轮，只证明游戏的 DirectInput 读取确实经过本层 detour。
-// 上一轮只在 lZ!=0 时记，detour 根本没被调到与「游戏没用 DirectInput」同形。
-std::atomic<int> g_generic_dinput_call_diag_budget{12};
 
-void NoteGenericDirectInputCall(const wchar_t *surface, void *device,
-                                DWORD bytes, LONG raw_wheel) {
-  if (g_generic_dinput_call_diag_budget.fetch_sub(
-          1, std::memory_order_relaxed) <= 0)
-    return;
-  const bool mouse = GenericDirectInputDeviceIsMouse(device);
-  wchar_t line[192] = {};
-  _snwprintf_s(line, _TRUNCATE,
-               L"dinput.call %ls device=%p bytes=%lu mouse=%d wheel=%ld "
-               L"thread=%lu",
-               surface, device, static_cast<unsigned long>(bytes),
-               mouse ? 1 : 0, raw_wheel,
-               static_cast<unsigned long>(GetCurrentThreadId()));
-  HookLogLine(line);
-}
-
-void NoteGenericDirectInputWheel(const wchar_t *surface, LONG delta,
-                                 bool mouse, bool overlay, bool stripped) {
+void NoteGenericDirectInputWheel(const wchar_t *surface, int32_t offset,
+                                 LONG delta, bool overlay, bool stripped) {
   if (g_generic_wheel_diag_budget.fetch_sub(1, std::memory_order_relaxed) <= 0)
     return;
   wchar_t line[160] = {};
   _snwprintf_s(line, _TRUNCATE,
-               L"wheel.dinput %ls delta=%ld mouse=%d overlay=%d stripped=%d",
-               surface, delta, mouse ? 1 : 0, overlay ? 1 : 0, stripped ? 1 : 0);
+               L"wheel.dinput %ls offset=%ld delta=%ld overlay=%d stripped=%d",
+               surface, static_cast<long>(offset), delta, overlay ? 1 : 0,
+               stripped ? 1 : 0);
   HookLogLine(line);
 }
 
-// 即时状态：DIMOUSESTATE(16) / DIMOUSESTATE2(20) 的 lZ。先看有没有滚动，再问设备身份
-// 与窗口归属，稳态（没有滚轮）零额外系统调用。
+// 即时状态：先确认是鼠标、查出 Z 轴偏移，再看那一格有没有滚动，最后才问窗口归属；
+// 稳态（没有滚轮）只剩一次缓存查找。
 void StripHostOverlayWheelFromMouseState(void *device, DWORD bytes,
                                          LPVOID state) {
-  if (state == nullptr)
-    return;
-  if (bytes != 16u && bytes != 20u) {
-    NoteGenericDirectInputCall(L"state", device, bytes, 0);
+  if (state == nullptr || bytes < sizeof(LONG) ||
+      !GenericDirectInputDeviceIsMouse(device)) {
     return;
   }
+  DWORD candidates[kGenericWheelOffsetProbeLimit / sizeof(LONG)] = {};
+  size_t count = 0;
+  for (DWORD offset = 0; offset + sizeof(LONG) <= bytes &&
+                         count < sizeof(candidates) / sizeof(candidates[0]);
+       offset += sizeof(LONG)) {
+    candidates[count++] = offset;
+  }
+  const int32_t offset = GenericDirectInputWheelOffset(device, candidates, count);
+  if (offset < 0 || static_cast<DWORD>(offset) + sizeof(LONG) > bytes)
+    return;
   LONG wheel = 0;
   __try {
-    wheel = static_cast<const LONG *>(state)[kGenericMouseStateWheelIndex];
+    memcpy(&wheel, static_cast<const uint8_t *>(state) + offset, sizeof(wheel));
   } __except (EXCEPTION_EXECUTE_HANDLER) {
     return;
   }
-  NoteGenericDirectInputCall(L"state", device, bytes, wheel);
   if (wheel == 0)
     return;
-  const bool mouse = GenericDirectInputDeviceIsMouse(device);
-  const bool overlay = mouse && HostOverlayUnderCursor();
+  const bool overlay = HostOverlayUnderCursor();
   bool stripped = false;
   if (overlay) {
     __try {
-      stripped = fushi_voice_hook::ClearDirectInputMouseStateWheel(
-          static_cast<uint8_t *>(state), bytes);
+      stripped = fushi_voice_hook::ClearDirectInputStateAxis(
+          static_cast<uint8_t *>(state), bytes, static_cast<uint32_t>(offset));
     } __except (EXCEPTION_EXECUTE_HANDLER) {
     }
   }
-  if (mouse)
-    NoteGenericDirectInputWheel(L"state", wheel, mouse, overlay, stripped);
+  NoteGenericDirectInputWheel(L"state", offset, wheel, overlay, stripped);
 }
 
-// 缓冲事件：只删鼠标设备上的 DIMOFS_Z 事件，其余事件保持原顺序。
+// 缓冲事件：只删鼠标设备 Z 轴偏移上的事件，其余事件保持原顺序。
 void StripHostOverlayWheelFromDeviceData(void *device, DWORD object_bytes,
                                          LPDIDEVICEOBJECTDATA events,
                                          LPDWORD event_count) {
   if (events == nullptr || event_count == nullptr ||
-      object_bytes < sizeof(DWORD) * 2u) {
+      object_bytes < sizeof(DWORD) * 2u || *event_count == 0 ||
+      !GenericDirectInputDeviceIsMouse(device)) {
     return;
   }
-  static_assert(DIMOFS_Z == fushi_voice_hook::kDirectInputMouseWheelOffset,
-                "DIMOFS_Z must match the pure helper's wheel offset");
+  int32_t offset = kGenericWheelOffsetNone;
   bool has_wheel = false;
-  bool mouse = false;
   bool overlay = false;
   size_t removed = 0;
   __try {
     auto *base = reinterpret_cast<uint8_t *>(events);
-    has_wheel = fushi_voice_hook::DirectInputEventsContainWheel(
-        base, object_bytes, static_cast<size_t>(*event_count));
-    if (has_wheel) {
-      mouse = GenericDirectInputDeviceIsMouse(device);
-      overlay = mouse && HostOverlayUnderCursor();
+    DWORD candidates[8] = {};
+    size_t count = 0;
+    for (DWORD i = 0; i < *event_count && count < 8; ++i) {
+      DWORD event_offset = 0;
+      memcpy(&event_offset, base + i * object_bytes, sizeof(event_offset));
+      bool seen = false;
+      for (size_t k = 0; k < count; ++k)
+        seen = seen || candidates[k] == event_offset;
+      if (!seen)
+        candidates[count++] = event_offset;
     }
+    offset = GenericDirectInputWheelOffset(device, candidates, count);
+    if (offset >= 0) {
+      has_wheel = fushi_voice_hook::DirectInputEventsContainAxis(
+          base, object_bytes, static_cast<size_t>(*event_count),
+          static_cast<uint32_t>(offset));
+    }
+    if (has_wheel)
+      overlay = HostOverlayUnderCursor();
     if (overlay) {
-      uint32_t count = static_cast<uint32_t>(*event_count);
-      removed = fushi_voice_hook::RemoveDirectInputWheelEvents(
-          base, object_bytes, &count);
-      *event_count = static_cast<DWORD>(count);
+      uint32_t kept = static_cast<uint32_t>(*event_count);
+      removed = fushi_voice_hook::RemoveDirectInputAxisEvents(
+          base, object_bytes, &kept, static_cast<uint32_t>(offset));
+      *event_count = static_cast<DWORD>(kept);
     }
   } __except (EXCEPTION_EXECUTE_HANDLER) {
   }
-  if (has_wheel && mouse)
-    NoteGenericDirectInputWheel(L"buffered", 0, mouse, overlay, removed != 0);
+  if (has_wheel)
+    NoteGenericDirectInputWheel(L"buffered", offset, 0, overlay, removed != 0);
 }
 
 HRESULT STDMETHODCALLTYPE
@@ -625,6 +720,8 @@ Detour_GenericDirectInputSetDataFormat(void *device, LPCDIDATAFORMAT format) {
   const HRESULT result = original(device, format);
   if (FAILED(result))
     return result;
+  // Z 轴偏移按当前格式缓存；格式换了就得重查（BUG-2738）。
+  ForgetGenericDirectInputKind(device);
   uint32_t state_bytes = 0;
   const bool standard = IsStandardDirectInputMouseFormat(format, &state_bytes);
   AcquireSRWLockExclusive(&g_generic_shield_state_lock);
@@ -698,8 +795,6 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceData(
       event_count == nullptr || events == nullptr) {
     return result;
   }
-  NoteGenericDirectInputCall(L"buffered", device, object_bytes,
-                             static_cast<LONG>(*event_count));
   StripHostOverlayWheelFromDeviceData(device, object_bytes, events,
                                       event_count);
   MarkGenericShieldObserved(
