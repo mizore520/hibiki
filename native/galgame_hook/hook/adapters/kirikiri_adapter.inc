@@ -944,6 +944,7 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 			global.fushiLookupSensorStage = "bootstrap";
 			// DLL 每帧按 Win32 判定后只在变化时改写；滚轮接缝会读它，必须先存在。
 			global.fushiLookupHostOverlayUnderCursor = 0;
+			global.fushiLookupWheelTraceBudget = 8;
 			global.fushiLookupCardSeq = 0;
 			// 制卡截图的临时视觉抑制。它与永久 dismiss 分开：不动 submit/Esc fence，
 			// 下一张完整卡片帧会清除此位并恢复。同一事务的成功 token 由 DLL 回读。
@@ -3984,6 +3985,15 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 			{
 				try
 				{
+					// 有界诊断（BUG-2738 复测）：滚轮是否经过这条接缝、当时浮窗标记是多少。
+					if(global.fushiLookupWheelTraceBudget > 0)
+					{
+						global.fushiLookupWheelTraceBudget--;
+						global.fushiLookupNoteError("wheel.seam", %[message:
+							"delta=" + delta + ",overlay=" +
+							global.fushiLookupHostOverlayUnderCursor +
+							",cardSeq=" + global.fushiLookupCardSeq]);
+					}
 					// 光标压在宿主贴在游戏上的浮窗（直连查词卡片等）：这格滚轮属于那个窗口。
 					// DLL 每帧按 Win32 owner/进程判定后写入；这里只消费，不转发。
 					if(global.fushiLookupHostOverlayUnderCursor) return true;
@@ -5285,36 +5295,6 @@ int g_lookup_variant_attempts = 0;
 // 每问一次"为什么"就要改一版、重启一次游戏。而 catch 里本来就握着异常文本，把它写出来
 // 一次就够。今天这条链上四个 bug（_invoke 自递归、PNG 死路、卡片层建不出来、类型不匹配）
 // 全被 `catch(e) {}` + 乐观诊断位藏着，都是这么一轮轮试出来的。
-void HookLogLine(const wchar_t* text) {
-  if (text == nullptr || *text == L'\0') return;
-  wchar_t dir[MAX_PATH] = {};
-  const DWORD n = GetTempPathW(MAX_PATH, dir);
-  if (n == 0 || n >= MAX_PATH) return;
-  std::wstring path = dir;
-  path += L"fushi_galhook.log";
-  HANDLE file = CreateFileW(path.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ,
-                            nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-  if (file == INVALID_HANDLE_VALUE) return;
-  SYSTEMTIME st = {};
-  GetLocalTime(&st);
-  wchar_t stamp[64] = {};
-  _snwprintf_s(stamp, _TRUNCATE, L"%02u:%02u:%02u.%03u pid=%lu ", st.wHour,
-               st.wMinute, st.wSecond, st.wMilliseconds, GetCurrentProcessId());
-  std::wstring line = stamp;
-  line += text;
-  line += L"\r\n";
-  const int bytes = WideCharToMultiByte(CP_UTF8, 0, line.c_str(), -1, nullptr, 0,
-                                        nullptr, nullptr);
-  if (bytes > 1) {
-    std::string utf8(static_cast<size_t>(bytes - 1), '\0');
-    WideCharToMultiByte(CP_UTF8, 0, line.c_str(), -1, utf8.data(), bytes, nullptr,
-                        nullptr);
-    DWORD written = 0;
-    WriteFile(file, utf8.data(), static_cast<DWORD>(utf8.size()), &written,
-              nullptr);
-  }
-  CloseHandle(file);
-}
 
 std::wstring g_lookup_card_path;  // 备路 PNG，恒在 %TEMP%（游戏目录一个字节都不写）
 
@@ -6309,73 +6289,6 @@ void DrainKirikiriLookupInput() {
 }
 
 // 游戏主线程的每帧入口。开关关着、查词区不存在、传感器还没建立时，这里一个字节都不写。
-// 光标下是否压着宿主贴在本游戏上的浮窗：别的进程的可见顶层窗，其 owner 是本进程的窗口
-// （查词直连卡片、Hook 工具条、悬浮歌词都以游戏窗为 owner）。KiriKiri 默认用 DirectInput
-// 读滚轮（`-wheel` 缺省 dinput，tTVPWheelDirectInputDevice），宿主 WH_MOUSE_LL 吞掉的只是
-// 窗口消息，同一格滚轮仍会经 Window.onMouseWheel 翻到下一句（BUG-2738）。这里只回答 Win32
-// 语义「这格滚轮本该属于光标下那个窗口」，不认任何游戏或宿主私有标识。
-// 候选浮窗：别的进程的顶层窗，其 owner 属于本进程。宿主会复用同一个 HWND 反复显隐，
-// 所以每 500 ms 用 EnumWindows 刷新一次候选，每帧只对这几扇窗做可见性与区域命中。
-// 不用 WindowFromPoint：光标落在游戏自己的窗上时它会向同线程窗口同步发 WM_NCHITTEST，
-// 等于每帧在 TJS continuous 回调里重入一次游戏 WndProc。这里的调用都不发窗口消息。
-constexpr size_t kHostOverlayCandidateCap = 16;
-constexpr ULONGLONG kHostOverlayRefreshMs = 500;
-struct HostOverlayCandidates {
-  HWND windows[kHostOverlayCandidateCap] = {};
-  size_t count = 0;
-  ULONGLONG refreshed_at = 0;
-  bool refreshed = false;
-};
-HostOverlayCandidates g_host_overlay_candidates;
-
-BOOL CALLBACK CollectHostOverlayCandidate(HWND window, LPARAM param) {
-  auto* out = reinterpret_cast<HostOverlayCandidates*>(param);
-  if (out->count >= kHostOverlayCandidateCap) return FALSE;
-  const HWND owner = GetWindow(window, GW_OWNER);
-  if (owner == nullptr) return TRUE;
-  const DWORD self = GetCurrentProcessId();
-  DWORD owner_pid = 0;
-  DWORD window_pid = 0;
-  GetWindowThreadProcessId(owner, &owner_pid);
-  GetWindowThreadProcessId(window, &window_pid);
-  if (owner_pid == self && window_pid != 0 && window_pid != self) {
-    out->windows[out->count++] = window;
-  }
-  return TRUE;
-}
-
-bool HostOverlayWindowContains(HWND window, POINT cursor) {
-  if (!IsWindow(window) || !IsWindowVisible(window) || IsIconic(window)) return false;
-  // 点击穿透的浮窗（悬浮歌词等）本来就不接收鼠标，滚轮归下面的游戏。
-  if ((GetWindowLongPtrW(window, GWL_EXSTYLE) & WS_EX_TRANSPARENT) != 0) return false;
-  RECT rect{};
-  if (!GetWindowRect(window, &rect) || !PtInRect(&rect, cursor)) return false;
-  // 级联卡片用 SetWindowRgn 裁成圆角 shell，包围矩形里的缝隙不属于它。
-  static HRGN region = CreateRectRgn(0, 0, 0, 0);
-  if (region == nullptr) return true;
-  const int kind = GetWindowRgn(window, region);
-  if (kind == ERROR || kind == NULLREGION) return true;  // 无窗口区域 = 整个矩形
-  return PtInRegion(region, cursor.x - rect.left, cursor.y - rect.top) != FALSE;
-}
-
-bool HostOverlayUnderCursor() {
-  POINT cursor{};
-  if (!GetCursorPos(&cursor)) return false;
-  const ULONGLONG now = GetTickCount64();
-  HostOverlayCandidates& cache = g_host_overlay_candidates;
-  if (!cache.refreshed || now - cache.refreshed_at >= kHostOverlayRefreshMs) {
-    HostOverlayCandidates fresh;
-    EnumWindows(&CollectHostOverlayCandidate, reinterpret_cast<LPARAM>(&fresh));
-    fresh.refreshed_at = now;
-    fresh.refreshed = true;
-    cache = fresh;
-  }
-  for (size_t i = 0; i < cache.count; ++i) {
-    if (HostOverlayWindowContains(cache.windows[i], cursor)) return true;
-  }
-  return false;
-}
-
 // 每帧一次 Win32 判定，只在变化时写一行 TJS（稳态零 TJS 求值）。执行失败不记新值，
 // 下一帧重试，避免 TJS 与 C++ 两侧对「是否压着浮窗」各执一词。
 // |active|=false（查词关闭）强制回 0：否则关闭那一刻光标若正压着浮窗，标记会残留为 1，

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 
 namespace fushi_voice_hook {
 
@@ -371,6 +372,59 @@ inline InputShieldFilterResult FilterDirectInputBufferedLeftButton(
     ObserveLeftButtonNeutralTail(request_active, latch);
   out.pending = latch->owned;
   return out;
+}
+
+// BUG-2738：光标压在宿主贴在游戏上的浮窗时，那一格滚轮属于浮窗。DirectInput 鼠标的
+// lZ 在 DIMOUSESTATE / DIMOUSESTATE2（16 / 20 字节）里都是第三个 LONG（DIMOFS_Z = 8）。
+// 其它布局不认识，原样返回。返回是否真的清掉了一格滚轮。
+constexpr uint32_t kDirectInputMouseWheelOffset = 8u;
+
+inline bool ClearDirectInputMouseStateWheel(uint8_t *state, size_t bytes) {
+  if (state == nullptr || (bytes != 16u && bytes != 20u))
+    return false;
+  int32_t wheel = 0;
+  std::memcpy(&wheel, state + kDirectInputMouseWheelOffset, sizeof(wheel));
+  if (wheel == 0)
+    return false;
+  wheel = 0;
+  std::memcpy(state + kDirectInputMouseWheelOffset, &wheel, sizeof(wheel));
+  return true;
+}
+
+// 缓冲事件：DIDEVICEOBJECTDATA 首字段 dwOfs。只删 DIMOFS_Z，其余事件保持原顺序；
+// stride 由调用方给（DX3 / DX8 结构大小不同）。返回删掉的条数。
+inline size_t RemoveDirectInputWheelEvents(uint8_t *events, size_t stride,
+                                           uint32_t *event_count) {
+  if (events == nullptr || event_count == nullptr ||
+      stride < sizeof(uint32_t) * 2u) {
+    return 0;
+  }
+  const size_t count = *event_count;
+  size_t write = 0;
+  for (size_t read = 0; read < count; ++read) {
+    uint32_t offset = 0;
+    std::memcpy(&offset, events + read * stride, sizeof(offset));
+    if (offset == kDirectInputMouseWheelOffset)
+      continue;
+    if (write != read)
+      std::memmove(events + write * stride, events + read * stride, stride);
+    ++write;
+  }
+  *event_count = static_cast<uint32_t>(write);
+  return count - write;
+}
+
+inline bool DirectInputEventsContainWheel(const uint8_t *events, size_t stride,
+                                          size_t count) {
+  if (events == nullptr || stride < sizeof(uint32_t) * 2u)
+    return false;
+  for (size_t i = 0; i < count; ++i) {
+    uint32_t offset = 0;
+    std::memcpy(&offset, events + i * stride, sizeof(offset));
+    if (offset == kDirectInputMouseWheelOffset)
+      return true;
+  }
+  return false;
 }
 
 } // namespace fushi_voice_hook

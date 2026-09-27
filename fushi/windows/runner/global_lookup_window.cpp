@@ -851,6 +851,17 @@ void GlobalLookupWindow::HandleGlobalClick(POINT screen_pt,
 // 的 DefWindowProc 不往下传），卡片一样滚不动。所以按模式各走各的既有输入路。
 void GlobalLookupWindow::HandleGlobalWheel(POINT screen_pt,
                                            const fushi::MouseHookWheel& wheel) {
+  // BUG-2738 复测用的有界诊断：钩子确实吞下并转交了这一格滚轮。与游戏侧
+  // wheel.dinput / wheel.seam 对照，分清滚轮是从哪条路进的游戏。
+  static int wheel_diag_budget = 20;
+  if (wheel_diag_budget > 0) {
+    --wheel_diag_budget;
+    NativeGlog("global wheel tick=" + std::to_string(GetTickCount64()) +
+               " delta=" + std::to_string(wheel.delta) +
+               " showing=" + std::to_string(IsShowing() ? 1 : 0) +
+               " direct=" + std::to_string(direct_process_client_active_ ? 1 : 0) +
+               " composition=" + std::to_string(composition_active_ ? 1 : 0));
+  }
   if (!IsShowing() || hwnd_ == nullptr || wheel.delta == 0) return;
   const UINT message = wheel.horizontal ? WM_MOUSEHWHEEL : WM_MOUSEWHEEL;
   // 与真滚轮消息同构：wparam 高字 = delta / 低字 = MK_* 修饰键；

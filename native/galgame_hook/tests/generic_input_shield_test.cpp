@@ -9,6 +9,7 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -125,6 +126,72 @@ void TestRawInputPreservesMovementWheelAndOtherButtons() {
   assert(!filtered.pending);
 }
 
+void TestHostOverlayWheelIsRemovedOnlyFromTheWheelAxis() {
+  // BUG-2738: DIMOUSESTATE / DIMOUSESTATE2 carry lZ at byte 8.  Only that axis
+  // is cleared; movement and buttons stay exactly as sampled.
+  for (const size_t bytes : {size_t{16}, size_t{20}}) {
+    std::array<uint8_t, 20> state{};
+    const int32_t x = 7, y = -3, z = 120;
+    std::memcpy(state.data(), &x, sizeof(x));
+    std::memcpy(state.data() + 4, &y, sizeof(y));
+    std::memcpy(state.data() + 8, &z, sizeof(z));
+    state[12] = 0x80;  // left button down
+    assert(fushi_voice_hook::ClearDirectInputMouseStateWheel(state.data(), bytes));
+    int32_t out = -1;
+    std::memcpy(&out, state.data() + 8, sizeof(out));
+    assert(out == 0);
+    std::memcpy(&out, state.data(), sizeof(out));
+    assert(out == x);
+    std::memcpy(&out, state.data() + 4, sizeof(out));
+    assert(out == y);
+    assert(state[12] == 0x80);
+    // Nothing to clear is reported as such.
+    assert(!fushi_voice_hook::ClearDirectInputMouseStateWheel(state.data(), bytes));
+  }
+  // Unknown layouts (keyboard 256 bytes, joystick 80) are never touched.
+  std::array<uint8_t, 256> keyboard{};
+  keyboard[8] = 0x80;
+  assert(!fushi_voice_hook::ClearDirectInputMouseStateWheel(keyboard.data(), 256));
+  assert(keyboard[8] == 0x80);
+
+  std::array<BufferedEvent, 4> events{{{0u, 5u, 1u}, {8u, 120u, 2u},
+                                       {12u, 0x80u, 3u}, {8u, 0xFFFFFF88u, 4u}}};
+  auto *bytes = reinterpret_cast<uint8_t *>(events.data());
+  assert(fushi_voice_hook::DirectInputEventsContainWheel(
+      bytes, sizeof(BufferedEvent), events.size()));
+  uint32_t count = static_cast<uint32_t>(events.size());
+  assert(fushi_voice_hook::RemoveDirectInputWheelEvents(
+             bytes, sizeof(BufferedEvent), &count) == 2u);
+  assert(count == 2u);
+  assert(events[0].dwOfs == 0u && events[0].timestamp == 1u);
+  assert(events[1].dwOfs == 12u && events[1].timestamp == 3u);
+  assert(!fushi_voice_hook::DirectInputEventsContainWheel(
+      bytes, sizeof(BufferedEvent), count));
+  assert(fushi_voice_hook::RemoveDirectInputWheelEvents(
+             bytes, sizeof(BufferedEvent), &count) == 0u);
+}
+
+void TestHostOverlayWheelIsStrippedBeforeDeviceRegistration() {
+  // Devices the game created before the factory hooks are unregistered; the
+  // wheel strip must run before the registered-record gate or attach misses it.
+  std::ifstream input(std::string(FUSHI_NATIVE_SOURCE_DIR) +
+                      "/hook/generic_input_shield.inc");
+  assert(input.good());
+  const std::string source((std::istreambuf_iterator<char>(input)),
+                           std::istreambuf_iterator<char>());
+  const size_t state = source.find("Detour_GenericDirectInputGetDeviceState(");
+  const size_t data = source.find("Detour_GenericDirectInputGetDeviceData(");
+  assert(state != std::string::npos && data != std::string::npos);
+  const size_t state_strip =
+      source.find("StripHostOverlayWheelFromMouseState(device", state);
+  const size_t state_gate = source.find("FindGenericDirectInputDeviceLocked(device)", state);
+  assert(state_strip != std::string::npos && state_strip < state_gate);
+  const size_t data_strip =
+      source.find("StripHostOverlayWheelFromDeviceData(device", data);
+  const size_t data_gate = source.find("FindGenericDirectInputDeviceLocked(device)", data);
+  assert(data_strip != std::string::npos && data_strip < data_gate);
+  assert(source.find("ProbeGenericDirectInputImplementations();") != std::string::npos);
+}
 void TestBufferedDirectInputCompactsStably() {
   constexpr uint32_t kButton0 = 12;
   std::array<BufferedEvent, 5> events{{
@@ -326,6 +393,8 @@ int main() {
   TestDirectInputImmediateLayoutsAndIsolation();
   TestRawInputPreservesMovementWheelAndOtherButtons();
   TestBufferedDirectInputCompactsStably();
+  TestHostOverlayWheelIsRemovedOnlyFromTheWheelAxis();
+  TestHostOverlayWheelIsStrippedBeforeDeviceRegistration();
   TestFastClickPreArmHidesQueuedSignalsAfterReleasePublication();
   TestIrrelevantPacketKeepsLatchAbandonable();
   TestPreArmEligibilityExcludesNeverObservedAlternatives();

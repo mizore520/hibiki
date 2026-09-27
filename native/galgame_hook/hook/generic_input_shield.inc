@@ -403,6 +403,162 @@ bool IsStandardDirectInputMouseFormat(LPCDIDATAFORMAT format,
   }
 }
 
+// ── 宿主浮窗下的滚轮（BUG-2738）────────────────────────────────────────────────
+// 引擎经 DirectInput 读滚轮时（KiriKiri 缺省 `-wheel=dinput`），宿主 WH_MOUSE_LL 吞掉的
+// 只是窗口消息；光标压在宿主贴在游戏上的浮窗（直连查词卡片等）时，同一格滚轮仍从
+// DIMOUSESTATE.lZ / DIMOFS_Z 进入游戏并翻页。这里在源头把那一格去掉：只动鼠标设备的
+// Z 轴，只在光标确实压着那种浮窗时，其余字段与左键护盾逻辑不变。
+// 附着前游戏自建的设备没有登记（错过了工厂 hook），所以鼠标身份另按 GetCapabilities
+// 判定并缓存；设备 Release 到 0 时清掉。
+constexpr size_t kGenericMouseStateWheelIndex = 2;  // lX, lY, lZ：DIMOFS_Z == 8
+constexpr DWORD kGenericDirectInputDevTypeMouse7 = 2u;     // DIDEVTYPE_MOUSE
+constexpr DWORD kGenericDirectInputDevTypeMouse8 = 0x12u;  // DI8DEVTYPE_MOUSE
+using GenericDirectInputGetCapabilitiesFn =
+    HRESULT(STDMETHODCALLTYPE *)(void *, LPDIDEVCAPS);
+
+struct GenericDirectInputKind {
+  void *device = nullptr;
+  bool mouse = false;
+};
+constexpr size_t kGenericDirectInputKindCapacity = 16;
+GenericDirectInputKind
+    g_generic_direct_input_kinds[kGenericDirectInputKindCapacity] = {};
+SRWLOCK g_generic_direct_input_kind_lock = SRWLOCK_INIT;
+
+bool QueryGenericDirectInputIsMouse(void *device) {
+  DIDEVCAPS caps{};
+  caps.dwSize = sizeof(caps);
+  __try {
+    const auto get_caps = reinterpret_cast<GenericDirectInputGetCapabilitiesFn>(
+        VtableSlot(device, 3));
+    if (get_caps == nullptr || FAILED(get_caps(device, &caps)))
+      return false;
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    return false;
+  }
+  const DWORD type = GET_DIDEVICE_TYPE(caps.dwDevType);
+  return type == kGenericDirectInputDevTypeMouse7 ||
+         type == kGenericDirectInputDevTypeMouse8;
+}
+
+bool GenericDirectInputDeviceIsMouse(void *device) {
+  if (device == nullptr)
+    return false;
+  AcquireSRWLockShared(&g_generic_shield_state_lock);
+  const auto *record = FindGenericDirectInputDeviceLocked(device);
+  const bool registered =
+      record != nullptr &&
+      record->format == GenericDirectInputFormatState::kStandardMouse;
+  ReleaseSRWLockShared(&g_generic_shield_state_lock);
+  if (registered)
+    return true;
+  AcquireSRWLockShared(&g_generic_direct_input_kind_lock);
+  for (const auto &kind : g_generic_direct_input_kinds) {
+    if (kind.device == device) {
+      const bool mouse = kind.mouse;
+      ReleaseSRWLockShared(&g_generic_direct_input_kind_lock);
+      return mouse;
+    }
+  }
+  ReleaseSRWLockShared(&g_generic_direct_input_kind_lock);
+  const bool mouse = QueryGenericDirectInputIsMouse(device);
+  AcquireSRWLockExclusive(&g_generic_direct_input_kind_lock);
+  for (auto &kind : g_generic_direct_input_kinds) {
+    if (kind.device == nullptr || kind.device == device) {
+      kind.device = device;
+      kind.mouse = mouse;
+      break;
+    }
+  }
+  ReleaseSRWLockExclusive(&g_generic_direct_input_kind_lock);
+  return mouse;
+}
+
+void ForgetGenericDirectInputKind(void *device) {
+  AcquireSRWLockExclusive(&g_generic_direct_input_kind_lock);
+  for (auto &kind : g_generic_direct_input_kinds) {
+    if (kind.device == device)
+      kind = GenericDirectInputKind{};
+  }
+  ReleaseSRWLockExclusive(&g_generic_direct_input_kind_lock);
+}
+
+// 有界诊断：只在 DirectInput 真读到滚轮时记，每进程最多 24 行。用来回答「游戏的滚轮
+// 到底是不是从 DirectInput 来、来的时候光标是否被判为压着宿主浮窗」（BUG-2738 复测）。
+std::atomic<int> g_generic_wheel_diag_budget{24};
+
+void NoteGenericDirectInputWheel(const wchar_t *surface, LONG delta,
+                                 bool mouse, bool overlay, bool stripped) {
+  if (g_generic_wheel_diag_budget.fetch_sub(1, std::memory_order_relaxed) <= 0)
+    return;
+  wchar_t line[160] = {};
+  _snwprintf_s(line, _TRUNCATE,
+               L"wheel.dinput %ls delta=%ld mouse=%d overlay=%d stripped=%d",
+               surface, delta, mouse ? 1 : 0, overlay ? 1 : 0, stripped ? 1 : 0);
+  HookLogLine(line);
+}
+
+// 即时状态：DIMOUSESTATE(16) / DIMOUSESTATE2(20) 的 lZ。先看有没有滚动，再问设备身份
+// 与窗口归属，稳态（没有滚轮）零额外系统调用。
+void StripHostOverlayWheelFromMouseState(void *device, DWORD bytes,
+                                         LPVOID state) {
+  if (state == nullptr || (bytes != 16u && bytes != 20u))
+    return;
+  LONG wheel = 0;
+  __try {
+    wheel = static_cast<const LONG *>(state)[kGenericMouseStateWheelIndex];
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+    return;
+  }
+  if (wheel == 0)
+    return;
+  const bool mouse = GenericDirectInputDeviceIsMouse(device);
+  const bool overlay = mouse && HostOverlayUnderCursor();
+  bool stripped = false;
+  if (overlay) {
+    __try {
+      stripped = fushi_voice_hook::ClearDirectInputMouseStateWheel(
+          static_cast<uint8_t *>(state), bytes);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+  }
+  NoteGenericDirectInputWheel(L"state", wheel, mouse, overlay, stripped);
+}
+
+// 缓冲事件：只删鼠标设备上的 DIMOFS_Z 事件，其余事件保持原顺序。
+void StripHostOverlayWheelFromDeviceData(void *device, DWORD object_bytes,
+                                         LPDIDEVICEOBJECTDATA events,
+                                         LPDWORD event_count) {
+  if (events == nullptr || event_count == nullptr ||
+      object_bytes < sizeof(DWORD) * 2u) {
+    return;
+  }
+  static_assert(DIMOFS_Z == fushi_voice_hook::kDirectInputMouseWheelOffset,
+                "DIMOFS_Z must match the pure helper's wheel offset");
+  bool has_wheel = false;
+  bool mouse = false;
+  bool overlay = false;
+  size_t removed = 0;
+  __try {
+    auto *base = reinterpret_cast<uint8_t *>(events);
+    has_wheel = fushi_voice_hook::DirectInputEventsContainWheel(
+        base, object_bytes, static_cast<size_t>(*event_count));
+    if (has_wheel) {
+      mouse = GenericDirectInputDeviceIsMouse(device);
+      overlay = mouse && HostOverlayUnderCursor();
+    }
+    if (overlay) {
+      uint32_t count = static_cast<uint32_t>(*event_count);
+      removed = fushi_voice_hook::RemoveDirectInputWheelEvents(
+          base, object_bytes, &count);
+      *event_count = static_cast<DWORD>(count);
+    }
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+  }
+  if (has_wheel)
+    NoteGenericDirectInputWheel(L"buffered", 0, mouse, overlay, removed != 0);
+}
+
 HRESULT STDMETHODCALLTYPE
 Detour_GenericDirectInputSetDataFormat(void *device, LPCDIDATAFORMAT format) {
   const auto original =
@@ -442,6 +598,7 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceState(
   const HRESULT result = original(device, bytes, state);
   if (FAILED(result) || state == nullptr)
     return result;
+  StripHostOverlayWheelFromMouseState(device, bytes, state);
   MarkGenericShieldObserved(
       fushi_voice_hook::kLookupShieldSurfaceDirectInputImmediate);
   const auto request = fushi_voice_hook::ReadLookupShieldRequest(g_header);
@@ -485,6 +642,8 @@ HRESULT STDMETHODCALLTYPE Detour_GenericDirectInputGetDeviceData(
       event_count == nullptr || events == nullptr) {
     return result;
   }
+  StripHostOverlayWheelFromDeviceData(device, object_bytes, events,
+                                      event_count);
   MarkGenericShieldObserved(
       fushi_voice_hook::kLookupShieldSurfaceDirectInputBuffered);
   if (object_bytes < sizeof(DWORD) * 2u) {
@@ -559,6 +718,7 @@ ULONG STDMETHODCALLTYPE Detour_GenericDirectInputRelease(void *device) {
     return 0;
   const ULONG refs = original(device);
   if (refs == 0) {
+    ForgetGenericDirectInputKind(device);
     AcquireSRWLockExclusive(&g_generic_shield_state_lock);
     auto *record = FindGenericDirectInputDeviceLocked(device);
     if (record != nullptr)
@@ -884,9 +1044,99 @@ void TryInstallGenericDirectInputFactories() {
   }
 }
 
+// 附着前游戏已经建好的 DirectInput 鼠标设备从未经过工厂 hook，它的 GetDeviceState /
+// GetDeviceData 没人拦（KiriKiri 的滚轮设备在主窗建立时就建好了）。设备方法的 hook 是装在
+// 实现函数上的 inline hook，同一实现的所有实例共用；因此经已 hook 的工厂自建一个系统鼠标
+// 设备（不 Acquire、不设协作级别、不读数据），让 CreateDevice detour 装好实现级 hook，
+// 随即释放。每个工厂只做一次；工厂不是本层 hook 的（被精确适配器接管）就不碰。
+using GenericDirectInputObjectReleaseFn = ULONG(STDMETHODCALLTYPE *)(void *);
+
+void ProbeGenericDirectInputDevice(void *direct_input) {
+  if (direct_input == nullptr)
+    return;
+  static constexpr GUID kSystemMouse = {
+      0x6f1d2b60u,
+      0xd5a0u,
+      0x11cfu,
+      {0xbfu, 0xc7u, 0x44u, 0x45u, 0x53u, 0x54u, 0x00u, 0x00u}};
+  __try {
+    const auto create_device = reinterpret_cast<GenericDirectInputCreateDeviceFn>(
+        VtableSlot(direct_input, 3));
+    void *device = nullptr;
+    if (create_device != nullptr &&
+        SUCCEEDED(create_device(direct_input, kSystemMouse, &device, nullptr)) &&
+        device != nullptr) {
+      reinterpret_cast<GenericDirectInputObjectReleaseFn>(VtableSlot(device, 2))(
+          device);
+    }
+    reinterpret_cast<GenericDirectInputObjectReleaseFn>(
+        VtableSlot(direct_input, 2))(direct_input);
+  } __except (EXCEPTION_EXECUTE_HANDLER) {
+  }
+}
+
+void ProbeGenericDirectInputImplementations() {
+  static bool probed_dinput8 = false;
+  static bool probed_dinput_a = false;
+  static bool probed_dinput_w = false;
+  const HINSTANCE instance = GetModuleHandleW(nullptr);
+  HMODULE dinput8 = GetModuleHandleW(L"dinput8.dll");
+  if (!probed_dinput8 && dinput8 != nullptr &&
+      g_generic_dinput8_factory_hooked.load(std::memory_order_relaxed)) {
+    probed_dinput8 = true;
+    // IID_IDirectInput8W = BF798031-483A-4DA2-AA99-5D64ED369700。
+    static constexpr GUID kDirectInput8W = {
+        0xbf798031u,
+        0x483au,
+        0x4da2u,
+        {0xaau, 0x99u, 0x5du, 0x64u, 0xedu, 0x36u, 0x97u, 0x00u}};
+    const auto create = reinterpret_cast<GenericDirectInput8CreateFn>(
+        GetProcAddress(dinput8, "DirectInput8Create"));
+    void *direct_input = nullptr;
+    const bool ok = create != nullptr &&
+                    SUCCEEDED(create(instance, 0x0800, kDirectInput8W,
+                                     &direct_input, nullptr));
+    if (ok)
+      ProbeGenericDirectInputDevice(direct_input);
+    HookLogLine(ok ? L"dinput.probe factory=DirectInput8Create ok=1"
+                   : L"dinput.probe factory=DirectInput8Create ok=0");
+  }
+  HMODULE dinput = GetModuleHandleW(L"dinput.dll");
+  if (dinput == nullptr)
+    return;
+  // A/W 设备在 dinput.dll 里是两张 vtable，各探一次。
+  const struct {
+    bool *probed;
+    const std::atomic<bool> *hooked;
+    const char *name;
+  } factories[] = {
+      {&probed_dinput_a, &g_generic_dinput_factory_a_hooked,
+       "DirectInputCreateA"},
+      {&probed_dinput_w, &g_generic_dinput_factory_w_hooked,
+       "DirectInputCreateW"},
+  };
+  for (const auto &factory : factories) {
+    if (*factory.probed || !factory.hooked->load(std::memory_order_relaxed))
+      continue;
+    *factory.probed = true;
+    const auto create = reinterpret_cast<GenericDirectInputCreateFn>(
+        GetProcAddress(dinput, factory.name));
+    void *direct_input = nullptr;
+    const bool ok = create != nullptr &&
+                    SUCCEEDED(create(instance, 0x0700, &direct_input, nullptr));
+    if (ok)
+      ProbeGenericDirectInputDevice(direct_input);
+    wchar_t line[96] = {};
+    _snwprintf_s(line, _TRUNCATE, L"dinput.probe factory=%hs ok=%d",
+                 factory.name, ok ? 1 : 0);
+    HookLogLine(line);
+  }
+}
+
 void TryInstallGenericLookupInputShield() {
   TryInstallGenericKeyAndRawInputShield();
   TryInstallGenericDirectInputFactories();
+  ProbeGenericDirectInputImplementations();
 }
 
 void PreArmGenericShieldForRequest(uint32_t request_seq,

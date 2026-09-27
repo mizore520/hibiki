@@ -492,7 +492,32 @@ HOST_OVERLAY_WHEEL_GATE = "if(global.fushiLookupHostOverlayUnderCursor) return t
 HOST_OVERLAY_SYNC_CALL = "SyncKirikiriHostOverlayUnderCursor(true);"
 
 
-def find_host_overlay_wheel_leak(source: MaskedSource) -> list[str]:
+HOST_OVERLAY_PROBE = ADAPTER.parent.parent / "host_overlay_probe.inc"
+
+
+def find_host_overlay_probe_messages(overlay_source: str) -> list[str]:
+    """宿主浮窗判定（host_overlay_probe.inc，护盾与 KiriKiri 泵共用）不得发窗口消息。
+
+    WindowFromPoint 落在游戏自己的窗上时会向同线程窗口同步发 WM_NCHITTEST，等于每帧在
+    TJS continuous 回调 / 游戏输入线程里重入一次游戏 WndProc（BUG-2738 审查）。
+    """
+    probe = overlay_source.find("bool HostOverlayUnderCursor() {")
+    if probe < 0:
+        return [f"{HOST_OVERLAY_PROBE.name}: 找不到 HostOverlayUnderCursor"]
+    start = overlay_source.rfind("constexpr size_t kHostOverlayCandidateCap", 0, probe)
+    end = overlay_source.find("\n}\n", probe)
+    body = overlay_source[start if start >= 0 else probe : end]
+    if "WindowFromPoint" in body:
+        return [
+            f"{HOST_OVERLAY_PROBE.name}: 浮窗判定不得用 WindowFromPoint"
+            "（会向游戏同线程窗口发 WM_NCHITTEST）"
+        ]
+    return []
+
+
+def find_host_overlay_wheel_leak(
+    source: MaskedSource, overlay_source: str | None = None
+) -> list[str]:
     """宿主浮窗下的滚轮必须在 kag 滚轮接缝里被消费（BUG-2738）。
 
     KiriKiri 默认经 DirectInput 读滚轮，宿主 WH_MOUSE_LL 吞不掉；唯一可靠的落点是
@@ -500,6 +525,8 @@ def find_host_overlay_wheel_leak(source: MaskedSource) -> list[str]:
     标记；bootstrap 先建立该全局（TJS 读不存在的成员会抛，与 BUG-2737 同类）；每帧
     泵同步 Win32 判定。
     """
+    if overlay_source is None:
+        overlay_source = HOST_OVERLAY_PROBE.read_text(encoding="utf-8")
     text = source.text
     hits: list[str] = []
     start = text.find("global.fushiLookupMouseWheelHook = function")
@@ -518,12 +545,7 @@ def find_host_overlay_wheel_leak(source: MaskedSource) -> list[str]:
     # 两条早退（会话结束/停机、查词关闭）都必须先复位，否则残留的 1 会吞掉之后所有滚轮。
     if text.count("SyncKirikiriHostOverlayUnderCursor(false);") < 2:
         hits.append(f"{ADAPTER.name}: 泵的早退路径没有全部复位宿主浮窗标记")
-    probe = text.find("bool HostOverlayUnderCursor() {")
-    probe_end = text.find("\n}\n", probe)
-    if probe < 0 or "WindowFromPoint" in text[probe:probe_end]:
-        hits.append(
-            f"{ADAPTER.name}: 浮窗判定不得用 WindowFromPoint（会向游戏同线程窗口发 WM_NCHITTEST）"
-        )
+    hits.extend(find_host_overlay_probe_messages(overlay_source))
     return hits
 
 
@@ -4979,15 +5001,20 @@ class MutationSelfTest(unittest.TestCase):
                 "    SyncKirikiriHostOverlayUnderCursor(false);\n    return;\n  }\n  // 必须位于",
                 "    return;\n  }\n  // 必须位于",
             ),
-            (
-                "  POINT cursor{};\n  if (!GetCursorPos(&cursor)) return false;\n  const ULONGLONG now",
-                "  POINT cursor{};\n  if (!GetCursorPos(&cursor)) return false;\n  (void)WindowFromPoint(cursor);\n  const ULONGLONG now",
-            ),
+
         ):
             with self.subTest(old=old):
                 self.assertIn(old, real)
                 dirty = MaskedSource(real.replace(old, new, 1))
                 self.assertNotEqual([], find_host_overlay_wheel_leak(dirty))
+        overlay = HOST_OVERLAY_PROBE.read_text(encoding="utf-8")
+        self.assertEqual([], find_host_overlay_probe_messages(overlay))
+        anchor = "  POINT cursor{};\n  if (!GetCursorPos(&cursor)) return false;\n"
+        self.assertIn(anchor, overlay)
+        dirty_overlay = overlay.replace(
+            anchor, anchor + "  (void)WindowFromPoint(cursor);\n", 1
+        )
+        self.assertNotEqual([], find_host_overlay_probe_messages(dirty_overlay))
 
     def test_clean_sample_passes_every_rule(self) -> None:
         self.assertEqual([], find_dynamic_tjs_concatenations(self.clean))

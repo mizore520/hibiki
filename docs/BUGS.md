@@ -33,7 +33,7 @@
 
 | BUG | 修复 | 测试 | 标题 |
 |---|:--:|:--:|---|
-| [BUG-2738](bugs/BUG-2738-kirikiri-dinput-wheel-over-host-popup.md) | ✅ | ✅ | KiriKiri 查词弹窗上滚动滚轮会让游戏翻到下一句 |
+| [BUG-2738](bugs/BUG-2738-kirikiri-dinput-wheel-over-host-popup.md) | 🚧 | ✅ | KiriKiri 查词弹窗上滚动滚轮会让游戏翻到下一句 |
 | [BUG-2737](bugs/BUG-2737-kirikiri-early-sensor-script-exception.md) | ✅ | ✅ | KiriKiri 启动并捕获时游戏弹出未处理脚本异常 CS_Timer |
 | [BUG-2736](bugs/BUG-2736-gal-popup-click-dismissed-by-shield.md) | ✅ | ✅ | 点击游戏内查词弹窗的按钮会关闭弹窗且随后数秒无法查词 |
 | [BUG-2735](bugs/BUG-2735-galgame-remove-cascades-sessions.md) | ✅ | ✅ | 从库移除游戏经 FK cascade 删光所有 Profile 的游玩会话 |

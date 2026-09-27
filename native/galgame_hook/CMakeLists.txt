@@ -47,6 +47,7 @@ add_library(fushi_voice_hook SHARED
   "hook/geometry_provider_registry.h"
   "hook/lookup_v19_runtime.h"
   "hook/generic_input_shield.inc"
+  "hook/host_overlay_probe.inc"
   "hook/xaudio_resource_dispatch.h"
   "hook/bgi_arc.h"
   "hook/artemis_pfs.h"

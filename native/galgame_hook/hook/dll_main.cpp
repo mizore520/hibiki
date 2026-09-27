@@ -598,6 +598,7 @@ bool SignalReady(DWORD pid, bool legacy_hibiki_ipc) {
 // 通用位图呈现器必须在 adapters 之前引入：KiriKiri 适配器要调 ClaimLookupPresenter()
 // 来认领呈现，把通用呈现器挡在门外（两条路径同时显示卡片会出现双份）。
 #include "lookup_overlay_window.inc"
+#include "host_overlay_probe.inc"
 
 #include "adapters/unity_adapter.inc"
 #include "adapters/windows_audio_adapter.inc"
