@@ -489,7 +489,7 @@ def find_kag_seam_context_rebinds(source: MaskedSource) -> list[str]:
 
 
 HOST_OVERLAY_WHEEL_GATE = "if(global.fushiLookupHostOverlayUnderCursor) return true;"
-HOST_OVERLAY_SYNC_CALL = "SyncKirikiriHostOverlayUnderCursor();"
+HOST_OVERLAY_SYNC_CALL = "SyncKirikiriHostOverlayUnderCursor(true);"
 
 
 def find_host_overlay_wheel_leak(source: MaskedSource) -> list[str]:
@@ -515,6 +515,8 @@ def find_host_overlay_wheel_leak(source: MaskedSource) -> list[str]:
         hits.append(f"{ADAPTER.name}: bootstrap 未初始化 fushiLookupHostOverlayUnderCursor")
     if HOST_OVERLAY_SYNC_CALL not in text:
         hits.append(f"{ADAPTER.name}: 每帧泵没有同步宿主浮窗判定")
+    if "SyncKirikiriHostOverlayUnderCursor(false);" not in text:
+        hits.append(f"{ADAPTER.name}: 查词关闭时没有把宿主浮窗标记复位")
     return hits
 
 
@@ -4962,6 +4964,10 @@ class MutationSelfTest(unittest.TestCase):
                 "\t\t\t// init removed",
             ),
             ("  " + HOST_OVERLAY_SYNC_CALL, "  // sync removed"),
+            (
+                "    SyncKirikiriHostOverlayUnderCursor(false);",
+                "    // reset removed",
+            ),
         ):
             with self.subTest(old=old):
                 self.assertIn(old, real)

@@ -6334,9 +6334,11 @@ bool HostOverlayUnderCursor() {
 
 // 每帧一次 Win32 判定，只在变化时写一行 TJS（稳态零 TJS 求值）。执行失败不记新值，
 // 下一帧重试，避免 TJS 与 C++ 两侧对「是否压着浮窗」各执一词。
-void SyncKirikiriHostOverlayUnderCursor() {
+// |active|=false（查词关闭）强制回 0：否则关闭那一刻光标若正压着浮窗，标记会残留为 1，
+// 游戏里的滚轮从此一直被接缝吞掉。
+void SyncKirikiriHostOverlayUnderCursor(bool active) {
   static int last = -1;
-  const int now = HostOverlayUnderCursor() ? 1 : 0;
+  const int now = active && HostOverlayUnderCursor() ? 1 : 0;
   if (now == last) return;
   if (ExecuteTjsScriptGuarded(
           now != 0 ? L"global.fushiLookupHostOverlayUnderCursor = 1;"
@@ -6358,6 +6360,7 @@ void PumpKirikiriLookup() {
         g_header, fushi_voice_hook::kLookupGeometryProviderRuntimeLayout,
         fushi_voice_hook::kLookupGeometryProviderIdKirikiri);
     g_lookup_enabled_last = false;
+    SyncKirikiriHostOverlayUnderCursor(false);
     return;
   }
   g_lookup_enabled_last = true;
@@ -6413,7 +6416,7 @@ void PumpKirikiriLookup() {
     }
   }
   // 传感器已活：TJS 全局已由 bootstrap 建立，滚轮接缝据此在宿主浮窗上吞滚轮。
-  SyncKirikiriHostOverlayUnderCursor();
+  SyncKirikiriHostOverlayUnderCursor(true);
   int64_t notify = 0;
   // 稳态下每帧只有这一次求值：notify 不变就一行 TJS 都不再跑。
   if (g_lookup_sensor_eval_backoff > 0) {
