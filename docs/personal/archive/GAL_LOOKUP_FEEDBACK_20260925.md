@@ -40,7 +40,7 @@
 ## 验证证据
 
 - native（MSVC /W4 /WX）：`attached_text_surface_window.cpp`、`global_lookup_window.cpp`、`flutter_window.cpp` 编译通过；`attached_text_layout_test` 40 cases、glyph latch、bitmap bounds、mouse hook / overlayability / shield policy 源码守卫全部通过。
-- Dart：查词、校准、OCR、texthooker、Hook 会话、i18n 相关 1288 项中 1285 项通过（`.codex-test/lookup-round2-20260925-tests.log`）。失败的 3 项（`gal_attached_popup_placement_test`、`global_lookup_hotkey_guard_test` 的整句横幅用例、`texthooker_char_level_lookup_guard_test`）在基线 `custom@47396e2a2c` 上同样失败，与本轮无关。`bugs_per_file_guard_test` 报历史撞号 BUG-2257，也是既有问题。
+- Dart：查词、校准、OCR、texthooker、Hook 会话、i18n 相关 1288 项中 1285 项通过（`.codex-test/lookup-round2-20260925-tests.log`）。失败的 3 项（`gal_attached_popup_placement_test`、`global_lookup_hotkey_guard_test` 的整句横幅用例、`texthooker_char_level_lookup_guard_test`）在基线 `custom@47396e2a2c` 上同样失败，与本轮无关。`bugs_per_file_guard_test` 报历史撞号 BUG-2800，也是既有问题。
 - 第三轮（`3b43205060`）：改动 Dart 文件静态分析无问题；查词、校准窗口、工作台、i18n 相关测试 1060 项中 1058 项通过，失败的 2 项即上面列出的基线既有失败。
 - 界面只有测试环境渲染截图（位于会话临时目录），不等于实机观感。
 - 三轮都没有做独立审查：用户此前要求不再使用子代理。点击拦截时序、Dart↔native 档案字段、截图租约条件都属于第 7 节要求审查的范围，合入前需要用户决定是否补审查。

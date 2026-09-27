@@ -29,6 +29,7 @@
 | `unreal_iostore` | Unreal Engine (IoStore) | `implemented_unverified` | luna_pc_hooks (implemented_unverified) | xaudio2_or_directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
 | `aos_sfa` | AOS / SFA (Princess Sugar, Atelier Kaguya family) | `implemented_unverified` | — | xaudio2_or_directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
 | `unity_mono` | Unity (Mono runtime) | `implemented_unverified` | luna_hook (implemented_unverified) | xaudio2_or_directsound_pcm (implemented_unverified)；process_loopback (implemented_unverified) | 0 |
+| `softpal` | Softpal (ディメンション凸ラバース!! exact build) | `implemented_unverified` | native_text_show (implemented_unverified) | softpal_pac_ogg_resource (implemented_unverified) | 0 |
 
 ## 无 OCR 内嵌查词矩阵
 
@@ -41,7 +42,7 @@
 | `tyrano_nwjs` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `unity_il2cpp` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `elf_ai6` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
-| `reallive` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
+| `reallive` | engine_exact_layout、attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `bgi_ethornell` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `catsystem2` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
 | `malie_libp` | attached_calibrated | `implemented_unverified` | `implemented_unverified` | `implemented_unverified` |
@@ -71,7 +72,7 @@
 - `elf_ai6` geometry：The calibrated fallback is implemented offline; positioned GDI lineage has not been admitted for this engine.
   - verified shield：The generic standard-surface shield is present, without the required real-build transaction corpus.
   - risky left click：Risk is accepted unconditionally (BUG-2154 removed the per-executable consent gate, which was unsatisfiable: the generic shield can never reach Verified); allow_risk still crosses the IPC contract, but no measured real-build click-leak rate is recorded.
-- `reallive` geometry：The calibrated fallback is implemented offline; positioned GDI lineage has not been admitted for this engine.
+- `reallive` geometry：The personal Little Busters! EX/Luca adapter publishes an exact-layout provider under the RealLive family. This is specific to that measured game/build and is not a general RealLive geometry claim. The calibrated fallback is implemented offline; full lookup/card acceptance remains unverified.
   - verified shield：The generic standard-surface shield is present, without the required real-build transaction corpus.
   - risky left click：Risk is accepted unconditionally (BUG-2154 removed the per-executable consent gate, which was unsatisfiable: the generic shield can never reach Verified); allow_risk still crosses the IPC contract, but no measured real-build click-leak rate is recorded.
 - `bgi_ethornell` geometry：The calibrated fallback is implemented offline; positioned GDI/DWrite lineage has not been admitted for this engine.
@@ -316,6 +317,8 @@ Tests：`tests/cmvs_adapter_test.cpp`、`../../fushi/test/mining/cmvs_pairing_te
 - 2026-08-19 measurement, both directions, same hook build. Positive: on a second KiriKiri Z sample (tenshi_sz.exe, Chinese release, KAGEX plus third-party textrender.dll) launched by Fushi 2.1.1-debug.11887, one session completed the whole in-game chain: lookup_diag reached 0x0000106F (sensor_installed | geometry_observed | hit_submitted | buffer_route_ready | frame_presented | expression_ready), clicking a glyph rendered the lookup card inside the game layer, and the card's mining button wrote a real Anki note (total notes 13200 -> 13201) whose media are genuine (10138-byte AVIF starting with ftypavis, 9260-byte MP3 starting with ID3) and whose sentence field holds the clicked line. Negative: on a classic KAG3 sample that ships no textrender.dll (フタマタ恋愛 Ver1.00, KiriKiri2/BCB), with lookup_enabled forced to 1 by the diagnostic probe, lookup_diag stayed 0x00000000 for the entire session while text capture worked (text_writes=8) - the sensor never installs and in-game lookup is entirely absent there. In-game lookup therefore stays scoped to KiriKiri Z builds shipping textrender.dll and is still not a KiriKiri-engine-wide capability. Recorded as measurement only; no status or capability upgrade is claimed.
 - Text-thread choice is not free on this engine: the same game exposes one EmbedKrkrZ thread carrying whole-string-doubled dialogue (folded correctly by the block-level normaliser) and several KiriKiriZ threads carrying per-character doubled/tripled strings that the artifact gate correctly drops. Selecting a KiriKiriZ thread leaves the workbench with zero lines forever and makes in-game mining fail silently. Tracked as BUG-1733/1734/1735; the native filtering is correct and must not be relaxed.
 - 2026-09-05 measurement, classic KAG3 in-game lookup, same hook build (helper x86 a180314c5688eca6eb03269c5c1dc958fe103a57b2fed6c28d74e1a80447afad). This supersedes the 2026-08-19 negative on classic KAG3, whose stated cause (no textrender.dll) was wrong. Two classic KAG3 / KiriKiri2-BCB samples were driven by the injector directly (--launch --hold) with lookup_enabled forced by the diagnostic probe. Fate/stay night[Realta Nua] -Fate-: lookup_diag 0xB0000541 (sensor_installed | expression_ready | classic_patch_installed | classic_processch_fired), xaudiodiag2 0x0194000c (SeamArmed | SeamFired | BootstrapStarted | BootstrapFired). Futamata Renai Ver1.00, the very sample recorded as the 2026-08-19 negative: lookup_diag 0xB0000141 (sensor_installed | expression_ready | classic_patch_installed), xaudiodiag2 0xa194000c, which additionally carries ExporterScanRan | ExporterScanAdopted. Four distinct root causes were fixed to get here: BUG-2121 (main-window shape, poll semantics, and the addHook precondition), BUG-2144 (Borland exceptions crossing an MSVC catch(...)), and BUG-2145 (a build with no export directory at all whose plugins all link before the LoadLibrary hook). The sensor now installs on classic KAG3 without textrender.dll. This is an install-stage measurement only: no glyph hit, card render, or mining E2E was run on either sample in this session, and no status or capability upgrade is claimed.
+- 2026-09-26 measurement, Yuzusoft KiriKiri Z variant plus launch lifecycle (BUG-2701/2702). Samples, all x86: 喫茶ステラと死神の蝶 original CafeStella.exe (SHA-256 0dd0b3bcc5dcdda257f50ef52f121f919a7453c2afa614f8f82124cb92351d50; no exe exports, exporter obtained by the linked-plugin scan; plugins PackinOne/yuzuex decrypt hashed archive members), the same package's Enigma-packed Chinese exe (7e6106bbfd82b0635ecbb2c9308cb3ddd5661d8fb89ee7f22e58e40f9764fc31; one TLS callback), PARQUET Steam build with SteamStub removed (83c40f84b722be859531795d0afd2722182cbf09f041a60916279b1103153d00), and 夏空カナタ KiriKiri2/BCB (2485542046550c6bd9c026fecd95b73493c2cf1def36eb211cfe9bc3f4714afe). The Enigma exe hung the remote LoadLibraryW under create-suspended early injection because the injector thread ran the process's TLS callbacks; the injector now parks the primary thread at the entry point when the exe declares TLS callbacks and its directory carries the KiriKiri XP3 archive signature (engine launch profile admission, no title or hash; owner 2026-09-26 narrowed it from every TLS-callback exe to KiriKiri, and a packer that rewrites the entry leaves the primary thread running and the game attached as a running process), after which it reached OK hooked, EmbedKrkrZ dialogue text and decdiag 0x031e0903. On the original exe every named voice open also produced a same-length ciphertext copy under the hashed physical name; the named-storage enqueue now requires an Ogg or RIFF/WAVE container, after which only the decrypted noz001_*.ogg files were published. Observed stages on the original exe: process_found, helper_ready, ipc_ready, text_ready (EmbedKrkrZ thread; KiriKiriZ threads carry the known doubled artifacts), and resource files whose ticks follow the matching dialogue lines. Not run: card write E2E. Japanese-named SE files still reach the consumer as voice candidates (BUG-2703). Measurement only; no status or capability upgrade is claimed.
+- 2026-09-26 measurement, Senren Banka disc release (BUG-2704/2705/2706/2708). Samples, x86: SenrenBanka.exe (SHA-256 5b9cdea0a8c5b22cfb1a7df2ecb2e01484a190dce31b2cd6d6b101b178645727; KAGEX CustomMessageLayer with a MessageTextLayer child, textrender.dll loaded but no TextRender instance bound to any message layer) and the package's Enigma-packed Chinese exe SenrenBankaCHS.exe (2369627f97a0de5222781e456e4abe9679d24a39e0b35f15e04f4184a59f3153; TLS callback shows a translator notice before the entry point). Original path via the rebuilt Fushi itest host (launchoff): the remembered EmbedKrkrZ thread restored to the current session, text lines arrive single and without the sticky looping-sound suffix, voiced lines pair as game_resource, and in-game lookup captured glyph geometry through the classic processCh fallback: clicking a glyph highlighted it, opened the Fushi lookup card for the clicked word, and the host line list did not advance. Not run: card write E2E. The Chinese exe was verified only up to the loader gate waiting on its notice (the sample itself then reports a missing patch.xp3 without Fushi). One extra click is swallowed right after dismissing a card (BUG-2710). Measurement only; no status or capability upgrade is claimed.
 
 Fixtures：`tests/fixtures/kirikiri_lookup_replay.tsv`
 
@@ -1009,6 +1012,47 @@ Tests：`tests/aos_sfa_adapter_test.cpp`、`../../fushi/test/mining/aos_sfa_pair
 Fixtures：`tests/fixtures/unity_mono_replay.json`
 
 Tests：`tests/unity_mono_adapter_test.cpp`、`../../fushi/test/mining/unity_mono_pairing_test.dart`
+
+### Softpal (ディメンション凸ラバース!! exact build) (`softpal`)
+
+- 状态：`implemented_unverified`
+- 别名：Pal、Softpal
+- 家族：`softpal`（Measured Pal.dll 1.10.0.0 build; no sibling title admitted）
+- 当前 adapter：`hook/adapters/softpal_adapter.inc`
+- 进程策略：launch=`generic_launch_available`，attach=`generic_attach_available`，follow-child=`false`
+
+识别签名（所有非空项均带真实样本或运行时观察证据）：
+
+- `executable_names`：totsulover.exe；证据：real_sample — Local game executable inspected 2026-09-26; name is only a catalogue field; adapter requires exact SHA-256.
+- `pe_architectures`：x86；证据：real_sample — totsulover.exe PE machine 0x14c, measured 2026-09-26
+- `directory_files_all`：data.pac、voice.pac、patch.pac、dll/Pal.dll；证据：real_sample — Original game directory inventory and PAC index structural validation 2026-09-26
+- `pe_imports`：Pal.dll；证据：real_sample — Measured totsulover.exe import table 2026-09-26
+- `resource_extensions`：.pac、.ogg；证据：real_sample — voice.pac has 22,135 OGG index entries; patch.pac has 116 OGG overrides, measured locally 2026-09-26
+- `hashes`：a2d14820e5c63520084565768ab8f14f7c356aad623de2e313b12c14bae83688、bd9360c130e366759b1b5b7d37c103dc0d064f0cded2545252f504c18d9ff235；证据：real_sample — totsulover.exe and dll/Pal.dll SHA-256, measured 2026-09-26; only EXE hash is the adapter admission gate
+
+文本能力：
+
+- `native_text_show`：`implemented_unverified` — Static SCRIPT.SRC inspection found distinct call-2 and call-15 dialogue paths; EXE registration maps call 15 to RVA 0x6ea60. User screenshots show the previous candidate's dedicated thread capturing call-2 text and resource audio, while call-15 text remains absent because that candidate hooked call 16. The corrected hook is not yet runtime verified.
+- codepage：932
+- 线程提示：When the exact-build Softpal adapter is ready, only its Softpal TextShow thread is offered; it emits dialogue body and event-owned OGG where present.
+
+音频优先级：
+
+1. `softpal_pac_ogg_resource` — `implemented_unverified`；格式：ogg_vorbis；clean voice：是
+
+真实样本证据：
+
+
+已知限制：
+
+- The prior candidate has user screenshots of selected Softpal text and one ready resource-audio line; this call-15 revision, matching playback, and Anki card E2E remain unverified.
+- 14 script voice keys reference OGG members absent from all PAC indexes in this measured install; those lines remain without audio.
+- Only the exact measured executable, data.pac, Pal.dll SHA-256 values and both text-display prologues are admitted; other Softpal versions are not covered.
+- In-game word geometry is not implemented.
+
+Fixtures：`tests/fixtures/softpal_replay.json`
+
+Tests：`tests/softpal_adapter_test.cpp`、`../../fushi/test/mining/galgame_audio_test.dart`
 
 ## 状态定义
 

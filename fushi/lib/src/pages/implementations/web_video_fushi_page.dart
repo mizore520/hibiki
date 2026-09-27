@@ -2045,7 +2045,7 @@ class _WebVideoFushiPageState extends ConsumerState<WebVideoFushiPage>
       onLoadStop: (InAppWebViewController controller, WebUri? url) {
         unawaited(_refreshWebVideoShortcutBindings());
         unawaited(_setNativeSubtitlesHidden(_hideNativeSubtitles));
-        // BUG-2260：队列换集走 loadUrl 整页重载，上一份文档里的 chrome 隐藏 <style> 随之消失，
+        // BUG-2803：队列换集走 loadUrl 整页重载，上一份文档里的 chrome 隐藏 <style> 随之消失，
         // 之后每张卡都带控制条/分级提示。隐藏态归 Dart 所有，新文档就绪时按 _mineRunning 重挂。
         unawaited(_setPlayerChromeHidden(_mineRunning));
         unawaited(_js('window.__fushiWebVideo.replayCues()'));

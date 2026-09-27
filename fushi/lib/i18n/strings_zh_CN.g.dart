@@ -2251,8 +2251,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String dict_task_failed_summary({required Object n}) => '${n} 本词典处理失败';
   @override
-  String get dict_update_check => '检查更新';
-  @override
   String get dict_update_checking => '正在检查更新…';
   @override
   String dict_update_done({required Object name}) => '${name} 已更新。';
@@ -2273,8 +2271,6 @@ class _StringsZhCn extends _StringsEn {
   }) => '所选文件是「${incoming}」，但你正在更新「${existing}」。仍要替换吗？';
   @override
   String get dict_update_name_mismatch_title => '词典名称不一致';
-  @override
-  String get dict_update_none => '所有词典均为最新。';
   @override
   String dict_update_summary({
     required Object updated,
@@ -2549,8 +2545,6 @@ class _StringsZhCn extends _StringsEn {
   String get download_rate_limit_lan_exempt => '不作用于局域网；局域网内的传输始终全速进行。';
   @override
   String get download_rate_limit_lan_included => '同时作用于局域网内的传输。';
-  @override
-  String get download_resources_tab => '资源';
   @override
   String get download_save_root_change => '更改目录';
   @override
@@ -4418,8 +4412,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get library_search => '搜索库';
   @override
-  String get library_view_browse => '发现';
-  @override
   String get library_view_discover => '发现';
   @override
   String get library_view_import => '导入';
@@ -4546,9 +4538,9 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get manga_global_search_hint => '搜索所有已启用来源';
   @override
-  String get manga_global_search_no_sources => '还没有已启用的漫画来源，去「导入」添加一个。';
+  String get manga_global_search_no_sources => '还没有已启用的漫画来源，去「浏览」添加一个。';
   @override
-  String get manga_global_search_open_sources => '去导入';
+  String get manga_global_search_open_sources => '去浏览';
   @override
   String get manga_global_search_prompt => '输入书名，一次搜索所有已启用的漫画来源。';
   @override
@@ -5319,7 +5311,7 @@ class _StringsZhCn extends _StringsEn {
   String get module_disabled_hint => '该功能模块已在「设置 → 外观 → 功能模块」中关闭。';
   @override
   String get module_downloads_hidden_hint =>
-      '「下载」页已在 设置 → 外观 → 功能模块 中隐藏；重新打开它才能管理订阅。';
+      '「浏览」页已在 设置 → 外观 → 功能模块 中隐藏；重新打开它才能管理订阅。';
   @override
   String get module_extension_label => '浏览器扩展';
   @override
@@ -10727,7 +10719,7 @@ class _StringsZhCn extends _StringsEn {
   String get reader_floating_ball => '悬浮球';
   @override
   String get reader_floating_ball_hint =>
-      '半透明小球停靠在页面边缘。点击后按钮环绕小球展开，再点收起；可拖动上下移动或换边。放哪些按钮在上方的按钮布局编辑器里拖选。';
+      '半透明小球停靠在页面边缘。点击后按钮在小球上方竖排一列展开（小球在最下方），再点小球收起；可拖动上下移动或换边。放哪些按钮在上方的按钮布局编辑器里拖选。';
   @override
   String get reader_control_item_play_pause => '播放 / 暂停';
   @override
@@ -10784,7 +10776,7 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get ai_features_section => '功能提供商';
   @override
-  String get ai_features_section_summary => '为每个功能指定使用哪一家提供商';
+  String get ai_features_section_summary => '先选一家默认提供商；个别功能想换一家或不用 AI，再单独指定';
   @override
   String get ai_feature_unset => '未指定';
   @override
@@ -11227,8 +11219,6 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get video_online_stream_none => '该集没有可播放的流。';
   @override
-  String get media_import_segment_local => '本地';
-  @override
   String get media_import_segment_stores => '仓库';
   @override
   String get media_import_segment_extensions => '扩展';
@@ -11469,11 +11459,7 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get manga_reader_skip_read => '跳过已读章节';
   @override
-  String get manga_reader_skip_filtered => '跳过已过滤章节';
-  @override
   String get manga_reader_skip_duplicate => '跳过重复章节';
-  @override
-  String get manga_reader_transition => '始终显示章节过渡';
   @override
   String get manga_reader_fullscreen => '全屏';
   @override
@@ -11589,7 +11575,8 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get ai_video_download_quality => '默认画质';
   @override
-  String get ai_video_download_quality_hint => 'AI 下载助手选版本时使用；「每次询问」= 每次都问。';
+  String get ai_video_download_quality_hint =>
+      'AI 下载助手选版本时使用；「最高可用」= 结果里分辨率最高的那一档，「每次询问」= 每次都问。';
   @override
   String get ai_video_download_quality_unset => '未设置（首次使用时询问）';
   @override
@@ -11977,7 +11964,8 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get game_stream_settings_adaptive => '自适应码率';
   @override
-  String get game_stream_settings_adaptive_hint => '网络拥塞时自动降低码率';
+  String get game_stream_settings_adaptive_hint =>
+      '从一半码率起步再逐步提升；关闭则直接以设定码率起步。两种方式在网络拥塞时都会降低码率';
   @override
   String get game_stream_settings_apply_failed => '未能应用串流设置';
   @override
@@ -12433,6 +12421,8 @@ class _StringsZhCn extends _StringsEn {
   @override
   String get manga_discovery_empty_action => '管理来源';
   @override
+  String get manga_reader_download_ahead => '阅读时预下载下一章';
+  @override
   String get video_dolby_vision_colors_unsupported =>
       '杜比视界 Profile 5 片源：本平台暂时无法正确还原它的颜色，画面可能偏紫或偏绿。';
   @override
@@ -12449,4 +12439,309 @@ class _StringsZhCn extends _StringsEn {
   @override
   String novel_online_chapter_failed({required Object error}) =>
       '章节加载失败：${error}';
+  @override
+  String get dict_update_all => '更新全部词典';
+  @override
+  String get dict_update_all_no_source =>
+      '没有词典声明在线更新地址。index.json 里没有更新地址的词典只能从本地文件更新。';
+  @override
+  String get dict_update_check_failed => '检查更新失败，请检查网络或代理设置。';
+  @override
+  String get dict_update_from_file_tooltip => '从本地文件更新（此词典没有在线更新地址）';
+  @override
+  String get anki_lapis_visual_text_indent => '首行缩进';
+  @override
+  String anki_lapis_visual_text_indent_chars({required Object count}) =>
+      '${count} 字';
+  @override
+  String get video_online_mining_mode => '在线视频制卡';
+  @override
+  String get video_online_mining_mode_background => '后台制卡';
+  @override
+  String get video_online_mining_mode_background_hint =>
+      '弹窗立刻显示已加入、视频照常播放，媒体在后台准备并写入 Anki。';
+  @override
+  String get video_online_mining_mode_deferred => '看完再制卡';
+  @override
+  String get video_online_mining_mode_deferred_hint =>
+      '后台准备好媒体后先放进待制卡列表，离开播放页或点「全部写入」时统一写入 Anki，写入前可删掉点错的。';
+  @override
+  String get video_online_mining_mode_wait => '等待完成';
+  @override
+  String get video_online_mining_mode_wait_hint =>
+      '弹窗等到卡片写入 Anki 才返回，保留「修改最新卡片」。';
+  @override
+  String video_mine_staged({required Object count}) => '已加入待制卡 · 共 ${count} 张';
+  @override
+  String video_mine_in_progress({required Object count}) => '正在制卡 ${count}';
+  @override
+  String video_mine_queue_badge({required Object count}) => '待制卡 ${count}';
+  @override
+  String get video_mine_queue_title => '待制卡';
+  @override
+  String get video_mine_queue_empty => '没有待写入的卡片。';
+  @override
+  String get video_mine_queue_commit_all => '全部写入 Anki';
+  @override
+  String video_mine_queue_committing({
+    required Object done,
+    required Object total,
+  }) => '正在写入 ${done}/${total}…';
+  @override
+  String video_mine_queue_committed({
+    required Object ok,
+    required Object failed,
+  }) => '已写入 ${ok} 张，失败 ${failed} 张';
+  @override
+  String video_mine_queue_failed({required Object reason}) => '写入失败：${reason}';
+  @override
+  String get video_mine_queue_remove => '移除';
+  @override
+  String get download_interconnect_section_title => '从配对设备下载';
+  @override
+  String interconnect_download_notification_title({required Object count}) =>
+      '正在从配对设备下载 ${count} 项';
+  @override
+  String download_keep_alive_multiple_title({required Object count}) =>
+      '${count} 项下载进行中';
+  @override
+  String update_download_notification_title({required Object version}) =>
+      '正在下载更新 ${version}';
+  @override
+  String get video_subtitle_remote_audio_fetching => '正在从服务端获取音轨…';
+  @override
+  String get video_subtitle_host_upload_done => '字幕已上传到服务端，设为这一集的默认字幕';
+  @override
+  String get video_subtitle_host_upload_failed => '字幕上传服务端失败，仅保存在本机';
+  @override
+  String get video_subtitle_host_upload_unsupported =>
+      '服务端 Fushi 版本过旧，不接收字幕，仅保存在本机';
+  @override
+  String get video_setting_subtitle_auto_upload_to_host => '导入的字幕自动上传到服务端';
+  @override
+  String get video_setting_subtitle_auto_upload_to_host_hint =>
+      '播放互联服务端上的视频时，导入或重定时的字幕会上传并设为该集默认字幕，所有设备都会看到。关闭后字幕只在本机生效。';
+  @override
+  String get delete_statistics_book_desc =>
+      '该书的阅读时长、阅读字数与查词/制卡计数将从统计中移除，并同步到其他设备';
+  @override
+  String get delete_statistics_manga_desc =>
+      '该漫画的阅读时长、字数、页数与查词/制卡计数将从统计中移除，并同步到其他设备';
+  @override
+  String get delete_statistics_game_desc => '该游戏的游玩时长与文本字数将从本机统计中移除';
+  @override
+  String get ai_feature_default_provider => '默认提供商';
+  @override
+  String get ai_feature_default_provider_summary => '下面的功能没单独指定时都用这一家，配一次就够';
+  @override
+  String ai_feature_follow_default({required Object name}) => '跟随默认（${name}）';
+  @override
+  String get ai_feature_disabled => '不使用 AI';
+  @override
+  String get ai_video_download_quality_best => '最高可用';
+  @override
+  String get ai_video_download_source => '片源偏好';
+  @override
+  String get ai_video_download_source_hint =>
+      '优先挑这种片源的版本，没有时照常用其它版本。蓝光含 BDRip / Remux。';
+  @override
+  String get ai_video_download_source_any => '不限';
+  @override
+  String get ai_video_download_source_best =>
+      '最佳（Remux > 蓝光 > WEB-DL > WEBRip > TV > DVD）';
+  @override
+  String get ai_video_download_source_bluray => '蓝光（BD）';
+  @override
+  String get ai_video_download_source_web => '网络源（WEB-DL / WEBRip）';
+  @override
+  String get ai_video_download_bitrate => '码率偏好';
+  @override
+  String get ai_video_download_bitrate_hint => '按每集文件体积估算码率，在已符合画质与片源的版本之间排序。';
+  @override
+  String get ai_video_download_bitrate_any => '不限';
+  @override
+  String get ai_video_download_bitrate_high => '高码率优先';
+  @override
+  String get ai_video_download_bitrate_low => '小体积优先';
+  @override
+  String get ai_feature_assigned_unavailable => '所选提供商不可用（未配置完整或已停用）';
+  @override
+  String get ai_video_acquire_action_change_work => '换一部';
+  @override
+  String get ai_video_acquire_action_scope_all => '下载整个系列';
+  @override
+  String get ai_video_acquire_action_scope_movies => '全部剧场版';
+  @override
+  String get ai_video_acquire_action_scope_series => '全部剧集';
+  @override
+  String get ai_video_acquire_action_scope_work => '只下这一部';
+  @override
+  String get ai_video_acquire_restart => '再下一部';
+  @override
+  String ai_video_acquire_franchise_searching({required Object title}) =>
+      '正在找「${title}」这个系列的全部作品（要逐部查资料，可能需要一分钟）…';
+  @override
+  String ai_video_acquire_franchise_found({
+    required Object name,
+    required Object series,
+    required Object movies,
+  }) => '找到「${name}」：${series} 部剧集、${movies} 部剧场版，正在逐部找资源…';
+  @override
+  String ai_video_acquire_franchise_not_found({required Object title}) =>
+      '没找到「${title}」同系列的其它作品，先按这一部继续。';
+  @override
+  String ai_video_acquire_franchise_ready({
+    required Object total,
+    required Object ready,
+  }) => '${total} 部里有 ${ready} 部找到了资源。取消勾选不要的再提交；还在播的剧集会自动订阅。';
+  @override
+  String ai_video_acquire_franchise_submitted({
+    required Object downloads,
+    required Object subscriptions,
+    required Object failed,
+  }) => '已入队 ${downloads} 条下载，新建 ${subscriptions} 个订阅；失败 ${failed} 部。';
+  @override
+  String ai_video_acquire_option_submit_all({required Object count}) =>
+      '提交勾选的（${count} 部）';
+  @override
+  String get ai_video_acquire_option_latest => '只下最新一集';
+  @override
+  String get ai_video_acquire_franchise_entry_pending => '正在找资源…';
+  @override
+  String get ai_video_acquire_franchise_entry_none => '没找到资源';
+  @override
+  String ai_video_acquire_franchise_entry_download({required Object version}) =>
+      '下载 · ${version}';
+  @override
+  String ai_video_acquire_franchise_entry_subscribe({
+    required Object version,
+  }) => '订阅 · ${version}';
+  @override
+  String get ai_video_acquire_franchise_entry_owned => '已在库或已订阅';
+  @override
+  String ai_video_acquire_summary_position({
+    required Object index,
+    required Object total,
+  }) => '第 ${index} / ${total} 个版本';
+  @override
+  String ai_video_acquire_summary_size({required Object size}) => '每集约 ${size}';
+  @override
+  String get ai_video_acquire_failure_no_candidates => '这部作品没搜到任何资源。';
+  @override
+  String get ai_video_acquire_failure_no_plannable_version =>
+      '搜到了资源，但没有一个满足要的集数或画质。';
+  @override
+  String get ai_video_acquire_failure_no_sources => '没有可以下载到的受管视频来源。';
+  @override
+  String get ai_video_acquire_failure_nothing_selected => '没有勾选任何可提交的作品。';
+  @override
+  String get ai_video_download_skip_extras => '跳过特典';
+  @override
+  String get ai_video_download_skip_extras_hint =>
+      'PV、CM、NCOP/NCED、菜单等。对所有下载到视频来源的任务生效：种子里的特典文件不下载，只有特典的发布也不会被选中。';
+  @override
+  String get ai_web_knowledge_section => '联网资料';
+  @override
+  String get ai_web_knowledge_wikipedia_zh => '维基百科（中文）';
+  @override
+  String get ai_web_knowledge_wikipedia_ja => 'Wikipedia（日本語）';
+  @override
+  String get ai_web_knowledge_wikipedia_en => 'Wikipedia（English）';
+  @override
+  String get ai_web_knowledge_section_hint =>
+      'Fushi 自己从所选来源抓取条目正文或作品清单交给 AI（AI 下视频列出系列作品、视频作品识别时使用），不需要 AI 提供商支持联网。AI 只能引用抓到的内容，列出的作品还会逐部在资料源里核对。其它 MediaWiki 站点（如 Fandom 上的作品维基）可在下方添加。';
+  @override
+  String get ai_web_knowledge_moegirl => '萌娘百科';
+  @override
+  String get ai_web_knowledge_ann => 'Anime News Network';
+  @override
+  String get ai_web_knowledge_tvmaze => 'TVmaze';
+  @override
+  String get ai_web_knowledge_custom_title => '自定义 MediaWiki 站点';
+  @override
+  String get ai_web_knowledge_custom_add => '添加 MediaWiki 站点';
+  @override
+  String get ai_web_knowledge_custom_name => '名称';
+  @override
+  String get ai_web_knowledge_custom_name_hint => '留空则显示域名';
+  @override
+  String get ai_web_knowledge_custom_endpoint => 'API 地址';
+  @override
+  String get ai_web_knowledge_custom_endpoint_hint =>
+      '站点的 api.php，例如 https://onepiece.fandom.com/api.php';
+  @override
+  String get ai_web_knowledge_custom_endpoint_invalid =>
+      '请填写以 https:// 开头、以 api.php 结尾的地址';
+  @override
+  String get ai_web_knowledge_custom_remove => '删除站点';
+  @override
+  String get video_item_rescrape_not_planned => '这个视频不在任何本地视频来源的刮削计划里';
+  @override
+  String get plex_settings_hint =>
+      '用 Plex 账号登录，或填写服务器地址与 X-Plex-Token 直连。播放直接串流原文件（direct play），不使用 Plex 转码。';
+  @override
+  String get plex_account_sign_in => '使用 Plex 账号登录';
+  @override
+  String get plex_pin_waiting => '等待在浏览器中授权 Fushi…';
+  @override
+  String get plex_pin_link_hint => '如果浏览器没有自动打开，请复制这个链接：';
+  @override
+  String get plex_pin_expired => '登录请求已过期，请重试。';
+  @override
+  String get plex_servers_none_reachable => '这个账号下没有找到可连接的 Plex 服务器。';
+  @override
+  String plex_servers_added({required Object n}) => '已添加 ${n} 台 Plex 服务器';
+  @override
+  String get plex_manual_title => '手动连接';
+  @override
+  String get plex_token_label => 'X-Plex-Token';
+  @override
+  String get plex_manual_connect => '连接';
+  @override
+  String get plex_sign_in_failed => 'Plex 登录失败';
+  @override
+  String get remote_video_stream_play => '播放（流播）';
+  @override
+  String get nav_browse => '浏览';
+  @override
+  String get novel_detail_library_remove => '移出书架';
+  @override
+  String get novel_detail_library_remove_confirm =>
+      '把这部小说移出书架？已缓存的章节和阅读进度会一并删除。';
+  @override
+  String get novel_detail_download => '下载';
+  @override
+  String get novel_detail_library_added => '已加入书架';
+  @override
+  String get video_online_extension_unavailable =>
+      '这一集所属的视频源扩展没有安装或已停用。请到「浏览 › 扩展」重新安装或启用。';
+  @override
+  String get video_online_library_add => '加入媒体库';
+  @override
+  String get video_online_library_remove => '移出媒体库';
+  @override
+  String video_online_library_added({required Object n}) => '已把 ${n} 集加入媒体库';
+  @override
+  String get video_online_library_removed => '已移出媒体库';
+  @override
+  String get video_online_download_all => '下载全部';
+  @override
+  String get video_online_download_episode => '下载本集';
+  @override
+  String get video_online_download_started => '已开始下载，进度见「浏览 › 下载」';
+  @override
+  String get video_online_downloaded => '已下载';
+  @override
+  String get onboarding_feature_browse_hint => '在线来源、扩展、发现与下载';
+  @override
+  String browse_moved_notice_title({required Object browse}) =>
+      '发现与在线来源已移到「${browse}」';
+  @override
+  String browse_moved_notice_body({
+    required Object browse,
+    required Object settings,
+    required Object appearance,
+    required Object modules,
+  }) =>
+      '发现页，以及漫画 / 视频 / 小说的在线来源，已经移到「${browse}」页签；它在本机目前是关闭的。要使用它们，请到「${settings} › ${appearance} › ${modules}」打开「${browse}」。';
 }

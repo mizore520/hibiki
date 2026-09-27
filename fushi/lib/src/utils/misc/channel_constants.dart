@@ -27,7 +27,17 @@ abstract final class FushiChannels {
 
   /// Hibiki→Fushi 跨包名迁移（探测/拉起新包、卸载引导、注销系统入口）。
   static const MethodChannel migration = MethodChannel('$_prefix/migration');
+
+  /// 互联下载保活（Android dataSync 前台服务 + 进度通知）。原生侧
+  /// `DownloadKeepAliveService.java`，Dart 门面 `android_download_keep_alive.dart`。
+  static const MethodChannel downloadKeepAlive =
+      MethodChannel('$_prefix/download_keep_alive');
   static const MethodChannel iconSwitch = MethodChannel('$_prefix/icon_switch');
+
+  /// 长按 app 图标的系统快捷方式（Android launcher shortcuts / iOS quick
+  /// actions）。Dart 门面 `lib/src/platform/app_shortcuts.dart`。
+  static const MethodChannel appShortcuts =
+      MethodChannel('$_prefix/app_shortcuts');
   static const MethodChannel clipboardImage =
       MethodChannel('$_prefix/clipboard_image');
   static const MethodChannel screenBrightness =

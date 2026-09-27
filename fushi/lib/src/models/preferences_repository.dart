@@ -5,6 +5,14 @@ import 'package:fushi_audio/fushi_audio.dart'
 import 'package:fushi_core/fushi_core.dart';
 import 'package:fushi/src/ai/ai_feature.dart';
 import 'package:fushi/src/ai/ai_provider_config.dart';
+import 'package:fushi/src/ai/web_knowledge.dart'
+    show
+        WebKnowledgeSite,
+        encodeWebKnowledgeCustomSites,
+        kBuiltinWebKnowledgeSites,
+        kLegacyWebKnowledgeSiteIds,
+        parseWebKnowledgeCustomSites,
+        parseWebKnowledgeEnabledIds;
 import 'package:fushi/src/dictionary/dict_style_rules.dart';
 import 'package:fushi/src/media/discovery/alist_site_config.dart';
 import 'package:fushi/src/media/discovery/opds_server_config.dart';
@@ -35,6 +43,7 @@ import 'package:fushi/src/media/video/video_immersive_mode.dart';
 import 'package:fushi/src/media/video/video_lua_capability.dart';
 import 'package:fushi/src/media/video/video_clip_export_preferences.dart';
 import 'package:fushi/src/media/video/video_screenshot_destination.dart';
+import 'package:fushi/src/mining/video_online_mining_mode.dart';
 import 'package:fushi/src/media/video/video_subtitle_obscure_mode.dart';
 import 'package:fushi/src/media/audiobook/mining_audio_clip.dart'
     show kMiningHeadPadMs, kMiningPadMaxMs, kMiningTailPadMs;
@@ -112,8 +121,10 @@ const String kDownloadExecutionHostPrefKey = 'download_execution_host';
 /// 备份把这扇门带到另一台电脑上。
 const String kGameStreamRemoteLaunchPrefKey = 'game_stream_remote_launch';
 
-/// 接收端的串流参数（分辨率 / 帧率 / 码率 / 编码等，JSON）。
-const String kGameStreamVideoSettingsPrefKey = 'game_stream_video_settings';
+/// 接收端的串流参数，只存与默认值不同的字段（`toOverridesJson`）：没动过的
+/// 字段一律跟随当前默认，默认值改了对所有人生效。旧键 `game_stream_video_settings`
+/// 存的是整张表（连隐式默认一起固化），已弃用不读。
+const String kGameStreamVideoSettingsPrefKey = 'game_stream_video_overrides';
 
 class PreferencesRepository extends ChangeNotifier implements PrefStore {
   PreferencesRepository(this._db);
@@ -1597,6 +1608,15 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     await setPref('torrent_upload_intro_shown', true);
   }
 
+  /// 「下载」改名「浏览」（2026-09-27）的一次性搬迁提示是否已处理：弹过，或首次
+  /// 启动新版时判定本安装不需要弹（全新安装 / 升级前开着下载）。默认 false。
+  bool get browseMovedNoticeHandled =>
+      getPref('browse_moved_notice_handled', defaultValue: false) as bool;
+
+  Future<void> setBrowseMovedNoticeHandled() async {
+    await setPref('browse_moved_notice_handled', true);
+  }
+
   /// 弹幕样式（字号/不透明度/速度/显示区域，JSON；见 [VideoDanmakuStyle]，TODO-1376）。
   /// 读盘经 [VideoDanmakuStyle.decode] 已 clamp 到合法区间。
   VideoDanmakuStyle get videoDanmakuStyle => VideoDanmakuStyle.decode(
@@ -1916,7 +1936,8 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
   }
 
   /// 「AI 下视频」的默认画质。三态：`''` 未设置（对话里第一次问、按「以后默认」
-  /// 勾选写回）/ `ask` 每次询问 / 固定档（`2160p` `1080p` `720p` `480p` `any`）。
+  /// 勾选写回）/ `ask` 每次询问 / 固定档（`best` `2160p` `1440p` `1080p` `720p`
+  /// `480p` `any`）。
   /// 类型化读法见 `ai_video_acquisition_preferences.dart`。
   String get aiVideoDownloadQuality =>
       getPref('ai_video_download_quality', defaultValue: '') as String;
@@ -1926,8 +1947,29 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
     notifyListeners();
   }
 
+  /// 「AI 下视频」的片源偏好（只排序不过滤）：`''` 不限 / `best` / `bluray` / `web`。
+  /// 类型化读法 `VideoAcquisitionSourcePref.parse`。
+  String get aiVideoDownloadSource =>
+      getPref('ai_video_download_source', defaultValue: '') as String;
+
+  Future<void> setAiVideoDownloadSource(String value) async {
+    await setPref('ai_video_download_source', value);
+    notifyListeners();
+  }
+
+  /// 「AI 下视频」的码率偏好（只排序不过滤）：`''` 不限 / `high` / `low`。
+  /// 类型化读法 `VideoAcquisitionBitratePref.parse`。
+  String get aiVideoDownloadBitrate =>
+      getPref('ai_video_download_bitrate', defaultValue: '') as String;
+
+  Future<void> setAiVideoDownloadBitrate(String value) async {
+    await setPref('ai_video_download_bitrate', value);
+    notifyListeners();
+  }
+
   /// 「AI 下视频」的字幕语言。取值：`''` 未设置（第一次问、按勾选写回）/ `ask`
-  /// 每次询问 / `original` 跟随作品语言 / 语言码（`ja` `zh` `en` `ko`）/
+  /// 每次询问 / `original` 跟随作品语言 / 语言码（见
+  /// `kVideoAcquisitionSubtitleLanguageCodes`）/
   /// `none` 不配字幕。与 [jimakuDefaultLanguage] 分开：那是字幕面板的全局默认，
   /// 这是 AI 对话流程自己的默认。类型化读法见 `ai_video_acquisition_preferences.dart`。
   String get aiVideoDownloadSubtitleLanguage =>
@@ -1937,6 +1979,76 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
   Future<void> setAiVideoDownloadSubtitleLanguage(String value) async {
     await setPref('ai_video_download_subtitle_language', value);
     notifyListeners();
+  }
+
+  /// AI 联网资料：用户自加的 MediaWiki 站点（读时逐条校验，坏条目丢弃）。
+  List<WebKnowledgeSite> get aiWebKnowledgeCustomSites =>
+      parseWebKnowledgeCustomSites(
+        getPref('ai_web_knowledge_custom_sites', defaultValue: null) as String?,
+      );
+
+  Future<void> setAiWebKnowledgeCustomSites(
+    List<WebKnowledgeSite> sites,
+  ) async {
+    await setPref(
+      'ai_web_knowledge_custom_sites',
+      encodeWebKnowledgeCustomSites(sites),
+    );
+    notifyListeners();
+  }
+
+  /// 启用的站点 id（内置 + 自定义）。
+  ///
+  /// 落盘记的是**关掉了哪些**（`ai_web_knowledge_disabled_sites`），不是开了哪些：
+  /// 记「开了哪些」时，以后新增的内置站对任何动过开关的用户都默认关；旧版客户端
+  /// 经同步写回它认识的 id 子集，还会把新站一起关掉。记「关了哪些」，新站默认开、
+  /// 旧客户端不认识的 id 也不会被它抹掉。
+  ///
+  /// 迁移：还没有新键时读旧键 `ai_web_knowledge_sources`（只可能含三个维基 id）——
+  /// 旧键里没列的维基视为关掉，其余一律开。
+  Set<String> get aiWebKnowledgeEnabledSiteIds {
+    final Set<String> all = <String>{
+      for (final WebKnowledgeSite site in kBuiltinWebKnowledgeSites) site.id,
+      for (final WebKnowledgeSite site in aiWebKnowledgeCustomSites) site.id,
+    };
+    final Set<String>? disabled = parseWebKnowledgeEnabledIds(
+      getPref('ai_web_knowledge_disabled_sites', defaultValue: null)
+          as String?,
+    );
+    if (disabled != null) return all.difference(disabled);
+    final Set<String>? legacyEnabled = parseWebKnowledgeEnabledIds(
+      getPref('ai_web_knowledge_sources', defaultValue: null) as String?,
+    );
+    if (legacyEnabled == null) return all;
+    return all.difference(
+      kLegacyWebKnowledgeSiteIds.difference(legacyEnabled),
+    );
+  }
+
+  Future<void> setAiWebKnowledgeEnabledSiteIds(Set<String> ids) async {
+    // 按「内置顺序 + 自定义顺序」写出关掉的那些，同一组选择写出的值恒相同；已删掉
+    // 的站点 id 顺手清掉，不在偏好里越攒越多。
+    final List<String> disabled = <String>[
+      for (final WebKnowledgeSite site in <WebKnowledgeSite>[
+        ...kBuiltinWebKnowledgeSites,
+        ...aiWebKnowledgeCustomSites,
+      ])
+        if (!ids.contains(site.id)) site.id,
+    ];
+    await setPref('ai_web_knowledge_disabled_sites', disabled.join(','));
+    notifyListeners();
+  }
+
+  /// 实际要查的站点：启用的内置站（内置顺序）+ 启用的自定义站（添加顺序）。
+  List<WebKnowledgeSite> get aiWebKnowledgeSites {
+    final Set<String> enabled = aiWebKnowledgeEnabledSiteIds;
+    return <WebKnowledgeSite>[
+      for (final WebKnowledgeSite site in <WebKnowledgeSite>[
+        ...kBuiltinWebKnowledgeSites,
+        ...aiWebKnowledgeCustomSites,
+      ])
+        if (enabled.contains(site.id)) site,
+    ];
   }
 
   /// 刮削完成后，自动为**仍缺字幕**的视频补一条在线字幕。默认开。
@@ -1954,6 +2066,32 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
 
   Future<void> setVideoSubtitleBackfillAfterScrape(bool enabled) async {
     await setPref('video_subtitle_backfill_after_scrape', enabled);
+    notifyListeners();
+  }
+
+  /// 下载进受管视频来源时跳过特典（PV / CM / NCOP / NCED / 菜单…）。默认关：
+  /// 整颗种子全下（旧行为）。下载管线每轮现读，改了对还没拿到文件表的任务生效。
+  bool get videoDownloadSkipExtras =>
+      getPref('video_download_skip_extras', defaultValue: false) as bool;
+
+  Future<void> setVideoDownloadSkipExtras(bool enabled) async {
+    await setPref('video_download_skip_extras', enabled);
+    notifyListeners();
+  }
+
+  /// 远端（互联 host）视频上导入 / 重定时得到的字幕是否自动上传到 host 并设为该集
+  /// 默认字幕（BUG-2728 的自动上传）。上传会改掉**所有** peer 在这一集看到的默认
+  /// 字幕，所以给用户一个开关；关掉时字幕只在本机应用与记忆，不发任何上传请求。
+  ///
+  /// 为什么默认开：BUG-2728 是所有者本人报的「字幕导入应该自动上传到服务端」，
+  /// PR #1688 按此默认上传后合入；开关是 2026-09-27 所有者追加的「加开关」，没有
+  /// 要求改默认。默认开让已在用的行为不因升级而静默变化。
+  bool get videoSubtitleAutoUploadToHost =>
+      getPref('video_subtitle_auto_upload_to_host', defaultValue: true)
+          as bool;
+
+  Future<void> setVideoSubtitleAutoUploadToHost(bool enabled) async {
+    await setPref('video_subtitle_auto_upload_to_host', enabled);
     notifyListeners();
   }
 
@@ -2145,6 +2283,16 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
 
   void setVideoMiningImageMode(VideoMiningImageMode mode) async {
     await setPref('video_mining_image_mode', mode.wireName);
+    notifyListeners();
+  }
+
+  // 在线视频点制卡后弹窗等不等（见 [VideoOnlineMiningMode]）。默认 background。
+  VideoOnlineMiningMode get videoOnlineMiningMode =>
+      VideoOnlineMiningMode.fromWireName(
+          getPref('video_online_mining_mode', defaultValue: null) as String?);
+
+  Future<void> setVideoOnlineMiningMode(VideoOnlineMiningMode mode) async {
+    await setPref('video_online_mining_mode', mode.wireName);
     notifyListeners();
   }
 
@@ -3639,7 +3787,10 @@ class PreferencesRepository extends ChangeNotifier implements PrefStore {
   Future<void> setGameStreamVideoSettings(
     GameStreamVideoSettings value,
   ) async {
-    await setPref(kGameStreamVideoSettingsPrefKey, jsonEncode(value.toJson()));
+    await setPref(
+      kGameStreamVideoSettingsPrefKey,
+      jsonEncode(value.toOverridesJson()),
+    );
     notifyListeners();
   }
 

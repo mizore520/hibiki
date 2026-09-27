@@ -16,6 +16,8 @@
 ## 仓库地图
 
 - 应用 `fushi/`；共享包 `packages/`；词典与 Hook 原生实现 `native/`；构建维护脚本 `tool/`；浏览器扩展在 `tools/browser-extension/`。
+- `packages/fushi_engine/` 是应用和无头服务端共用的纯 Dart 引擎，不得依赖 Flutter、`dart:ui`、插件或 `package:fushi`；`packages/fushi_server/` 是 CLI 服务端。修改装配前查 [仓库地图](docs/agent/repository-map.md) 与对应模块文档。
+- 作者已将顶层「下载」改为「浏览」模块：入口 `fushi/lib/src/pages/implementations/browse_page.dart`，持久化键仍为 `module_downloads_enabled`；在线发现和来源 UI 由浏览模块承载。
 - 需要定位模块时查 [仓库地图](docs/agent/repository-map.md)，不按旧文档中的固定行数或他人绝对路径定位。
 - 修改共享引擎/服务端、ASR/OCR、存储迁移或平台装配前，读取地图中的对应技术边界与模块文档；共享引擎保持纯 Dart，持久化标识的改名必须有迁移方案。
 
@@ -30,6 +32,8 @@
 - 运行时诊断或支持验收前，按用户原始安装与启动路径建立身份/时序台账；静态调查、离线修复和文档改动可先推进，未验证能力保持 `implemented_unverified`。台账包括：启动器与真实游戏 PID/父子关系、架构、exe/module/helper/DLL 实际路径与 SHA-256、注入/附着策略，以及进程出现、模块加载、首次资源访问和首次音频的时间。imports、模块名、DLL 已加载或 Hook installed 只算候选证据。
 - 能力阶段必须分开记录：`process_found → helper_ready → ipc_ready → text_ready → resource/pcm_ready → paired → e2e_verified`；不得用前一阶段推断后一阶段，也不得把 ready、捕获、纯人声分类、哈希一致和端到端混成一个“成功”。
 - 每轮只修原始路径上第一个未通过边界。引擎/保护壳/加载时序特例必须收进 profile/adapter；共享中间件不得仅凭 DLL 名启用，且须有跨引擎负向测试。
+- 新游戏或引擎适配只有在原始路径同时验证当前台词文本、对应语音（非纯 Loopback）、游戏内查词，以及点击查词不推进游戏后才称为成功；缺项逐条报告为部分适配。
+- 游戏特例须收敛成引擎或引擎变体的结构判据和生命周期，不新增按单款游戏的 exe 哈希、文件名或标题写死的 profile；用同引擎多版本和其他引擎负向样本验证。
 - Loopback 只是显式降级，不能证明引擎 Hook、逐句配对或纯人声已验证；任何必需测试、双架构构建、replay 或真机门被跳过/阻塞，只能标 `implemented_unverified`，不得宣称“已支持/已修好”。
 - 支持升级必须回到原始启动路径完成“当前文本 → 对应语音 → 当前画面 → 真卡写入”E2E；宣称原始逐句资源时还须记录与源 entry 的字节哈希一致性，并只通过 `native/galgame_hook/engine-support.yaml` 真相源更新支持状态。
 

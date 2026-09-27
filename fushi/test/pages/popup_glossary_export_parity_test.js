@@ -7,15 +7,22 @@
 //   (`{glossary-first}` / `{single-glossary-*}`) already agreed. Only
 //   constructGlossaryHtml prefixed an index, so cards read "(1, 词典名)".
 //
-// BUG-1062 — exported definition images were pinned to physical pixels. Yomitan's
-//   structured-content-generator always writes `width: {usedWidth}em` on the
-//   container and lets CSS decide what 1em is: in its own popup a stylesheet
-//   squashes it to ~1px, but an Anki card has no such stylesheet, so `em`
-//   resolves against the card font size. popup.js instead exported
-//   `width: {usedWidth}px` plus an inline `font-size: 1px` (which, being inline,
-//   also overrode any note-type CSS) — cards ended up a whole font-size factor
-//   smaller than Yomitan's. Export now keeps the `em` semantics; the popup path
-//   keeps px (its own CSS is what makes px correct there).
+// BUG-1062 / BUG-2742 — exported definition images must get Yomitan's box.
+//   Yomitan's importer stores the dictionary JSON `width`/`height` as
+//   preferredWidth/preferredHeight and replaces width/height with the media
+//   file's REAL pixel size; its structured-content-generator then writes
+//   `width: {usedWidth}em`, and the Anki export inlines
+//   structured-content-style.json: `.gloss-image-container{font-size:1px}`,
+//   overridden to `1em` only for `[data-size-units=em]`. So a non-em image is
+//   usedWidth px and an em image is usedWidth card-font-sizes (checked against
+//   real Yomitan cards: 明鏡 `font-size:1px;width:150em`, 語彙力
+//   `font-size:1px;font-size:1em;width:8.57143em`).
+//   popup.js has no real sizes in its database, so an image declaring only one
+//   dimension (語彙力: `height:10, sizeUnits:'em'`) fell back to `width = 100`
+//   → a 100em × 10em strip, squeezed to the card width with the picture shrunk
+//   and centred in it. buildMinePayload now measures the real sizes first.
+//   (BUG-1062 had pinned every export to `font-size:1em`, which blew non-em
+//   images up to the card width; BUG-2742 restores Yomitan's 1px rule.)
 //
 // This EXECUTES the real popup.js against a minimal fake DOM. Reverting either
 // fix turns this red.
@@ -33,7 +40,9 @@ const popupPath = path.resolve(__dirname, '../../assets/popup/popup.js');
 // (normalizeDictMediaPath / rewriteDictionaryMediaPath), so load the real thing
 // rather than stubbing the media path rules.
 const dictMediaPath = path.resolve(__dirname, '../../assets/popup/dict-media.js');
+const yomitanRendererPath = path.resolve(__dirname, '../../assets/popup/yomitan-glossary-renderer.js');
 const source = fs.readFileSync(dictMediaPath, 'utf8') + '\n' +
+  fs.readFileSync(yomitanRendererPath, 'utf8') + '\n' +
   fs.readFileSync(popupPath, 'utf8');
 
 function makeElement(tag) {
@@ -76,15 +85,19 @@ function makeElement(tag) {
 }
 
 function makeSandbox() {
+  const created = [];
   const documentObj = {
     documentElement: { style: {}, classList: makeElement().classList },
+    ELEMENT_NODE: 1,
+    TEXT_NODE: 3,
     head: { appendChild() {} },
     body: makeElement('body'),
     getElementById() { return null; },
     querySelector() { return null; },
     querySelectorAll() { return []; },
-    createElement(tag) { return makeElement(tag); },
+    createElement(tag) { const element = makeElement(tag); created.push(element); return element; },
     createTextNode(text) { const n = makeElement('#text'); n.textContent = text; return n; },
+    createTreeWalker() { return { nextNode() { return null; } }; },
     addEventListener() {},
   };
 
@@ -95,10 +108,10 @@ function makeSandbox() {
     dictionaryStyles: {},
     hiddenDictionaryNames: [],
     collapsedDictionaryNames: [],
-    compactGlossariesAnki: false,
     // Mining payload path: dictionary media is embedded, so exported images are
     // <img src="fushi_dict_N.ext"> and go through applyImageStyles.
     embedMedia: true,
+    NodeFilter: { SHOW_ELEMENT: 1, SHOW_TEXT: 4 },
     devicePixelRatio: 2,
     innerWidth: 400,
     flutter_inappwebview: { callHandler() { return Promise.resolve(false); } },
@@ -106,8 +119,37 @@ function makeSandbox() {
   };
   documentObj.defaultView = windowObj;
 
+  // Stands in for the popup's media loads: buildMinePayload measures real image
+  // sizes through `new Image()` on the same image:// URL the popup displays.
+  // Paths listed in `naturalSizes` load with that size; any other path errors.
+  const naturalSizes = {};
+  class FakeImage {
+    constructor() {
+      this.naturalWidth = 0;
+      this.naturalHeight = 0;
+      this.onload = null;
+      this.onerror = null;
+    }
+    set src(url) {
+      this._src = url;
+      const match = /[?&]path=([^&]*)/.exec(url);
+      const size = match ? naturalSizes[decodeURIComponent(match[1])] : undefined;
+      setTimeout(() => {
+        if (size) {
+          this.naturalWidth = size[0];
+          this.naturalHeight = size[1];
+          if (this.onload) this.onload();
+        } else if (this.onerror) {
+          this.onerror();
+        }
+      }, 0);
+    }
+    get src() { return this._src; }
+  }
+
   const sandbox = {
     Node: { TEXT_NODE: 3, ELEMENT_NODE: 1 },
+    NodeFilter: { SHOW_ELEMENT: 1, SHOW_TEXT: 4 },
     Date, Math, URL, JSON, RegExp, Set, Map, Object, Array, console,
     performance: { now() { return 0; } },
     setTimeout, clearTimeout,
@@ -115,6 +157,9 @@ function makeSandbox() {
     document: documentObj,
     window: windowObj,
     getComputedStyle() { return {}; },
+    Image: FakeImage,
+    __naturalSizes: naturalSizes,
+    __created: created,
   };
   sandbox.globalThis = sandbox;
   return sandbox;
@@ -133,6 +178,16 @@ function loadPopup(entry) {
       image: function(data, exporting) { return createDefinitionImage(data, 'Dict', exporting); },
       structured: function(parent, node, exporting) {
         return renderStructuredContent(parent, node, null, 'Dict', exporting);
+      },
+      // Runs the real mining payload builder and returns every image node it
+      // exported, so the test sees exactly what lands in the Anki field.
+      mine: async function() {
+        const start = __created.length;
+        const payload = await buildMinePayload('x', 'x', [], [], [], 'x', 0, '');
+        const exported = __created.slice(start).filter(node =>
+          node.className === 'gloss-image-link');
+        return { exported, glossary: payload.glossary,
+          sizesClosed: currentExportImageSizes === null };
       },
     };
   `;
@@ -158,7 +213,7 @@ function containerOf(node) {
   return node.children[0];
 }
 
-(function run() {
+(async function run() {
   const entry = {
     expression: '猫', reading: 'ねこ',
     glossaries: [gloss('JMdict', 'cat'), gloss('JMdict', 'kitty'), gloss('Daijirin', 'ねこ科の動物')],
@@ -191,20 +246,28 @@ function containerOf(node) {
     }
   }
 
-  // BUG-1062 (1/3): an exported image keeps Yomitan's em sizing, and does not
-  // pin an inline 1px font-size (which would also outrank note-type CSS).
+  // BUG-1062 / BUG-2742 (1/3): a non-em image exports exactly like Yomitan's
+  // card — `width: {usedWidth}em` in a `font-size:1px` container, i.e. usedWidth
+  // px (real Yomitan card: 明鏡 `font-size:1px;width:150em`). BUG-1062 had pinned
+  // `font-size:1em` here, which blew such images up to the full card width.
   {
     const sb = loadPopup(entry);
-    const node = sb.window.__test.image({ path: 'pic.png', width: 10, height: 5 }, true);
+    const node = sb.window.__test.image({ path: 'pic.png', width: 150, height: 100 }, true);
     const container = containerOf(node);
-    assert.strictEqual(container.style.width, '10em',
+    assert.strictEqual(container.style.width, '150em',
       'exported image container must size in em like Yomitan; got ' + container.style.width);
-    assert.ok(/font-size:1em/.test(container.style.cssText),
-      'exported image container must inherit the card font size; got ' + container.style.cssText);
-    assert.ok(!/font-size:1px/.test(container.style.cssText),
-      'exported image container must not pin font-size:1px (BUG-1062); got ' + container.style.cssText);
+    assert.ok(/font-size:1px/.test(container.style.cssText) &&
+      !/font-size:1em/.test(container.style.cssText),
+      'a non-em image must sit in Yomitan\'s font-size:1px container; got ' +
+      container.style.cssText);
     assert.ok(/max-width:100%/.test(container.style.cssText),
       'exported image must still be capped at the card width');
+    assert.strictEqual(node.dataset.sizeUnits, undefined,
+      'a non-em image must not be tagged data-size-units=em');
+    const img = container.children.find(c => c.tagName === 'IMG');
+    assert.ok(img.width === 150 && img.height === 100,
+      'non-em <img> attributes are usedWidth x usedWidth*aspect like Yomitan; got ' +
+      img.width + 'x' + img.height);
   }
 
   // BUG-1062 (2/3): the popup path is unchanged — px there is correct because
@@ -226,6 +289,11 @@ function containerOf(node) {
     const container = containerOf(node);
     assert.strictEqual(container.style.width, '2em',
       'sizeUnits:em images stay em on export; got ' + container.style.width);
+    assert.ok(/font-size:1em/.test(container.style.cssText) &&
+      !/font-size:1px/.test(container.style.cssText),
+      'an em image\'s container must follow the card font size; got ' +
+      container.style.cssText);
+    assert.strictEqual(node.dataset.sizeUnits, 'em');
   }
 
   // BUG-1676 (1/3): a dictionary that declares NO size must not be exported at
@@ -328,7 +396,136 @@ function containerOf(node) {
     const container = withMedia.children[0];
     assert.ok(container.children.some(c => c.tagName === 'IMG'),
       'embedded gaiji exports an <img>');
+    // The 1.2em inline gaiji box must track the text size: Yomitan's 1px
+    // container rule would squash it to 1.2px.
+    assert.ok(/font-size:1em/.test(container.style.cssText) &&
+      !/font-size:1px/.test(container.style.cssText),
+      'an unsized SVG gaiji must keep a 1em container; got ' + container.style.cssText);
+  }
+
+  // ---- BUG-2742: the real image size drives the exported box ----
+  const goiEntry = {
+    expression: 'コンコン', reading: 'コンコン',
+    glossaries: [{
+      // Shape of 語彙力・熟語の百科事典 on the user's card: the pictures declare
+      // only a height, in em.
+      dictionary: '語彙力・熟語の百科事典',
+      content: JSON.stringify({
+        type: 'structured-content',
+        content: [
+          { tag: 'div', content: [
+            { tag: 'img', path: 'img/kitsune.png', height: 10, sizeUnits: 'em', background: false, collapsible: false },
+            { tag: 'img', path: 'img/knock.png', height: 10, sizeUnits: 'em', background: false, collapsible: false },
+          ] },
+          { tag: 'div', content: [
+            { tag: 'img', path: 'img/wide.png', width: 200 },
+            { tag: 'img', path: 'img/plain.png' },
+            { tag: 'img', path: 'img/missing.png', height: 10, sizeUnits: 'em' },
+          ] },
+        ],
+      }),
+      definitionTags: '', termTags: '',
+    }],
+    frequencies: [], pitches: [],
+  };
+  const near = (actual, expected) => Math.abs(actual - expected) < 1e-6;
+const sizerOf = (container) => container.children.find(c => c.className === 'gloss-image-sizer');
+const imgOf = (container) => container.children.find(c => c.tagName === 'IMG');
+function exportedFontRule(sandbox, selector, value) {
+  return sandbox.__fushiYomitanGlossaryRenderer._styleApplier._styleData.some(rule =>
+    rule.selectors.split(',').includes(selector) &&
+    rule.styles.some(style => style.property === 'font-size' && style.value === value));
+}
+
+  const sb = loadPopup(goiEntry);
+  // 180x210 is the real file behind the user's Yomitan card (its <img> reads
+  // 480x560 only because em images are rendered at usedWidth * 14 * 2 * dpr).
+  sb.__naturalSizes['img/kitsune.png'] = [180, 210];
+  sb.__naturalSizes['img/knock.png'] = [200, 280];
+  sb.__naturalSizes['img/wide.png'] = [400, 300];
+  sb.__naturalSizes['img/plain.png'] = [320, 240];
+  const mined = await sb.window.__test.mine();
+  assert.ok(mined.sizesClosed,
+    'buildMinePayload must close the measured-size registry like currentDictionaryMedia');
+  const byPath = {};
+  mined.exported.forEach(node => { (byPath[node.dataset.path] = byPath[node.dataset.path] || []).push(node); });
+  for (const p of ['img/kitsune.png', 'img/knock.png', 'img/wide.png', 'img/plain.png', 'img/missing.png']) {
+    assert.ok(byPath[p] && byPath[p].length > 0, 'mining must export ' + p);
+  }
+
+  // BUG-2742 (1/4): the user's card. Height-only em pictures take their width
+  // from the real aspect ratio — Yomitan's `width: 8.57143em` (= 10 / (210/180))
+  // and a 116.667% sizer — instead of the `width = 100` fallback that made a
+  // 100em × 10em strip with the picture shrunk and centred inside.
+  for (const [p, w, h] of [
+    ['img/kitsune.png', 180, 210],
+    ['img/knock.png', 200, 280],
+  ]) {
+    for (const node of byPath[p]) {
+      const container = containerOf(node);
+      const usedWidth = 10 / (h / w);
+      assert.ok(/em$/.test(container.style.width) && near(parseFloat(container.style.width), usedWidth),
+        `${p}: container must be ${usedWidth}em wide like Yomitan; got ${container.style.width}`);
+      assert.ok(near(parseFloat(sizerOf(container).style.paddingTop), (h / w) * 100),
+        `${p}: sizer must carry the real aspect ratio; got ${sizerOf(container).style.paddingTop}`);
+      assert.strictEqual(node.dataset.sizeUnits, 'em');
+      assert.ok(exportedFontRule(sb,
+        '.gloss-image-link[data-size-units=em] .gloss-image-container', '1em'),
+        `${p}: exported renderer must scale em pictures with the card font`);
+      const img = imgOf(container);
+      // The new renderer writes the measured source pixels into the image
+      // attributes; the em-sized outer box above still controls card layout.
+      assert.ok(near(img.width, w) && near(img.height, h),
+        `${p}: <img> attributes must carry measured ${w}x${h}; got ${img.width}x${img.height}`);
+    }
+  }
+
+  // BUG-2742 (2/4): width-only non-em image → declared width in px, real aspect.
+  for (const node of byPath['img/wide.png']) {
+    const container = containerOf(node);
+    assert.strictEqual(container.style.width, '200em');
+    assert.ok(near(parseFloat(sizerOf(container).style.paddingTop), 75),
+      'width-only image must use the real 400x300 aspect; got ' + sizerOf(container).style.paddingTop);
+    assert.ok(exportedFontRule(sb, '.gloss-image-container', '1px') &&
+      node.dataset.sizeUnits !== 'em',
+      'non-em image must use the exported renderer\'s 1px container rule');
+    const img = imgOf(container);
+    assert.ok(img.width === 400 && near(img.height, 300),
+      'new renderer must keep measured source attributes: got ' + img.width + 'x' + img.height);
+  }
+
+  // BUG-2742 (3/4): an unsized image that could be measured gets Yomitan's box
+  // at its real pixel size (320em in a 1px container = 320px).
+  for (const node of byPath['img/plain.png']) {
+    const container = containerOf(node);
+    assert.strictEqual(container.style.width, '320em');
+    assert.ok(exportedFontRule(sb, '.gloss-image-container', '1px') &&
+      node.dataset.sizeUnits !== 'em', 'measured non-em image must use the 1px rule');
+    assert.strictEqual(node.dataset.hasAspectRatio, 'true');
+    assert.ok(near(parseFloat(sizerOf(container).style.paddingTop), 75));
+  }
+
+  // BUG-2742 (4/4): measuring failed (missing file / host too slow). Never fall
+  // back to the invented 100em strip: the <img> keeps its own aspect ratio and
+  // only the declared dimension is applied to it.
+  for (const node of byPath['img/missing.png']) {
+    const container = containerOf(node);
+    assert.strictEqual(container.style.width, 'auto',
+      'unmeasured height-only image must be laid out by the <img>; got ' + container.style.width);
+    assert.ok(!/100em/.test(container.style.cssText + container.style.width),
+      'the width = 100 fallback must never be exported; got ' + container.style.cssText);
+    assert.ok(node.dataset.sizeUnits === 'em' && exportedFontRule(sb,
+      '.gloss-image-link[data-size-units=em] .gloss-image-container', '1em'),
+      'unmeasured em image must keep the exported 1em rule');
+    const img = imgOf(container);
+    assert.strictEqual(img.style.height, '10em',
+      'the declared height must still size the <img>; got ' + img.style.height);
+    assert.strictEqual(img.style.position, 'static',
+      'unmeasured image must remain in normal flow');
   }
 
   console.log('popup_glossary_export_parity_test.js: all assertions passed');
-})();
+})().catch(error => {
+  console.error(error);
+  process.exit(1);
+});

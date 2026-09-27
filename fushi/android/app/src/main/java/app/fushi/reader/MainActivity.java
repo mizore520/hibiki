@@ -606,6 +606,7 @@ public class MainActivity extends AudioServiceActivity {
         SystemOcrChannel.registerWith(flutterEngine);
         ClipboardImageChannel.registerWith(flutterEngine, getApplicationContext());
         MigrationChannelHandler.registerWith(flutterEngine, getApplicationContext());
+        DownloadKeepAliveService.registerWith(flutterEngine, getApplicationContext());
 
         volumeKeyChannel = new MethodChannel(
                 flutterEngine.getDartExecutor().getBinaryMessenger(), VOLUME_KEY_CHANNEL);
@@ -1123,6 +1124,23 @@ public class MainActivity extends AudioServiceActivity {
                     default:
                         result.notImplemented();
                         break;
+                }
+            });
+
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), ChannelNames.APP_SHORTCUTS)
+            .setMethodCallHandler((call, result) -> {
+                if ("setShortcuts".equals(call.method)) {
+                    List<Map<String, String>> items = call.argument("items");
+                    String disabledMessage = call.argument("disabledMessage");
+                    List<String> moduleDisabledIds = call.argument("moduleDisabledIds");
+                    AppShortcutsHelper.setShortcuts(
+                        this,
+                        items == null ? new ArrayList<>() : items,
+                        disabledMessage,
+                        moduleDisabledIds == null ? new ArrayList<>() : moduleDisabledIds);
+                    result.success(null);
+                } else {
+                    result.notImplemented();
                 }
             });
 

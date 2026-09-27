@@ -58,6 +58,10 @@ bool isBilibiliCdnHost(String host) {
     'bilivideo.cn', // *.mcdn.bilivideo.cn
     'acgvideo.com', // 老 upos-hz-mirrorcos.acgvideo.com
     'hdslb.com',
+    // B 站 PCDN（`b-<id>.edge.mountaintoys.cn:4483`），实测不带 Referer 403。PCDN 域名会
+    // 轮换，这张表永远追不全；B 站制卡链路已改由流解析层显式声明 Referer
+    // （`kBilibiliMediaHttpHeaders`），这里只是其他入口的兜底。
+    'mountaintoys.cn',
   ]) {
     if (h == domain || h.endsWith('.$domain')) return true;
   }
@@ -1698,6 +1702,8 @@ Future<String?> extractAudioSegmentViaFfmpeg({
   Map<String, String> httpHeaders = const {},
   // 有声书倍速制卡：句子音频按播放倍速变速不变调；null / 1.0 = 原速（现状）。
   double? tempo,
+  // 句子级片段默认 120s 足够；整集音轨（远端对轴 / 重定时）由调用方按时长放大。
+  Duration timeout = const Duration(seconds: 120),
 }) async {
   // TODO-1005 / BUG-472：这两条「ffmpeg 还没跑」的早返回历来静默 return null——
   // 有声书片段导出 / 句子音频 TTS / 视频制卡 只看到「失败但日志空白」，无从诊断。
@@ -1741,7 +1747,7 @@ Future<String?> extractAudioSegmentViaFfmpeg({
         httpHeaders: httpHeaders,
         tempo: tempo,
       ),
-      const Duration(seconds: 120),
+      timeout,
     );
     final int? code = result.returnCode;
     if (code == 0 && output.existsSync() && output.lengthSync() > 0) {

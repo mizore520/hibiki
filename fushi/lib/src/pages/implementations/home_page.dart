@@ -25,6 +25,8 @@ import 'package:fushi/src/utils/components/fushi_desktop_title_bar.dart';
 import 'package:fushi/src/utils/components/nav_rail_brand_button.dart';
 import 'package:fushi/src/utils/misc/build_version.dart';
 import 'package:fushi/src/pages/implementations/download_backend_setup_dialog.dart';
+import 'package:fushi/src/settings/settings_destination.dart';
+import 'package:fushi/src/pages/implementations/module_settings_view.dart';
 import 'package:fushi/src/pages/implementations/managed_video_source_prompt.dart';
 import 'package:fushi/src/sync/desktop_foreground_guard.dart';
 import 'package:fushi/src/anki/anki_media_dedup_runner.dart';
@@ -70,6 +72,7 @@ import 'package:fushi_engine/media/video/metadata/video_metadata_models.dart';
 import 'package:fushi_engine/media/video/metadata/video_metadata_provider.dart';
 import 'package:fushi_engine/media/video/metadata/video_source_scrape_config.dart';
 import 'package:fushi_engine/media/video/metadata/video_source_scrape_coordinator.dart';
+import 'package:fushi/src/ai/ai_video_franchise_assistant.dart';
 import 'package:fushi/src/ai/ai_video_acquisition_assistant.dart';
 import 'package:fushi/src/ai/ai_video_identity_assistant.dart';
 import 'package:fushi/src/media/video/metadata/video_source_scrape_dialog.dart';
@@ -83,14 +86,17 @@ import 'package:fushi/src/pages/implementations/video_discovery_detail_page.dart
 import 'package:fushi/src/pages/implementations/video_discovery_page.dart'
     show VideoDiscoveryController;
 import 'package:fushi/src/pages/implementations/video_library_shell.dart';
+import 'package:fushi/src/pages/implementations/browse_moved_notice.dart'
+    show maybeShowBrowseMovedNotice;
 import 'package:fushi/src/pages/implementations/media_server/media_server_browse_page.dart'
     show MediaServerEntry;
-import 'package:fushi/src/sync/jellyfin_video_client.dart'
-    show JellyfinServerConfig, JellyfinVideoClient;
+import 'package:fushi/src/media/video/media_server/media_server_config.dart'
+    show MediaServerConfig;
 import 'package:fushi/src/sync/remote_library_cache.dart'
     show remoteLibraryCacheProvider;
 import 'package:fushi/src/media/audiobook/now_listening_mini_bar.dart';
 import 'package:fushi/src/models/module_id.dart';
+import 'package:fushi/src/models/module_registry.dart';
 import 'package:fushi/src/sync/desktop_lookup_service.dart';
 import 'package:fushi/pages.dart';
 import 'package:fushi/utils.dart';
@@ -131,22 +137,7 @@ import 'package:fushi_core/fushi_core.dart'
         VideoSourceScrapeRunRow,
         VideoSourceScrapeSettingRow;
 
-/// 顶层 tab 的逻辑身份（取代写死的整数索引 0/1/2）。条件 tab（video/downloads 常驻、
-/// games 仅 Windows）用枚举身份而非位置来切换/路由——插入条件 tab 不会再打乱「设置/词典」
-/// 的索引（消除 `==2` / `case 1/2` / `%3` 这类特殊情况）。底栏/侧栏只在渲染层把身份映射
-/// 成位置。games（galgame 库）紧跟在 video 之后。顶层 texthooker tab 已删（galgame 捕获
-/// 工作台现内嵌于 games tab，会话见 [GalHookSessionController]）。
-enum HomeTab {
-  home,
-  books,
-  manga,
-  video,
-  downloads,
-  dictionaries,
-  games,
-  browserExtension,
-  settings,
-}
+export 'package:fushi/src/models/home_tab.dart';
 
 /// 纯函数：给定视频开关与游戏库开关，返回可见顶层 tab 的**视觉顺序**——视频固定插在书架
 /// 与词典之间（用户要求「在书架和词典管理中间」），games（galgame 库）仅在开启时出现，
@@ -170,7 +161,7 @@ List<HomeTab> homeActiveTabs(ModuleVisibility visibility) => <HomeTab>[
   // 下载 tab（统一下载中心）：除番剧 torrent 外还承载通用磁力（书）与漫画
   // 「在线目录」卷下载队列，所以不随视频开关联动，只听自己的模块开关；位置在
   // 视频/游戏之后。
-  if (visibility.isEnabled(ModuleId.downloads)) HomeTab.downloads,
+  if (visibility.isEnabled(ModuleId.browse)) HomeTab.browse,
   if (visibility.isEnabled(ModuleId.lookup)) HomeTab.dictionaries,
   // 浏览器扩展管理（安装引导 + 连接检测 + 版本）独立成页，仅桌面出现（手机浏览器
   // 不支持加载未解压扩展，故按平台而非实验开关门控——平台判据在
@@ -254,11 +245,12 @@ AdaptiveNavItem homeNavItemFor(HomeTab tab) {
         selectedIcon: Icons.movie,
         label: t.nav_video,
       );
-    case HomeTab.downloads:
+    case HomeTab.browse:
+      // Mihon 的 Browse：来源 / 扩展 / 发现 / 下载（2026-09-27 由「下载」改名）。
       return AdaptiveNavItem(
-        icon: Icons.download_outlined,
-        selectedIcon: Icons.download,
-        label: t.nav_downloads,
+        icon: Icons.explore_outlined,
+        selectedIcon: Icons.explore,
+        label: t.nav_browse,
       );
     case HomeTab.dictionaries:
       return AdaptiveNavItem(
@@ -398,6 +390,15 @@ class _HomePageState extends BasePageState<HomePage>
 
   HomeTab _currentTab = HomeTab.home;
 
+  /// BUG-2719：tab 正文（[_bodyWithMiniBar]）的唯一身份。三套布局把正文挂在不同的父链下
+  /// （底栏：`Scaffold.body > SafeArea`；侧栏：`Row > Expanded`；macOS：
+  /// `ContentArea`），而 [LayoutBuilder] 只按**当前宽度**挑其一。没有这把 key，
+  /// 宽度一越过 600 的断点，整棵正文就被卸载重建，所有 tab 的 State 一起丢掉。
+  /// 最常见的触发是手机竖屏点开视频：播放页转横屏，被它盖住的首页跟着变宽换成侧栏
+  /// 布局，退出视频转回竖屏再换一次——视频库的分区（系列 / 全部视频 / 媒体服务器…）
+  /// 于是每次都回到第一个「首页」分区。持有 [GlobalKey] 让换布局变成同一子树换父节点。
+  final GlobalKey _homeBodyKey = GlobalKey(debugLabel: 'home-tab-body');
+
   /// Android games tab（串流接收端）的依赖装配；只在首次切到该 tab 时构造。
   late final GameStreamLibraryServices _gameStreamLibraryServices =
       GameStreamLibraryServices.interconnect(appModel: appModelNoUpdate);
@@ -421,8 +422,9 @@ class _HomePageState extends BasePageState<HomePage>
   VideoDiscoveryService? _videoDiscoveryService;
   VideoDiscoveryController? _videoDiscoveryController;
   String? _videoDiscoveryConfigFingerprint;
-  int _downloadsInitialTabIndex = 0;
-  int _downloadsGeneration = 0;
+
+  /// 待送达浏览页的跳转请求：只在跳转那一帧非空，送达后即清（见 [_openBrowseTab]）。
+  BrowseNavigationRequest? _browseRequest;
 
   /// 定时后台同步：app 存活期每隔 [_periodicSyncInterval] 重跑一次 app-open 语义的全量
   /// sweep，让「手机一直开着、电脑那边改了数据」这种没有任何事件触发的场景也能自动拉到
@@ -478,6 +480,9 @@ class _HomePageState extends BasePageState<HomePage>
 
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
+      // 在下面任何分支改写 first_time_setup 之前取：「下载 → 浏览」搬迁提示要据此
+      // 区分全新安装与升级（见 browse_moved_notice.dart）。
+      final bool freshInstall = appModelNoUpdate.isFirstTimeSetup;
       final RecommendedPackTutorialState tutorialState =
           RecommendedPackTutorialState(appModelNoUpdate.appDirectory);
       if (await tutorialState.shouldPrompt) {
@@ -525,6 +530,17 @@ class _HomePageState extends BasePageState<HomePage>
           ),
         );
         await appModel.setOnboardingCompleted(value: true);
+      }
+
+      // 「下载」改名「浏览」：升级前关着下载的用户照旧关着，但一次性告诉他们发现与
+      // 在线来源搬到了哪里、在哪里打开（所有者 2026-09-28 拍板）。排在新手引导之后、
+      // 更新弹窗之前，与它们串行，不抢同一帧。
+      if (mounted) {
+        await maybeShowBrowseMovedNotice(
+          context: context,
+          appModel: appModelNoUpdate,
+          freshInstall: freshInstall,
+        );
       }
 
       if (mounted) {
@@ -1525,9 +1541,10 @@ class _HomePageState extends BasePageState<HomePage>
     // ——关掉下载/听书后它们仍钉在首页底部，与「看起来像纯粹的阅读器」直接相反。
     final ModuleVisibility visibility = appModel.moduleVisibility;
     return Column(
+      key: _homeBodyKey,
       children: <Widget>[
         Expanded(child: buildBody()),
-        if (visibility.isEnabled(ModuleId.downloads))
+        if (visibility.isEnabled(ModuleId.browse))
           const RecommendedPackDownloadMiniBar(),
         if (visibility.isEnabled(ModuleId.listening))
           const NowListeningMiniBar(),
@@ -1588,6 +1605,10 @@ class _HomePageState extends BasePageState<HomePage>
   /// 游戏页也必须保活：捕获工作台拥有文本订阅、音频源与轮询会话，切去查词或设置时
   /// 只能隐藏，不能因 dispose 停止正在进行的 Hook。
   ///
+  /// 浏览页也保活：它的来源 / 发现页签每次挂载都要对全部来源联网拉一遍（热门 /
+  /// 发现列表），切去别的 tab 再回来不该丢掉搜索词、结果与滚动再重拉；跨页跳转
+  /// 改走 [BrowsePage.navigationRequest] 原地切页签。
+  ///
   /// 其余 tab（词典 / 设置）**故意不保活**、按需重建，以保留其依赖
   /// `initState` 挂载的语义——尤其 [HomeDictionaryPage] 靠切到查词 tab 时 re-mount
   /// 消费桌面悬浮字幕的 pending 查词（TODO-376，见 [_onHomeDictionaryTabRequested]）；
@@ -1597,6 +1618,7 @@ class _HomePageState extends BasePageState<HomePage>
     HomeTab.manga,
     HomeTab.video,
     HomeTab.games,
+    HomeTab.browse,
   };
 
   /// 用户已实际打开过至少一次的保活 tab。惰性构建：没进过的视频/书架 tab 不预建，
@@ -1641,13 +1663,13 @@ class _HomePageState extends BasePageState<HomePage>
 
   /// 下载页当前是否可达（「功能模块 → 下载」开着）。指向下载页的入口一律先问这里：
   /// 页面不可达时入口就不该渲染，而不是渲染出来再在点击时静默失败。
-  bool get _downloadsReachable => _activeTabs().contains(HomeTab.downloads);
+  bool get _browseReachable => _activeTabs().contains(HomeTab.browse);
 
   VideoDiscoveryActions get _productionVideoDiscoveryActions {
     // 「查看下载」「管理订阅」两个端口本就是 nullable、消费端已按 null 不渲染
     // （video_discovery_page 的页头按钮、detail 页的订阅按钮），所以下载模块关掉时
     // 直接不接线即可 —— 不必在点击路径上再加一个「其实去不了」的特例分支。
-    final bool downloadsReachable = _downloadsReachable;
+    final bool browseReachable = _browseReachable;
     return VideoDiscoveryActions(
       loadDetails: _loadVideoDiscoveryDetails,
       watchStatus: _watchVideoDiscoveryStatus,
@@ -1656,20 +1678,24 @@ class _HomePageState extends BasePageState<HomePage>
       // 订阅本身与下载 tab 无关（订阅在后台照常拉取），故不随下载模块门控。
       onSubscribe: _openVideoDiscoverySubscription,
       onPlay: _openLocalVideoDiscoveryWork,
-      // 必须走 _popToDownloadsTab：作品**详情页**永远是 pushed route，而
-      // _openDownloadsTab 只 setState 切 home 的 tab、不动导航栈 —— tab 在
+      // 必须走 _popToBrowseTab：作品**详情页**永远是 pushed route，而
+      // _openBrowseTab 只 setState 切 home 的 tab、不动导航栈 —— tab 在
       // 底下切了，用户还停在详情页上，看起来什么都没发生。
       // 内联在 home 里的发现页已在栈顶，popUntil(isFirst) 对它是 no-op。
-      onOpenDownloads: downloadsReachable ? () => _popToDownloadsTab(0) : null,
-      onOpenSubscriptions: downloadsReachable
+      onOpenDownloads: browseReachable
+          ? () => _popToBrowseTab(BrowseTab.downloads)
+          : null,
+      onOpenSubscriptions: browseReachable
           ? _openVideoDiscoverySubscriptionsPanel
           : null,
-      // 取消不经下载 tab，所以**不随** downloadsReachable 门控：下载模块被关掉的
+      // 取消不经下载 tab，所以**不随** browseReachable 门控：下载模块被关掉的
       // 用户照样可能有一条在飞的任务需要停掉。
       onCancelDownloads: _cancelVideoDiscoveryDownloads,
-      // 「AI 下视频」入口：AI 提供商未指派 / 平台合规不可用 / 下载 runtime 没起时
-      // 不接线，发现页搜索行整颗按钮不渲染。
-      onAiAcquire: _canAiAcquire ? _openAiVideoAcquisition : null,
+      // 「AI 下视频」入口：仅平台合规不可用（iOS）时不接线、整颗按钮不渲染；
+      // AI 未指派 / 下载 runtime 没起在点击时引导配置（见 _canAiAcquire）。
+      onAiAcquire: _canAiAcquire && _aiAcquireModulesEnabled
+          ? _openAiVideoAcquisition
+          : null,
     );
   }
 
@@ -1736,15 +1762,21 @@ class _HomePageState extends BasePageState<HomePage>
   /// 若先 popUntil 再发现去不了，用户的详情页 / 放送日历会被弹掉、界面停在首页且毫无
   /// 提示 —— 比「什么都不做」更坏。所以可达性判定必须在动导航栈**之前**。
   /// 返回是否真的落地到了下载页，调用方据此给出可操作提示。
-  bool _popToDownloadsTab(int tabIndex) {
-    if (!_downloadsReachable) return false;
+  bool _popToBrowseTab(
+    BrowseTab tab, {
+    BrowseDownloadsSection downloadsSection = BrowseDownloadsSection.tasks,
+  }) {
+    if (!_browseReachable) return false;
     Navigator.of(context).popUntil((Route<Object?> route) => route.isFirst);
     if (!mounted) return false;
-    _openDownloadsTab(tabIndex);
+    _openBrowseTab(tab, downloadsSection: downloadsSection);
     return true;
   }
 
-  void _openVideoDiscoverySubscriptionsPanel() => _popToDownloadsTab(2);
+  void _openVideoDiscoverySubscriptionsPanel() => _popToBrowseTab(
+    BrowseTab.downloads,
+    downloadsSection: BrowseDownloadsSection.subscriptions,
+  );
 
   Future<VideoDiscoveryDetailData> _loadVideoDiscoveryDetails(
     VideoDiscoveryItem item,
@@ -1830,10 +1862,9 @@ class _HomePageState extends BasePageState<HomePage>
   /// 猜成「没配下载后端」（下载页在 BUG-1706 已把原因拆开，这里漏改）。
   /// 返回空表 = 用户取消或加完仍为空，调用方直接返回。
   ///
-  /// **重读仍为空必须给回一句提示**：本条路径上没有可停留的空态门（下载页有，
-  /// `downloads_page.dart` 的 `_addVideoSource` 关掉对话框后重算前置条件、空态门
-  /// 继续留在页面上说明缺什么），静默返回等于整个流程无声消失——比修前那句 snackbar
-  /// 还糟。`promptManagedVideoSourceSetup` 返回 true 只表示用户走进了来源对话框，
+  /// **重读仍为空必须给回一句提示**：本条路径上没有可停留的空态门（有空态门的页面
+  /// 关掉对话框后会重算前置条件、空态门继续留在页面上说明缺什么），静默返回等于
+  /// 整个流程无声消失——比修前那句 snackbar 还糟。`promptManagedVideoSourceSetup` 返回 true 只表示用户走进了来源对话框，
   /// 不表示真加成了。
   Future<List<MediaSourceRow>> _managedVideoDownloadSourcesOrPrompt(
     BuildContext context,
@@ -1958,9 +1989,12 @@ class _HomePageState extends BasePageState<HomePage>
     if (existing.any((VideoDownloadSubscriptionRow row) => row.enabled)) {
       // 已订阅 → 唯一有意义的动作是「去管理」，落在下载页订阅 tab。
       // 下载模块关掉时 onOpenSubscriptions 端口不接线，订阅按钮会退化成本回调，
-      // 于是这条分支仍可达；[_popToDownloadsTab] 先判可达再动导航栈，去不了就只
+      // 于是这条分支仍可达；[_popToBrowseTab] 先判可达再动导航栈，去不了就只
       // 给一句可操作提示，绝不把用户的详情页弹掉后无声消失。
-      if (!_popToDownloadsTab(2)) {
+      if (!_popToBrowseTab(
+        BrowseTab.downloads,
+        downloadsSection: BrowseDownloadsSection.subscriptions,
+      )) {
         _showVideoDiscoveryMessage(context, t.module_downloads_hidden_hint);
       }
       return;
@@ -2058,23 +2092,48 @@ class _HomePageState extends BasePageState<HomePage>
     );
   }
 
-  /// 「AI 下视频」入口可用的门（build 期求值，AI 指派变更后随 appModel 通知重算）：
-  /// AI 提供商已指派 + 下载中心与外部发现在本平台可用（iOS 合规）+ 资源 registry
-  /// 与下载管线已起。判据只问 [StoreRestrictedCapability]，不写 `Platform.isIOS`。
+  /// 「AI 下视频」入口渲染的门：只看本平台允许与否（iOS 合规）。判据只问
+  /// [StoreRestrictedCapability]，不写 `Platform.isIOS`。
+  ///
+  /// **AI 未指派、下载 runtime 没起都不藏入口**：此前两者任一不满足整颗按钮不渲染，
+  /// 而新装用户两者恰恰都不满足——入口对他们永远不存在，也没有任何线索提示「要先
+  /// 去 AI 设置指派」（用户 2026-09-26 反馈 Windows / Mac 都找不到）。缺什么改由
+  /// [_openAiVideoAcquisition] 在点击时直接弹对应的配置引导。
   bool get _canAiAcquire =>
       appModelNoUpdate.isPreferencesReady &&
-      resolveVideoAcquireAiProvider(appModelNoUpdate.prefsRepo) != null &&
       StoreRestrictedCapability.downloads.isAvailable &&
-      StoreRestrictedCapability.externalDiscovery.isAvailable &&
-      appModelNoUpdate.videoResourceRegistry != null &&
-      appModelNoUpdate.videoDownloadPipelineService != null;
+      StoreRestrictedCapability.externalDiscovery.isAvailable;
+
+  /// 「AI 下视频」入口的模块门：用户在「功能模块」里关掉的东西，入口不能再把它
+  /// 带出来。
+  ///
+  /// - 在线服务（`ModuleId.services`）关了 = 用户主动隐藏了「设置 › AI」。入口一旦
+  ///   出现，点击就会经 [_pushAiSettings] 推出这个被关掉的页面（`ModuleSettingsView`
+  ///   不查 `visible`），所以这里按同一判据 [isSettingsDestinationVisible] 收起。
+  /// - 下载模块关了：这个功能的产物就是下载任务，与设置里「AI 下视频」段
+  ///   （`settings_schema_ai.dart`）同一个门。
+  bool get _aiAcquireModulesEnabled =>
+      isSettingsDestinationVisible(
+        SettingsDestinationId.ai,
+        appModel.moduleVisibility,
+      ) &&
+      appModel.moduleVisibility.isEnabled(ModuleId.browse);
 
   /// 打开「AI 下视频」对话页：组装全部端口后交给 [VideoAcquisitionService]。
   ///
-  /// 前置与资源搜索页一致：后端 runtime 没起 → 配置引导；没有受管视频来源 → 补来源
-  /// 引导。页面本身不挂 Riverpod，所有能力按闭包注入，AI 提供商每次调用时现解析。
-  Future<void> _openAiVideoAcquisition() async {
+  /// 前置按顺序逐个引导，配完即继续：AI 提供商未指派 → 推 AI 设置页；后端 runtime
+  /// 没起 → 配置引导；没有受管视频来源 → 补来源引导。页面本身不挂 Riverpod，所有
+  /// 能力按闭包注入，AI 提供商每次调用时现解析。
+  Future<void> _openAiVideoAcquisition([String? initialQuery]) async {
     final BuildContext context = this.context;
+    if (resolveVideoAcquireAiProvider(appModelNoUpdate.prefsRepo) == null) {
+      _showVideoDiscoveryMessage(context, t.ai_assist_no_provider);
+      await _pushAiSettings(context);
+      if (!context.mounted ||
+          resolveVideoAcquireAiProvider(appModelNoUpdate.prefsRepo) == null) {
+        return;
+      }
+    }
     final VideoResourceRegistry? registry =
         appModelNoUpdate.videoResourceRegistry;
     final VideoDownloadPipelineService? pipeline =
@@ -2096,6 +2155,12 @@ class _HomePageState extends BasePageState<HomePage>
     final VideoAcquisitionService service = VideoAcquisitionService(
       defaults: VideoAcquisitionDefaults(
         qualityPref: prefs.aiVideoDownloadQuality,
+        sourcePref: VideoAcquisitionSourcePref.parse(
+          prefs.aiVideoDownloadSource,
+        ),
+        bitratePref: VideoAcquisitionBitratePref.parse(
+          prefs.aiVideoDownloadBitrate,
+        ),
         subtitleLanguagePref: prefs.aiVideoDownloadSubtitleLanguage,
         sources: <VideoAcquisitionSource>[
           for (final MediaSourceRow source in sources)
@@ -2103,6 +2168,7 @@ class _HomePageState extends BasePageState<HomePage>
         ],
         defaultSourceId: (defaultSourceId ?? 0) == 0 ? null : defaultSourceId,
         locale: appModelNoUpdate.appLocale.toLanguageTag(),
+        skipExtras: prefs.videoDownloadSkipExtras,
       ),
       ports: VideoAcquisitionPorts(
         searchWorks: discovery.load,
@@ -2114,6 +2180,14 @@ class _HomePageState extends BasePageState<HomePage>
               reference,
             )).any((VideoDownloadSubscriptionRow row) => row.enabled),
         searchResources: registry.search,
+        // 资料源（TMDB collection + MAL 关联）+ 联网资料补全（维基 → AI 列作品 →
+        // 逐部回资料源核对），见 ai_video_franchise_assistant.dart。
+        loadFranchise: createPreferencesVideoFranchiseLoader(
+          prefs,
+          base: (VideoDiscoveryItem item) async =>
+              discoveryService?.loadFranchise(item),
+          searchWorks: discovery.load,
+        ),
         parseIntent: createPreferencesVideoAcquisitionIntentParser(prefs),
         decideIdentity: createPreferencesVideoAcquisitionIdentityDecider(prefs),
         persistPreference:
@@ -2204,6 +2278,7 @@ class _HomePageState extends BasePageState<HomePage>
         MaterialPageRoute<void>(
           builder: (_) => AiVideoAcquisitionPage(
             service: service,
+            initialQuery: initialQuery,
             onConfigureBackend: _promptDownloadBackendSetup,
           ),
         ),
@@ -2326,6 +2401,39 @@ class _HomePageState extends BasePageState<HomePage>
     );
   }
 
+  /// 推一页独立的「设置 › AI」（提供商 + 功能指派），返回即回到原入口。
+  Future<void> _pushAiSettings(BuildContext context) {
+    return Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (BuildContext context) => Scaffold(
+          body: SafeArea(
+            child: ModuleSettingsView(
+              destinationId: SettingsDestinationId.ai,
+              navigation: Row(
+                children: <Widget>[
+                  FushiIconButton(
+                    icon: Icons.arrow_back,
+                    tooltip: t.back,
+                    onTap: () => Navigator.of(context).maybePop(),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      t.ai_settings_title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showVideoDiscoveryMessage(BuildContext context, String message) {
     if (!context.mounted) return;
     ScaffoldMessenger.of(
@@ -2333,12 +2441,22 @@ class _HomePageState extends BasePageState<HomePage>
     ).showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _openDownloadsTab(int tabIndex) {
+  void _openBrowseTab(
+    BrowseTab tab, {
+    BrowseDownloadsSection downloadsSection = BrowseDownloadsSection.tasks,
+  }) {
+    // 浏览页是保活 tab：跳转是一条送给已挂载页面的请求（它原地切页签），不再换
+    // key 整页重建——那会丢掉来源 / 发现 / 下载各页签的搜索词、结果与滚动。
     setState(() {
-      _downloadsInitialTabIndex = tabIndex.clamp(0, 2);
-      _downloadsGeneration++;
+      _browseRequest = BrowseNavigationRequest(
+        tab,
+        downloadsSection: downloadsSection,
+      );
     });
-    _selectTab(HomeTab.downloads);
+    _selectTab(HomeTab.browse);
+    // 用后即清：请求随本帧送达一次；之后的无关重建传 null，不会把用户已切走的
+    // 页签拽回来，模块开关重建出的新浏览页也不会落在这次过期的页签上。
+    WidgetsBinding.instance.addPostFrameCallback((_) => _browseRequest = null);
   }
 
   Stream<VideoDiscoveryAcquisitionState> _watchVideoDiscoveryStatus(
@@ -2966,18 +3084,18 @@ class _HomePageState extends BasePageState<HomePage>
     );
   }
 
-  /// 视频页「媒体服务器」分区的服务器清单：每台已登录的 Jellyfin/Emby 配置出一个
-  /// 浏览器（`client is MediaServerBrowser`）。每次进分区重取——设置页登入 / 登出
+  /// 视频页「媒体服务器」分区的服务器清单：每台已登录的服务器（Jellyfin 家族 /
+  /// Plex）经 [MediaServerConfig.buildBrowser] 出一个浏览器（`client is
+  /// MediaServerBrowser`），这里不按类型分支。每次进分区重取——设置页登入 / 登出
   /// 立即反映，不缓存 client 实例。
   Future<List<MediaServerEntry>> _loadMediaServerEntries() async {
     final SyncRepository syncRepo = SyncRepository(appModelNoUpdate.database);
-    final List<JellyfinServerConfig> configs = await syncRepo
-        .getJellyfinServers();
+    final List<MediaServerConfig> configs = await syncRepo.getMediaServers();
     return <MediaServerEntry>[
-      for (final JellyfinServerConfig config in configs)
+      for (final MediaServerConfig config in configs)
         MediaServerEntry(
-          browser: config.buildClient(),
-          accountName: config.username,
+          browser: config.buildBrowser(),
+          accountName: config.accountName,
           routeUrls: config.routeUrls,
           onSwitchRoute: (String url) => _switchMediaServerRoute(config, url),
         ),
@@ -2986,23 +3104,14 @@ class _HomePageState extends BasePageState<HomePage>
 
   /// 视频页服务器卡片上的「切换线路」：写回配置并失效这台的远端清单缓存槽
   /// （槽里的封面 / 流 URL 烤着旧线路的 host）。与设置页 `_switchRoute` 同口径；
-  /// 身份锚（[JellyfinServerConfig.serverUrl]）不变，历史 / 封面磁盘缓存照常。
+  /// 身份锚（[MediaServerConfig.sourceId]）不变，历史 / 封面磁盘缓存照常。
   Future<void> _switchMediaServerRoute(
-    JellyfinServerConfig config,
+    MediaServerConfig config,
     String url,
   ) async {
     final SyncRepository syncRepo = SyncRepository(appModelNoUpdate.database);
-    await syncRepo.upsertJellyfinServer(
-      config.copyWithRoutes(activeServerUrl: url),
-    );
-    ref
-        .read(remoteLibraryCacheProvider)
-        .invalidateSource(
-          JellyfinVideoClient.sourceIdFor(
-            serverUrl: config.serverUrl,
-            userId: config.userId,
-          ),
-        );
+    await syncRepo.upsertMediaServer(config.withActiveRoute(url));
+    ref.read(remoteLibraryCacheProvider).invalidateSource(config.sourceId);
   }
 
   Widget _buildTabContent(HomeTab tab) {
@@ -3023,14 +3132,11 @@ class _HomePageState extends BasePageState<HomePage>
         // 键，于是本次会话下载入库的作品永远赶不上那唯一一轮。
         loadPendingScrapeWorks: () =>
             _videoLibraryScrapeSweep.sweepAndListPending(),
-        discoveryController: _productionVideoDiscoveryController,
-        discoveryActions: _productionVideoDiscoveryActions,
         mediaServerServersLoader: _loadMediaServerEntries,
         systemBackActive: _visibleTab == HomeTab.video,
       ),
-      HomeTab.downloads => DownloadsPage(
-        key: ValueKey<String>('downloads-$_downloadsGeneration'),
-        initialTabIndex: _downloadsInitialTabIndex,
+      HomeTab.browse => BrowsePage(
+        navigationRequest: _browseRequest,
         videoDiscoveryController: _productionVideoDiscoveryController,
         videoDiscoveryActions: _productionVideoDiscoveryActions,
       ),

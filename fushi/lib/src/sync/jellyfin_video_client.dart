@@ -38,6 +38,7 @@ import 'package:http/http.dart' as http;
 import 'package:fushi_engine/media/metadata/credential_redaction.dart'
     show redactCredentialsInText;
 import 'package:fushi/src/media/video/media_server/media_server_browser.dart';
+import 'package:fushi/src/media/video/media_server/media_server_config.dart';
 import 'package:fushi/src/media/video/media_server/media_server_search_match.dart';
 import 'package:fushi_engine/sync/fushi_library_host_service.dart'
     show
@@ -60,7 +61,10 @@ const int kTicksPerMs = 10000;
 /// 令牌与互联 per-peer token 同款落 Drift prefs（不是明文红线的 configJson——
 /// 该红线针对 MediaSources 行；prefs 是既有凭据落点，见 sync_repository.dart
 /// 各后端凭据键）。
-class JellyfinServerConfig {
+///
+/// 是 [MediaServerConfig] 的 [MediaServerKind.jellyfin] 实现：与 Plex 共用列表键，
+/// 存量 JSON 没有 `kind` 字段，按 Jellyfin 读取（[MediaServerKind.fromWire]）。
+class JellyfinServerConfig implements MediaServerConfig {
   const JellyfinServerConfig({
     required this.serverUrl,
     required this.username,
@@ -94,9 +98,11 @@ class JellyfinServerConfig {
   final String activeServerUrl;
 
   /// 全部线路：主地址在首位，后面按添加顺序。
+  @override
   List<String> get routeUrls => <String>[serverUrl, ...alternateUrls];
 
   /// 请求实际走的根 URL（[buildClient] 用它建 [JellyfinApi]）。
+  @override
   String get effectiveServerUrl =>
       activeServerUrl.isNotEmpty && routeUrls.contains(activeServerUrl)
           ? activeServerUrl
@@ -118,6 +124,27 @@ class JellyfinServerConfig {
   /// 本配置的 JSON 里（登出即随键一起删），不进全局偏好表。
   final List<String> libraryIds;
 
+  @override
+  MediaServerKind get kind => MediaServerKind.jellyfin;
+
+  @override
+  String get sourceId =>
+      JellyfinVideoClient.sourceIdFor(serverUrl: serverUrl, userId: userId);
+
+  @override
+  String get accountName => username;
+
+  @override
+  JellyfinServerConfig withActiveRoute(String url) =>
+      copyWithRoutes(activeServerUrl: url);
+
+  @override
+  MediaServerBrowser buildBrowser({http.Client? httpClient}) =>
+      buildClient(httpClient: httpClient);
+
+  /// 不写 `kind`：缺字段即 [MediaServerKind.jellyfin]，产出与引入类型字段之前
+  /// 逐字相同（旧版本读回无差别）。
+  @override
   Map<String, Object?> toJson() => <String, Object?>{
         'serverUrl': serverUrl,
         'username': username,
@@ -1588,11 +1615,18 @@ class JellyfinApi {
   }
 
   /// 通用下载：GET [url] 流式写入 [dest]，按 Content-Length 汇报进度。
+  ///
+  /// [onBytes] 报 `(已收, Content-Length)`。[cancelSignal] 完成后在下一个数据块到达
+  /// 时中止并抛 [RemoteDownloadCancelled]（本源无续传，半截文件照常删掉）。
   Future<void> downloadToFile(
     String url,
     File dest, {
     void Function(double progress)? onProgress,
+    void Function(int received, int? total)? onBytes,
+    Future<void>? cancelSignal,
   }) async {
+    bool cancelled = false;
+    cancelSignal?.then((_) => cancelled = true, onError: (_) {});
     try {
       final http.Request req = http.Request('GET', Uri.parse(url));
       req.headers.addAll(_headers);
@@ -1609,8 +1643,10 @@ class JellyfinApi {
       bool ok = false;
       try {
         await for (final List<int> chunk in res.stream) {
+          if (cancelled) throw const RemoteDownloadCancelled();
           sink.add(chunk);
           received += chunk.length;
+          onBytes?.call(received, total);
           if (total != null && total > 0) {
             onProgress?.call(received / total);
           }
@@ -2045,16 +2081,8 @@ class JellyfinVideoClient
 
   /// 展示标题（与 [JellyfinItem.displayTitle] 同一口径：单集拼
   /// `剧名 S01E02 集名`，其余用条目名）。播放页的合集面板 / 通知栏都吃它。
-  static String displayTitleOf(MediaServerItem item) {
-    final String? series = item.seriesName;
-    if (item.type != MediaServerItemType.episode ||
-        series == null ||
-        series.isEmpty) {
-      return item.name;
-    }
-    final String code = item.episodeCode;
-    return '$series${code.isEmpty ? '' : ' $code'} ${item.name}';
-  }
+  static String displayTitleOf(MediaServerItem item) =>
+      mediaServerDisplayTitle(item);
 
   @override
   String get serverId => remoteLibrarySourceId;
@@ -2403,19 +2431,8 @@ class JellyfinVideoClient
   }
 
   /// 单集 → 按剧名归入 playlist 合集（库页折叠成一张剧卡）；电影独立。
-  static RemoteCollectionMembership? _collectionOf(MediaServerItem item) {
-    final String? series = item.seriesName;
-    if (item.type != MediaServerItemType.episode ||
-        series == null ||
-        series.isEmpty) {
-      return null;
-    }
-    return RemoteCollectionMembership(
-      collectionName: series,
-      collectionType: 'playlist',
-      sortIndex: (item.seasonNumber ?? 0) * 10000 + (item.episodeNumber ?? 0),
-    );
-  }
+  static RemoteCollectionMembership? _collectionOf(MediaServerItem item) =>
+      mediaServerCollectionOf(item);
 
   /// 本次枚举要递归哪些 ParentId（BUG-1891）。
   ///
@@ -2486,6 +2503,8 @@ class JellyfinVideoClient
     String id,
     File dest, {
     void Function(double progress)? onProgress,
+    void Function(int received, int? total)? onBytes,
+    Future<void>? cancelSignal,
   }) async {
     // 飞牛要求 stream 端点带 MediaSourceId（BUG-2254 ③），而下载入参只有条目
     // id：先打一次 /Items/{id} 拿 MediaSources[0].Id。原版 Jellyfin/Emby 上省这发
@@ -2495,6 +2514,8 @@ class JellyfinVideoClient
       api.streamUrl(id, mediaSourceId: item.mediaSourceId),
       dest,
       onProgress: onProgress,
+      onBytes: onBytes,
+      cancelSignal: cancelSignal,
     );
   }
 
