@@ -906,6 +906,42 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 			global.fushiLookupProbeCaretCount = 0;
 			global.fushiLookupProbeVisCount = 0;
 			global.fushiLookupCardPath = "__FUSHI_CARD_PATH__";
+			// 传感器装上之后游戏若弹出未处理脚本异常框，框里只有一句话，定位不到是哪段脚本、
+			// 被谁调用；而异常框是模态的，DLL 的每帧回读在它关掉前一次都不会再跑，关掉后游戏
+			// 多半直接退出。所以只在这里**同步**把异常原文与 trace 写进 %TEMP%，然后原样
+			// 交还：有前任处理器就交给它，没有就返回 false 让引擎照常弹框。不吞、不改结论。
+			global.fushiLookupExceptionPath = "__FUSHI_EXCEPTION_PATH__";
+			if(global.fushiLookupExceptionPath != "" &&
+				typeof global.fushiLookupExceptionObserver == "undefined")
+			{
+				try
+				{
+					global.fushiLookupPreviousExceptionHandler = System.exceptionHandler;
+					global.fushiLookupExceptionObserver = function(e)
+					{
+						try
+						{
+							var lines = [];
+							lines.add("tick=" + System.getTickCount());
+							try { lines.add("message=" + e.message); }
+							catch(e2) { lines.add("message=?"); }
+							try { lines.add("trace=" + e.trace); }
+							catch(e3) { lines.add("trace=?"); }
+							try { lines.add("sensorStage=" + global.fushiLookupSensorStage); }
+							catch(e4) {}
+							lines.save(global.fushiLookupExceptionPath);
+						}
+						catch(e5) {}
+						var previous = global.fushiLookupPreviousExceptionHandler;
+						if(typeof previous == "Object" && previous !== null)
+							return previous(e);
+						return false;
+					};
+					System.exceptionHandler = global.fushiLookupExceptionObserver;
+				}
+				catch(e) {}
+			}
+			global.fushiLookupSensorStage = "bootstrap";
 			global.fushiLookupCardSeq = 0;
 			// 制卡截图的临时视觉抑制。它与永久 dismiss 分开：不动 submit/Esc fence，
 			// 下一张完整卡片帧会清除此位并恢复。同一事务的成功 token 由 DLL 回读。
@@ -5156,6 +5192,28 @@ if(typeof global.fushiLookupBootstrap == "undefined")
 				throw new Exception("fushiLookup: no kag input seam available");
 			installStage = 50;
 
+			// 安装时刻的 KAG 生命周期快照：早注入（启动并捕获）与晚附着的差别只在「装上时
+			// 游戏启动脚本跑到哪了」，异常 trace 需要它才能判读。逐个字段单独 try 读，
+			// 绝不整体枚举（BUG-2116）。
+			try
+			{
+				var stable = "?", conductor = "?", plugins = "?", pluginBase = "?";
+				try { stable = "" + global.kag.inStable; } catch(e1) {}
+				try { conductor = "" + global.kag.conductor.status; } catch(e2) {}
+				try { plugins = "" + global.kag.kagPlugins.count; } catch(e3) {}
+				try { pluginBase = typeof global.KAGPlugin; } catch(e4) {}
+				global.fushiLookupSensorStage = "installed@" + System.getTickCount();
+				global.fushiLookupNoteError("bootstrap.context",
+					%[message: "tick=" + System.getTickCount() +
+						",stable=" + stable + ",conductor=" + conductor +
+						",plugins=" + plugins + ",pluginBase=" + pluginBase +
+						",seams=" + global.fushiLookupKagSeams +
+						",classic=" + global.fushiLookupClassicSource +
+						",exceptionObserver=" +
+						(System.exceptionHandler === global.fushiLookupExceptionObserver)]);
+			}
+			catch(e) {}
+
 			Debug.notice("[HibikiLookup] sensor installed");
 			System.removeContinuousHandler(global.fushiLookupBootstrap);
 			global.fushiLookupBootstrap = void;
@@ -6475,6 +6533,23 @@ bool PrepareKirikiriLookupCardPath() {
   return true;
 }
 
+// 未处理脚本异常的诊断落点：同 %TEMP%、同正斜杠与可疑字符纪律，按 PID 区分会话。
+// 拿不到安全路径就返回空串，TJS 侧据此不装观察者。
+std::wstring KirikiriLookupExceptionPath() {
+  wchar_t temp[MAX_PATH] = {};
+  const DWORD length = GetTempPathW(MAX_PATH, temp);
+  if (length == 0 || length >= MAX_PATH) return std::wstring();
+  std::wstring path = temp;
+  path += L"fushi-kirikiri-exception-";
+  path += std::to_wstring(GetCurrentProcessId());
+  path += L".txt";
+  for (wchar_t& ch : path) {
+    if (ch == L'\\') ch = L'/';
+  }
+  if (path.find_first_of(L"\"\\\r\n") != std::wstring::npos) return std::wstring();
+  return path;
+}
+
 void ReplaceLookupPlaceholder(std::wstring& script, const wchar_t* placeholder,
                               const std::wstring& value) {
   const size_t pos = script.find(placeholder);
@@ -6492,6 +6567,8 @@ std::wstring BuildKirikiriLookupBootstrapScript() {
   ReplaceLookupPlaceholder(script, L"__FUSHI_PROBE_MODE__",
                            kKirikiriLookupProbePaths ? L"1" : L"0");
   ReplaceLookupPlaceholder(script, L"__FUSHI_CARD_PATH__", g_lookup_card_path);
+  ReplaceLookupPlaceholder(script, L"__FUSHI_EXCEPTION_PATH__",
+                           KirikiriLookupExceptionPath());
   return script;
 }
 
